@@ -1,0 +1,40 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Filezilla en occitan\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: \n"
+"Last-Translator: Tòni Galhard <tony.gaillard@supinfo.com>\n"
+"Language-Team: Tòni Galhard <tony.gaillard@supinfo.com>\n"
+"Language: oc\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Poedit-Language: occitan\n"
+"X-Poedit-Country: Occitània\n"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Ret inaccessible"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Certificat alunhat sens fisança."
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Lo servidor a pas tampat la connexion TLS d'un biais corrèct"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Tipe de certificat pas suportat"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Verificacion del certificat..."
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "desconegut"

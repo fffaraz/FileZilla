@@ -1,0 +1,208 @@
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla Thai\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2015-06-01 02:40+0700\n"
+"Last-Translator: Teerapat Taechaiya <teerapat.top@gmail.com>\n"
+"Language-Team: \n"
+"Language: th_TH\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.8.1\n"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "ระวัง! ใบรับรองถูกเพิกถอน"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "ไม่สามารถกำหนดที่อยู่ที่ร้องขอ"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "การเชื่อมต่อถูกยกเลิก"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "ความพยายามในการเชื่อมต่อหมดเวลา"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "การเชื่อมต่อถูกปฏิเสธโดยแม่ข่าย"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "การเชื่อมต่อถูกตั้งค่าใหม่โดยเครือข่าย"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "การเชื่อมต่อถูกตั้งค่าใหม่โดยอีกฝั่ง"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr "ไม่สามารถรับชื่อจำเพาะของผู้ออกใบรับรอง, gnutls_x509_get_issuer_dn ล้มเหลว"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr "ไม่สามารถรับชื่อจำเพาะของหัวข้อใบรับรอง, gnutls_x509_get_dn ล้มเหลว"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "ไม่สามารถตรวจสอบใบรับรองอีกฝั่ง"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "ข้อผิดพลาด GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "ข้อผิดพลาด GnuTLS %d ใน %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "ข้อผิดพลาด GnuTLS %d ใน %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "ข้อผิดพลาด GnuTLS %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "โฮสต์ล่ม"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "ถูกขัดจังหวะโดยสัญญาณ"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "อาร์กิวเมนต์ที่ส่งผ่านไม่ถูกต้อง"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "ค่าสำหรับ ai_flags ไม่ถูกต้อง"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "จุดสิ้นสุดในเครื่องถูกปิด"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "การจัดสรรหน่วยความจำล้มเหลว"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "ข้อความมีขนาดใหญ่เกินไป"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "ไม่สามารถเข้าถึงเครือข่าย"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "ไม่มีที่อยู่ที่เกี่ยวข้องกับชื่อโหนด"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "ไม่มีเส้นทางไปยังโฮสต์"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "ข้อผิดพลาดระบบอื่น ๆ"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "หน่วยความจำไม่เพียงพอ"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "สิทธิการเข้าถึงถูกปฏิเสธ"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "โปรโตคอลไม่รองรับ"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "โปรโตคอลไม่รองรับกับชนิดซ็อกเก็ตที่ให้มา"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "ได้รับการแจ้งเตือน TLS จากแม่ข่าย: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "ได้รับการแจ้งเตือน TLS ที่ไม่รู้จัก %d จากแม่ข่าย"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "ใบรับรองระยะไกลไม่น่าเชื่อถือ"
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "โปรโตคอลการจำแนกไม่รู้จัก"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "ทรัพยากรไม่พร้อมใช้งานชั่วคราว"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "แม่ข่ายไม่ได้ถูกปิดการเชื่อมต่อ TLS อย่างถูกต้อง"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "ที่อยู่ซ็อกเก็ตอยู่นอกพื้นที่ของที่อยู่"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "ซ็อกเก็ตเชื่อมต่ออยู่แล้ว"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "ซ็อกเก็ตถูกปิด"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "ซ็อกเก็ตไม่ได้เชื่อมต่อ"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "ระบบย่อยในเครือข่ายของระบบล้มเหลว"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "ชื่อเครือข่ายที่ระบุไม่สามารถใช้ได้อีกต่อไป"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "ชนิดใบรับรองไม่รองรับ"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "กำลังตรวจสอบใบรับรอง..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers คืนค่าเป็นไม่มีใบรับรอง"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "ไม่รู้จัก"

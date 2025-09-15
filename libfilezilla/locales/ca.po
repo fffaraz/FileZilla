@@ -1,0 +1,362 @@
+# translation of ca.po to català
+# Catalan Translation of FileZilla
+# Copyright (C) 2005, 2006, 2007, 2008
+# This file is distributed under the same license as the FileZilla package.
+#
+# Oscar Martinez Llobet <omllobet@telefonica.net>, 2005, 2006, 2007, 2008.
+# Toni Hermoso Pulido <toniher@softcatala.org>, 2008, 2009
+# Joan Monguillot Serra <jmonguillot@gmail.com>, 2015-2018.
+# Carles Ferreiro Casanovas <carles.ferreiro@gmail.com>, 2019.
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2019-03-03 20:09+0100\n"
+"Last-Translator: Carles Ferreiro <carles.ferreiro@gmail.com>\n"
+"Language-Team: Català\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"X-Generator: Poedit 2.2.1\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Un certificat de la cadena s'ha signat amb un algoritme insegur"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr ""
+"Un emissor del certificat en cadena no és una autoritat de certificació"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Desbordament de la memòria intermèdia de paràmetres"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Descriptor de fitxer erroni"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Compte! S'ha revocat el certificat"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "No es pot assignar l'adreça demanada"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Ha fallat la verificació de la signatura del certificat"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Connexió avortada"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "L'intent de connexió ha excedit el temps d'espera"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Connexió refusada pel servidor"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Connexió reiniciada per la xarxa"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Connexió reiniciada pel parell"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "No s'ha pogut afegir el certificat a la llista temporal de confiança"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "No s'ha pogut copiar el certificat"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"No s'ha pogut obtenir nom distingit de l'emissor del certificat, ha fallat "
+"gnutls_x509_get_issuer_dn"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"No s'ha pogut obtenir nom distingit del subjecte del certificat, ha fallat "
+"gnutls_x509_get_dn"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "No s'han pogut ordenar els certificats dels parells"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "No s'ha pogut verificar el certificat del parell"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "El descriptor de fitxer no és sòcol"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Error %d a GnuTLS"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "Error %d en %s a GnuTLS"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "Error %d en %s a GnuTLS: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "Error %d a GnuTLS: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "L'amfitrió ha caigut"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Interrupció de senyal"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "S'ha enviat un paràmetre no vàlid"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Valor incorrecte per ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Valor no vàlid pels consells"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "L'adreça local s'està utilitzant"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "S'ha tancat el punt final local"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Ha fallat l'assignació de memòria"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Missatge massa llarg"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr ""
+"No s'ha proporcionat ni el nom de node ni el nom de servidor, o no es "
+"coneixen"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"L'amfitrió de la xarxa no disposa de cap adreça de xarxa dins la família "
+"d'adreces sol·licitada"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "La xarxa no és accessible"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "No hi ha cap adreça associada amb aquest nom de node"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Sense ruta a l'amfitrió"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Fallada irrecuperable en la traducció de noms de domini"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "No s'ha inicialitzat, cal cridar WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "L'operació ja és en curs"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operació en curs"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Operació no admesa"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Altre error de sistema"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Sense memòria"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Permís denegat"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Processa desbordament de taula de fitxers"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protocol no admès"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protocol no admès en el tipus de sòcol donat"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "S'ha rebut una alerta TLS del servidor: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"No s'ha pogut verificar el certificat en cadena rebut. L'estat de la "
+"verificació és %d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "S'ha rebut una alerta TLS desconeguda %d del servidor"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "No s'ha validat el certificat remot."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "El protocol resolt és desconegut"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Recurs indisponible temporalment"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "El servidor no ha tancat correctament la connexió TLS"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"El servidor ha enviat una cadena de certificat desordenada per violació de "
+"les especificacions TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "L'adreça del sòcol és fora de l'espai d'adreces"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "El sòcol ja està connectat"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "El sòcol s'ha aturat"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "El sòcol no està connectat"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "No s'admet el tipus de sòcol per la família d'adreces"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "S'ha superat el límit de sistema pels fitxer oberts"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Ha fallat el subsistema de xarxa del sistema"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Fallada temporal en la traducció de noms de domini"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "No s'admet el membre ai_family"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "No s'admet el membre ai_socktype"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"El certificat requereix que el servidor inclogui un estat OCSP a la seva "
+"resposta, però l'estat OCSP no hi és."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr ""
+"El nom d'amfitrió del servidor difereix del nom d'amfitrió del certificat"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "No s'admet el paràmetre de nom de servidor per ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "No s'admet la família d'adreces proporcionada"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "El nom de xarxa proporcionat ja no està disponible"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Tipus de certificat no compatible"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "S'està verificant el certificat..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers no ha retornat cap certificat"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "ha fallat gnutls_pem_base64_encode2 failed"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "desconegut"

@@ -1,0 +1,159 @@
+/* config/config.hpp.in.  Generated from configure.ac by autoheader.  */
+
+
+#ifndef LIBFILEZILLA_CONFIG_HEADER
+#define LIBFILEZILLA_CONFIG_HEADER
+
+
+/* Set to 1 to ensure socket invariants. */
+#undef DEBUG_SOCKETEVENTS
+
+/* Set to 1 to use ciphers defined in system policy. */
+#undef FZ_USE_GNUTLS_SYSTEM_CIPHERS
+
+/* Define to 1 if you have the `accept4' function. */
+#undef HAVE_ACCEPT4
+
+/* clock_gettime can be used */
+#undef HAVE_CLOCK_GETTIME
+
+/* define if the compiler supports basic C++17 syntax */
+#undef HAVE_CXX17
+
+/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+   you don't. */
+#undef HAVE_DECL_CLOCK_MONOTONIC
+
+/* Define to 1 if you have the declaration of `pthread_condattr_setclock', and
+   to 0 if you don't. */
+#undef HAVE_DECL_PTHREAD_CONDATTR_SETCLOCK
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* eventfd */
+#undef HAVE_EVENTFD
+
+/* getentropy can be used */
+#undef HAVE_GETENTROPY
+
+/* getrandom can be used */
+#undef HAVE_GETRANDOM
+
+/* Define to 1 if you have the `gmtime_r' function. */
+#undef HAVE_GMTIME_R
+
+/* gmtime_s can be used */
+#undef HAVE_GMTIME_S
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the `localtime_r' function. */
+#undef HAVE_LOCALTIME_R
+
+/* localtime_s can be used */
+#undef HAVE_LOCALTIME_S
+
+/* Define if MEMFD_CREATE is supported */
+#undef HAVE_MEMFD_CREATE
+
+/* Define if thread_local isn't supported */
+#undef HAVE_NO_THREAD_LOCAL
+
+/* Define to 1 if you have the `pipe2' function. */
+#undef HAVE_PIPE2
+
+/* Define to 1 if you have the `posix_fadvise' function. */
+#undef HAVE_POSIX_FADVISE
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdio.h> header file. */
+#undef HAVE_STDIO_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if there is a member named d_type in the struct describing directory
+   headers. */
+#undef HAVE_STRUCT_DIRENT_D_TYPE
+
+/* stat::st_mtim::tv_nsec can be used */
+#undef HAVE_STRUCT_STAT_ST_MTIM
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define if TCP_INFO is supported */
+#undef HAVE_TCP_INFO
+
+/* Define to 1 if you have the `timegm' function. */
+#undef HAVE_TIMEGM
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
+#undef LT_OBJDIR
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Define to 1 if all of the C90 standard headers exist (not just the ones
+   required in a freestanding environment). This macro is provided for
+   backward compatibility; new code need not use it. */
+#undef STDC_HEADERS
+
+/* Build system under which the program was compiled on. */
+#undef USED_BUILD
+
+/* Define to name and version of used compiler */
+#undef USED_COMPILER
+
+/* Define to the used CXXFLAGS to compile this package. */
+#undef USED_CXXFLAGS
+
+/* Host system under which the program will run. */
+#undef USED_HOST
+
+/* Version number of package */
+#undef VERSION
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
+
+
+#endif
+

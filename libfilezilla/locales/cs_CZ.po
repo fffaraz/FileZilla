@@ -1,0 +1,353 @@
+# Czech translations of FileZilla 3
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the FileZilla 3 package.
+# Michal Molhanec <michal@molhanec.net>, 2007-2018.
+# Martin Ruzicka <martin.ruzicka.cz@gmail.com>, 2011.
+# Ivan Masár <helix84@centrum.sk>, 2008.
+# Acci <acci@acci.cz>, 2008.
+# Tobiczech <tobiczech@gmail.com>
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla 3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2019-05-07 14:35+0200\n"
+"Last-Translator: Michal Molhanec <michal@molhanec.net>\n"
+"Language-Team: Michal Molhanec <michal@molhanec.net>\n"
+"Language: cs_CZ\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Poedit-Bookmarks: -1,-1,-1,-1,-1,924,-1,541,986,-1\n"
+"X-Generator: Poedit 1.8.7.1\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Certifikát v řetězci byl podepsán pomocí nejistého algoritmu"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Emitent v řetězci certifikátů není certifikační autoritou"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Přetečení vyrovnávací paměti argumentu"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Neplatný popisovač souboru"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Pozor! Certifikát byl odvolán"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Nemohu přiřadit požadovanou adresu"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Ověření podpisu certifikátu se nezdařilo"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Připojení bylo přerušeno"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Pokus o připojení překročil časový limit"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Připojení odmítnuto serverem"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Připojení resetováno sítí"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Připojení resetováno druhou stranou"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "Nepodařilo se přidat certifikát do dočasného seznamu důvěryhodných"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Nelze kopírovat certifikát"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Nelze získat rozlišující název vydavatele certifikátu, vykonání funkce "
+"gnutls_x509_get_issuer_dn se nezdařilo"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Nelze získat rozlišující název předmětu certifikátu, vykonání funkce "
+"gnutls_x509_get_dn se nezdařilo"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Certifikáty peer nelze řadit"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Nezdařilo se ověřit certifikát druhé strany"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Popisovač souboru není soketem"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Chyba GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "Chyba GnuTLS %d v %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "Chyba GnuTLS %d v %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "Chyba GnuTLS %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Hostitel není spuštěn"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Přerušeno signálem"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Předán neplatný argument"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Neplatná hodnota ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Neplatný hodnota pro hinty"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Místní adresa se již používá"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Byl uzavřen koncový bod"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Selhala alokace paměti"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Příliš velká zpráva"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Ani nodename, ani servname nebylo poskytnuto, nebo není známé"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "V požadované rodině adres nemá síťový hostitel žádnou síťovou adresu"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Síť je nedostupná"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "S nodename není přidružena žádná adresa"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "K hostiteli nevede žádná cesta"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Nezotavitelná chyba při překladu názvů"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Neinicializováno, je potřeba zavolat WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Operace již probíhá"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operace probíhá"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Nepodporovaná operace"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Jiná systémová chyba"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Nedostatek paměti"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Přístup byl odepřen"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Přetečení tabulky souborů procesu"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protokol není podporován"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protokol není podporovám daným typem soketu"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Ze serveru byla přijata výstraha TLS: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr "Přijatý řetězec certifikátu nelze ověřit. Stav ověření je %d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Ze serveru bylo přijato neznámé TLS upozornění %d"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Nedůvěryhodný vzdálený certifikát."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Překlad protokolu není znám"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Zdroj není dočasně k dispozici"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Server správně neukončil připojení TLS"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Server odeslal řetěz neseřazené certifikátů v rozporu se specifikací TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Adresa soketu je mimo adresní prostor"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Soket je již připojen"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Soket je vypnutý"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Soket není připojen"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Rodina adres nepodporuje daný typ soketu"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Byl překročen systémový limit otevřených souborů"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Selhal síťový subsystém operačního systému"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Dočasný nezdar při překladu názvů"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Nepodporovaný člen ai_family"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Nepodporovaný člen ai_socktype"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Certifikát vyžaduje, aby server v odpovědi zahrnul OCSP status, ale OCSP "
+"status chybí."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Název hostitele serveru se neshoduje s název hostitele certifikátu"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Parametr servname není podporován pro ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Tato rodina adres není podporována"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Uvedený síťový název již není dostupný"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Nepodporovaný typ certifikátu"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Ověřování certifikátu..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers nevrátil žádné certifikáty"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 selhal"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "neznámý"

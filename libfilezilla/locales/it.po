@@ -1,0 +1,359 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: Filezilla italian translation v. 28.04.2019\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2019-04-28 17:25+0200\n"
+"Last-Translator: bovirus <bovirus@gmail.com>\n"
+"Language-Team: bovirus - Andrea Sanavia - Vincenzo Reale - Riccardo Vianello "
+"<bovirus@gmail.com>\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 2.2.1\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr ""
+"Un certificato nella struttura è stato firmato con un algoritmpo non sicuro"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "L'autore nelle info certificato non è una autorità di certificazione"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Buffer argomenti pieno"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Errato descrittore file"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Attenzione! Il certificato è stato revocato"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Impossibile assegnare indirizzo richiesto"
+
+#: ../lib/tls_layer_impl.cpp:1379
+msgid "Certificate of connection does not match expected certificate."
+msgstr "Il certificato della connesione non corrisponde al certificato atteso."
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Verifica fallita firma certificato"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Connessione interrotta"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Scaduto tentativo connessione"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Connessione rifiutata dal server"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Connessione ripristinata dalla rete"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Connessione ripristinata dal peer"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "Impossibile aggiungere certificato all'elenco temporaneo certificati"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Impossibile copiare il certificato"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Impossibile distinguere nome del certificato emittente, "
+"gnutls_x509_get_issuer_dn fallito"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Impossibile distinguere nome del certificato oggetto, gnutls_x509_get_dn "
+"fallito"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Impossibile ordinare certificati peer"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Impossibile verificare il certificato connessione"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Il descrittore file non è un socket"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Errore GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "Errore GnuTLS %d in %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "Errore GnuTLS %d in %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "Errore GnuTLS %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Host non attivo"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Interrotto dal segnale"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Argomento passato non valido"
+
+#: ../lib/socket_errors.cpp:105
+msgid "Invalid characters in hostname"
+msgstr "Caratteri non validi nel nome host"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Valore non valido per ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Valore non valido per i suggerimenti"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Indirizzo locale in uso"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Il punto di chiusura locale è stato chiuso"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Fallita allocazione memoria"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Messaggio troppo lungo"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Nome nodo e nome server non forniti, o sconosiuti"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"L'host di rete non ha un indirizzo di rete nella famiglia di indirizzi "
+"richiesta"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Rete non raggiungibile"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Nessun indirizzo associato con il nome nodo"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Nessun route verso l'host"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Errore non recuperabile nella risoluzione nomi"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Non inizializzato, serve una chiamata a WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Operazione già in corso"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operazione in corso"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Operazione non supportata"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Altre errore di sistema"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Memoria esaurita"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Permesso negato"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Tabella file elaborazione piena"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protocollo non supportato"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protocollo non supportato dal socket fornito"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Ricevuto avviso TLS dal server: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"La struttura del certificato ricevuto non può essere verificata. Stato "
+"verifica %d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Ricevuto avviso TLS sconosciuto %d dal server"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Certificato remoto non sicuro."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Il protocollo risoluzione è sconosciuto"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Risorsa temporaneamente non disponibile"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Il server non ha correttamente chiuso la connessione TLS"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Il server ha inviato un collegamento certificato non ordinato in violazione "
+"alle specifche TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Indirizzo socket al di fuori dello spazio indirizzi"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Socket già connesso"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Il socket è stato spento"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Socket non connesso"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Tipo socket non supportato per famiglia indirizzi"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Raggiunto limite di sistema apertura file"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Il sottosistema di rete ha fallito"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Fallimento temporaneo nella risoluzione nomi"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Il membro ai_familty non è supportato"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Il membro asock_type non è supportato"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Il certificato richiede che il server includa un stato OCSP nella sua "
+"risposta, ma lo stato OCSP è mancante."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Il nome host server non corrisponde al nome host del certificato"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Il parametro nome server non è supportato da a_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "La famiglia di indirizzi specificata non è supportata"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Il nome rete specificato non è più disponibile"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Tipo certificato non supportato"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Verifica del certificato in corso..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers ha ritornato nessun certificato"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "Fallita gnutls_pem_base64_encode2"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "sconosciuto"

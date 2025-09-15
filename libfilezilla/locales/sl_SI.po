@@ -1,0 +1,350 @@
+# Copyright (C) 2004.
+# This file is distributed under the same license as the FileZilla package.
+# Martin Srebotnjak <miles@filmsi.net>, 2004.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla 3.40.0\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2019-02-17 22:58+0100\n"
+"Last-Translator: Martin Srebotnjak <miles@filmsi.net>\n"
+"Language-Team: Martin Srebotnjak <miles@filmsi.net>\n"
+"Language: sl_SI\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=4; plural=(n%100==1 ? 1 : n%100==2 ? 2 : n%100==3 || n"
+"%100==4 ? 3 : 0);\n"
+"X-Poedit-SourceCharset: iso-8859-1\n"
+"X-Generator: Poedit 2.2.1\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Potrdilo v verigi je bilo podpisano z algoritmom, ki ni varen"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Izdajatelj v verigi potrdila ni avtoriteta potrdil"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Prekoračen medpomnilnik argumentov"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Napačen opisnik datotek"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Pozor! Potrdilo je bilo preklicano"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Zahtevanega naslova ni mogoče dodeliti"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Overjanje podpisa potrdila je spodletelo"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Povezava prekinjena"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Poskus povezave je časovno potekel"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Povezava zavrnjena na strani strežnika"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Povezava zavrnjena na strani omrežja"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Povezava zaprta na strani vrstnika"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "Potrdila ni mogoče dodati na začasni seznam zaupanja vrednih"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Potrdila ni mogoče kopirati"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Imena izdajatelja potrdila ni mogoče pridobiti, gnutls_x509_get_issuer_dn ni "
+"uspel"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Imena potrditvenega subjekta ni mogoče pridobiti, gnutls_x509_get_dn ni uspel"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Razvrščanje vrstniških potrdil ni uspelo"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Preverjanje vrstniškega potrdila ni uspelo"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Opisnik datoteke ne predstavlja vrat"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Napaka GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "Napaka GnuTLS %d v %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "Napaka GnuTLS %d v %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "Napaka GnuTLS %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Gostitelj ni postavljen"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Prekinil signal"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Podan neveljaven argument"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Neveljavna vrednost za ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Neveljavna vrednost za namige"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Krajevni naslov je v rabi"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Krajevna zaključna točka je zaprta"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Spodletelo dodeljevanje pomnilnika"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Sporočilo je preveliko"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr ""
+"Ime vozlišča (nodename) in ime strežnika (servname) nista podana ali nista "
+"znana"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "Omrežni gostitelj nima omrežnih naslovov v zahtevani družini naslovov"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Omrežje ni dostopno"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "S tem imenom vozlišča ni povezan noben naslov"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Ni poti do gostitelja"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Neobnovljiva napaka pri razločevanju imena"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Ni inicializirano, potreben je klic WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Dejanje je že v teku"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operacija je v teku"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Opravilo ni podprto"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Druga sistemska napaka"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Pomanjkanje pomnilnika"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Ni ustreznih dovoljenj"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Prekoračitev tabele obdelave datotek"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protokol ni podprt"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protokol na dani vrsti vrat ni podprt"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Prejeto opozorilo TLS s strežnika: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr "Prejete verige potrdila ni mogoče preveriti. Stanje preverjanja je %d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Prejeto neznano opozorilo TLS %d s strežnika"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Oddaljeno potrdilo ni vredno zaupanja."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Razločeni protokol ni znan"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Vir trenutno ni na voljo"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Strežnik ni pravilno zaprl povezave TLS"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Strežnik je poslal nerazvrščeno verigo potrdil, kar krši specifikacije TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Naslov vrat je zunaj naslovnega prostora"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Vrata so že povezana"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Vrata so zaprta"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Vrata niso povezana"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Vrsta vrat ni podprta za družino naslovov"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Sistemska meja odprtih datotek je presežena"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Omrežni podsistem sistema je spodletel"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Začasen neuspeh v razločevanju imena"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Član ai_family ni podprt"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Član ai_socktype ni podprt"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Certifikat zahteva, da strežnik v svojem odgovoru vključi stanje OCSP, "
+"vendar stanje OCSP manjka."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Ime gostitelja strežnika se ne ujema z imenom gostitelja potrdila"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Za ai_socktype parameter servname ni podprt"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Navedena družina naslovov ni podprta"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Navedeno ime omrežja ni več na voljo"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Nepodprta vrsta potrdila"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Preverjanje potrdila ..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers ni vrnil nobenega potrdila"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 je spodletel"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "neznano"

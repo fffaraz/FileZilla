@@ -1,0 +1,354 @@
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+#
+# Olatz Erdozia <olatz8@yahoo.com>, 2014.
+# Asier Iturralde Sarasola <asier.iturralde@gmail.com>, 2014, 2015, 2016.
+# Gontzal M. Pujana <juchuf@gmail.com>, 2018.
+msgid ""
+msgstr ""
+"Project-Id-Version: filezilla\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2018-11-20 23:43+0100\n"
+"Last-Translator: Gontzal M. Pujana <juchuf@gmail.com>\n"
+"Language-Team: Spanish <kde-i18n-doc@kde.org>\n"
+"Language: eu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Lokalize 2.0\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Kateko ziurtagiri bat algoritmo ez seguru bat erabiliz sinatu zen"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Ziurtagiri kateko emaile bat ez da ziurtagiri-autoritatea"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Argumentu-buffer gainezkatzea"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Fitxategi-deskribatzaile okerra"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Kontuz! Ziurtagiria ezeztatu egin da"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Ezin da eskatutako helbidea esleitu"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Ziurtagiriaren sinaduraren egiaztapenak huts egin du"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Konexioa utzita"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Konexio-saiakeraren denbora-muga gainditu da"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Zerbitzariak konexioa ukatu du"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Sareak konexioa berrezarri du"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Pareak konexioa berrezarri du"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "Ezin izan da ziurtagiria gehitu aldi baterako konfiantzazko zerrendan"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Ezin izan da ziurtagiria kopiatu"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Ezin izan da ziurtagiri-emailearen izen osatua eskuratu; "
+"gnutls_x509_get_issuer_dn-k huts egin du"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Ezin izan da ziurtagiri-gaiaren izen bereizia eskuratu; gnutls_x509_get_dn -"
+"k huts egin du"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Ezin izan dira parekoaren ziurtagiriak ordenatu"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Ezin izan da parekoaren ziurtagiria egiaztatu"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Fitxategi-deskribatzailea ez da socket bat"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS errorea %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS errorea %d %s(e)n"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS errorea %d %s(e)n: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS errorea %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Ostalaria erorita dago"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Seinaleak etenda"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Argumentu baliogabea pasa da"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "ai_flags-en balio baliogabea"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Aztarnen balio baliogabea"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Helbide lokala erabiltzen"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Amaiera-puntu lokala itxi da"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Memoria-esleipenak huts egin du"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Mezu luzeegia"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Ez da nodo-izen edo servname-rik eman, edo ezezaguna"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"Sareko ostalariak ez dauka sareko helbiderik eskatutako helbide-familian"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Ezin da sarea atzitu"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Ez dago nodo-izenarekin erlazionaturiko helbiderik"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Ostalarira biderik ez"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Errore konponezina izen-ebazpenean"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Hasieratu gabe, WSAStartup deitu behar da"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Eragiketa dagoeneko lanean"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Eragiketa lanean"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Eragiketa ez onartua"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Bestelako sistema-errorea"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Memoria nahikorik ez"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Baimena ukatuta"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Prozesu-fitxategi taularen gainezkatzea"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protokolo ez onartua"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protokoloa ez da onartzen emandako socket motan"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "TLS alerta jaso da zerbitzaritik: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"Ezin izan da egiaztatu jasotako ziurtagiri katea. Egiaztapen egoera %d da."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "%d TLS alerta ezezaguna jaso da zerbitzaritik"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Urruneko ziurtagiria ez da fidagarria"
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Ebatzitako protokoloa ezezaguna da"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Baliabidea ez dago eskuragarri aldi baterako"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Zerbitzariak ez du ondo itxi TLS konexioa"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Zerbitzariak ordenatu gabeko ziurtagiri kateak bidali ditu, TLS "
+"espezifikazioak urratuz."
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Socket-helbidea helbideen espaziotik kanpo"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Socket-a dagoeneko konektatuta"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Socket-a itzali da"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Socket-a ez dago konektatuta"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Socket-mota ez da onartzen helbide-familian"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Sistemaren irekitako fitxategien muga gainditu da"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Sistemaren sarearen azpi-sistemak huts egin du"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Aldi baterako errorea izen-ebazpenean"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "ai_family-ko kidea ez da onartzen"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "ai_socktype kidea ez da onartzen"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Ziurtagiriak zerbitzariak bere erantzunean OCSP egoera bat gehitzea eskatzen "
+"su, baina OCSP egoera falta da."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr ""
+"Zerbitzariaren ostalari-izena ez dator bat ziurtagiriko ostalari-izenarekin"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "ai_socktype-ek ez du onartzen servname parametroa"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Zehazturiko helbide-familia ez da onartzen"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Zehazturiko sare-izena ez dago eskuragarri"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Ziurtagiri mota hau ez da onartzen."
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Ziurtagiria egiaztatzen..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers-ek ez du ziurtagiririk itzuli"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2-k huts egin du"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "ezezaguna"

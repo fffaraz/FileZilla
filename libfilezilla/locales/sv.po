@@ -1,0 +1,345 @@
+# translation of filezilla.po to Swedish
+# Copyright (C) 2007 Free Software Foundation, Inc.
+# This file is distributed under the same license as the filezilla package.
+# Daniel Nylander <po@danielnylander.se>, 2007.
+# MaDcOw <adrenalinechicken@gmail.com>, 2006.
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla 3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2016-12-11 21:36+0100\n"
+"Last-Translator: Magnus Hovén <magnus.hoven@manet.se>\n"
+"Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
+"Language: sv\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.5.4\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Ett certifikat i kedjan var signerat med en osäker algoritm"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "En av utfärdarna i certifikatkedjan är ingen certifikatutfärdare"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Överflöde i argumentbufferten"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Felaktig filbeskrivare"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Se upp! Certifikatet har återkallats"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Kan inte tilldela begärd adress"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Verifieringen av certifikatets signatur misslyckades"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Anslutningen avbröts"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Tidsgränsen för anslutningsförsöket överstegs"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Anslutningen nekades av servern"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Anslutningen återställdes av nätverket"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Anslutningen återställdes av andra parten"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr ""
+"Kunde inte lägga till certifikatet till listan av tillfälligt betrodda "
+"certifikat"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Kunde inte kopiera certifikat"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Fick inget unikt namn för certifikatsutfärdaren, gnutls_x509_get_issuer_dn "
+"misslyckades"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Fick inget unikt namn för certifikatsobjektet, gnutls_x509_get_dn "
+"misslyckades"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Kunde inte sortera andra partens certifikat"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Misslyckades med att verifiera andra partens certifikat"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Filbeskrivaren är ingen sockel"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS-fel %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS-fel %d i %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS-fel %d i %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS-fel %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Värden ligger nere"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Avbruten av signal"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Ogiltigt argument gavs"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Felaktigt värde för ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Ogiltigt värde för tips"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Lokal adress används"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Lokal ändpunkt har stängts"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Minnesallokeringsfel"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Meddelandet är för stort"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Varken nodnamn eller servname tillhandahållet, eller okända"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "Nätverksvärden har inga nätverksadresser inom begärd adressfamilj"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Nätverket är inte tillgängligt"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Ingen adress är associerad med nodnamnet"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Ingen väg till värden"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Oåterställbart fel vid namnuppslagningen"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Inte initierad, måste anropa WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Åtgärden pågår redan"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Åtgärden pågår"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Åtgärden stöds inte"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Annat systemfel"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Slut på minne"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Åtkomst nekad"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Överflöde i processfiltabellen"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protokollet stöds inte"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protokollet stöds inte på angiven sockeltyp"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Mottog TLS-varning från severn: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"Den mottagna certikfatskedjan kunde inte verifieras. Verifieringsstatus är "
+"%d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Mottog okänd TLS-varning %d från servern"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Fjärrcertifikatet inte pålitligt."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Uppslaget protokoll är okänt"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Resursen är tillfälligt otillgänglig"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Servern stängde inte ner TLS-anslutningen korrekt"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Servern skickade en osorterad certifikatkedja vilket strider mot "
+"specifikationerna för TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Sockeladressen är utanför adressrymden"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Sockeln är redan ansluten"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Sockeln har stängts ner"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Sockeln är inte ansluten"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Sockeltypen stöds inte för adressfamiljen"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Systemets gräns för antal öppna filer har överskridits"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Systemets underliggande nätverkssystem har fallerat"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Tillfälligt fel vid namnuppslagningen"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "ai_family-medlemmen stöds inte"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "ai_socktype-medlemmen stöds inte"
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Serverns värdnamn stämmer inte överens med värdnamnet i certifikatet"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Parametern servname stöds inte för ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Den angivna familjen av adresser stöds inte"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Angivet nätverksnamn är inte längre tillgängligt"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Certifikatstypen stöds inte"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Validerar certifikatet..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers returnerade inga certifikat"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 misslyckades"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "okänd"

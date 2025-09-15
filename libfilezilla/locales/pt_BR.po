@@ -1,0 +1,303 @@
+# Copyright (C) 2016 FileZilla's COPYRIGHT HOLDER
+# This file is distributed under the same license as the FileZilla package.
+# Felipe Santello <fsantello@gmail.com>, ?.
+# Nelson Luiz Dumbra <nelson@dumbra.com.br>, 2016.
+# Rodolfo Ribeiro Gomes <rodolforg@gmail.com>, 2016.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla 3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2016-06-19 05:33-0300\n"
+"Last-Translator: Rodolfo Ribeiro Gomes <rodolforg@gmail.com>\n"
+"Language-Team: Brazilian Portuguese <ldpbr-translation@lists.sourceforge."
+"net>\n"
+"Language: pt\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Gtranslator 2.91.7\n"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Argumento de buffer overflow"
+
+# Mesmo que o termo "descritor" soa meio estranho eu verifiquei no dicionário Michaelis (www.michaelis.com.br) e a palavra existe. Então decidi manter. :)
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Descritor de arquivo inválido"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Atenção! O certificado foi revogado"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Não é possível designar o endereço requisitado"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Conexão cancelada"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Tempo de tentativa de conexão excedido"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Conexão recusada pelo servidor"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Conexão redefinida pela rede"
+
+# Não tenho certeza aqui como traduzir "peer". No site www.linguee.com encontrei como "mesmo nível" mas não fiquei seguro para usar este termo...
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Conexão redefinida"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Não foi possível obter o nome distinto do emissor do certificado, o módulo "
+"'gnutls_x509_get_issuer_dn' falhou"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Não foi possível obter o nome distinto do sujeito do certificado, o módulo "
+"'gnutls_x509_get_dn' falhou"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Falha na verificação do certificado de ponto"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Descritor de arquivo não é um socket"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS erro %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS erro %d em %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS erro %d em %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS erro %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "O host está desligado"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Interrompido por sinal"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Argumento inválido passado"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Valor inválido para ai_flags"
+
+# Devemos deixar "hints" como "dicas" ou como "hints" mesmo?
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Valor inválido para dicas"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Endereço local em uso"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Endpoint local foi fechado"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Falha na alocação de memória"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Mensagem muito comprida"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Nem nodename nem servname fornecidos, ou desconhecidos"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "Host da rede não possui nenhum endereço de rede"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Rede inacessível"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Nenhum endereço associado com nodename"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Sem rota para host"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Falha não recuperável em resolução de nome"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Não inicializado, precisa invocar WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Operação já em progresso"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operação em progresso"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Operação não compatível"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Outro erro de sistema"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Sem memória"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Permissão negada"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Overflow de tabela de processo de arquivo"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protocolo não compatível"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protocolo não compatível com tipo de socket especificado"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Recebido alerta TLS do servidor: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Recebido alerta TLS desconhecido %d a partir do servidor"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "O certificado remoto não é de confiança."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Protocolo resolvido desconhecido"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Recurso temporariamente desconhecido"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "O servidor não fechou devidamente a conexão TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Endereço de socket fora do espaço do endereço"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Socket já conectado"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Socket foi desligado"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Socket não conectado"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Tipo de socket não compatível com família de endereços"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Limite de arquivos abertos no sistema excedido"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Subsistema de rede do sistema falhou"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Falha temporária em resolução de nome"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "O membro ai_family não é compatível"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "O membro ai_socktype não é compatível"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "O parâmetro servname não é compatível com ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "A famílida de endereços especificada não é compatível"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "O nome da rede especificada não está mais disponível"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Tipo de certificado não suportado"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Verificando certificado..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr ""
+"o módulo gnutls_certificate_get_peers não retornou qualquer certificado"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "desconhecido"

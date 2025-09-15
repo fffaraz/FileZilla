@@ -1,0 +1,288 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: Mon May 16 2016 13:46:03 GMT+0900 (대한민국 표준시)\n"
+"Last-Translator: DylanYi <0kymmx@gmail.com>\n"
+"Language-Team: Korean (Republic of Korea)\n"
+"Language: ko-KR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "인증서 체인의 발행자가 인증서 공인 기관이 아님"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "인자 버퍼 오버플로"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "파일 기술자 이상"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "주의! 인증서 재사용"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "요청 주소를 지정할 수 없음"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "인증서 서명 검증 실패"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "연결 중단됨"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "연결 시간 초과"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "서버에서의 연결 거부"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "네트웍에서의 연결 리셋"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "피어에서의 연결 리셋"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "인증서를 복사하지 못함"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"인증서 발급자의 식별 이름을 가져올 수 없어서 gnutls_x509_get_issuer_dn 실패"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr "인증서 주체의 식별 이름을 가져올 수 없어서 gnutls_x509_get_dn 실패"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "피어 인증서를 정렬하지 못함"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "피어 인증서 검증 실패"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "파일 기술자가 소켓이 아님"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS 오류 %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS 오류 %d in %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS 오류 %d in %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS 오류 %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "호스트 다운"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "시그널에 의해 중단됨"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "전달받은 인자 이상"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "힌트 값 이상"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "사용 중인 로컬 주소"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "메모리 할당 실패"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "메시지가 너무 큼"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "노드명이나 서버명이 지정되지 않았거나 알 수 없음"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "네트웍 호스트가 요청 주소군에서는 네트웍 주소가 없음"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "네트웍에 도달할 수 없음"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "노드명에 연동된 주소 없음"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "호스트로의 경로 없음"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "이름 해석 실패"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "이미 작업이 진행 중임"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "작업 진행 중"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "지원되지 않는 작업임"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "기타 시스템 오류"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "메모리 부족"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "권한 거부"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "프로세스 파일 테이블 오버플로"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "지원되지 않는 프로토콜임"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "지정한 소켓 유형에 지원되지 않는 프로토콜"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "서버에서 TLS 경보를 수신함: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "정말 서버에서 파일 %d개를 삭제하시겠습니까?"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "리모트 인증서 신뢰 불가."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "해석된 프로토콜을 알 수 없음"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "일시적으로 해당 자원 사용 불가"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "서버가 TLS 연결을 정상 해제하지 않았습니다"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "소켓 주소가 주소 공간을 벗어남"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "소켓이 이미 연결됨"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "소켓이 닫혔습니다"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "소켓이 연결되지 않았음"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "소켓 유형이 주소군에서 지원되지 않는 것임"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "시스템의 열린 파일 수 제한이 초과됨"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "시스템의 네트웍 서브시스템에 장애 발생"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "이름 해석 중 일시 장애"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "ai_family 요소는 지원되지 않습니다"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "ai_socktype 멤버는 지원되지 않음"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "지정된 주소군은 지원되지 않음"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "지정된 네트워크 이름이 지금은 사용 가능하지 않습니다"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "지원되지 않는 인증서 유형"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "인증서 검증..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers에서 인증서를 반환하지 않았습니다"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "알 수 없음"

@@ -1,0 +1,154 @@
+# translation of lt_LT_updated.po to Lithuanian
+#
+# Darius Žitkevičius <skystis@splius.lt>, 2006.
+# Tomas Jakstas <bizabrazija@gmail.com>, 2008.
+# Darius Žitkevičius <skystis@gmail.lt>, 2008.
+# Algimantas Margevičius <algimantas@margevicius.lt>, 2012-2014.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: lt_LT_updated\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2016-09-14 13:55+0300\n"
+"Last-Translator: Algimantas Margevičius <algimantas@margevicius.lt>\n"
+"Language-Team: Lietuvių <>\n"
+"Language: lt_LT\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && (n"
+"%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 1.8.9\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Sertifikatas gijoje buvo pasirašytas nesaugiu algoritmu"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Argumento buferio perpildymas"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Blogas failo deskriptorius"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Saugokitės! Liudijimas buvo panaikintas"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Neįmanoma priskirti prašomo adreso"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Nepavyko gauti liudijimo išdavėjo vardo, gnutls_x509_get_issuer_dn nepavyko"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Nepavyko gauti liudijimo objekto unikalaus vardo, gnutls_x509_get_dn nepavyko"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Nepavyko patikrinti siuntėjo liudijimo"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Failo deskriptorius ne socket'as"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS klaida %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS klaida %d viduje %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS klaida %d viduje %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS klaida %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Serveris atsijungęs"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Neteisinga ai_flags reikšmė"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Vietinis pabaigos taškas buvo uždarytas"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Tinklas nepasiekiamas"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Jokio kelio iki serverio"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Neatstatoma klaida vardo atpažinime"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Operacija jau yra progrese"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Kita sistemos klaida"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Nepakanka atminties"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Nutolusiu sertifikatu nėra pasitikima."
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Serveris tinkamai neužbaigė TLS susijungimo"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Pasiektas atidarytų failų sistemos limitas"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Laikinas sutrikimas vardo atpažinime"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Nepalaikomas tapatybės liudijimo tipas"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Tikrinamas sertifikatas..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers negrąžino liudijimų"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "nežinomas"

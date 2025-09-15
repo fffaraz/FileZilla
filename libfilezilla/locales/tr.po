@@ -1,0 +1,352 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+#
+# Translators:
+# Roman Neumüller <email@katpatuka.org>, 2007
+# Kaya Zeren <kayazeren@gmail.com>, 2014-2018
+# Roman Neumüller <email@katpatuka.org>, 2007
+# Volkan Gezer <volkangezer@gmail.com>, 2013
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2018-10-27 05:23+0000\n"
+"Last-Translator: Kaya Zeren <kayazeren@gmail.com>\n"
+"Language-Team: Turkish (Turkey) (http://www.transifex.com/zeron/filezilla/"
+"language/tr_TR/)\n"
+"Language: tr_TR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr ""
+"Zincirdeki bir sertifika güvenli olmayan bir algoritma kullanılarak "
+"imzalanmış"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Sertifika zincirindeki yayıncılardan biri sertifika yetkilisi değil"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Seçenek tampon bellek taşması"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Dosya belirteci bozuk"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "Dikkat! Sertifika geçersiz kılınmış"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "İstenen adres atanamadı"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "Sertifika imzası doğrulanamadı"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Bağlantıdan vazgeçildi"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Bağlanma denemesi zaman aşımına uğradı"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Bağlantı sunucu tarafından reddedildi"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Bağlantı ağ tarafından sıfırlandı"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Bağlantı diğer uç tarafndan sıfırlandı"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "Sertifika geçici güvenilirlik listesine eklenemedi"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "Sertifika kopyalanamadı"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Sertifika yayıncısının adı alınamadı, gnutls_x509_get_issuer_dn başarısız"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr "Sertifika konusunun adı alınamadı, gnutls_x509_get_dn başarısız"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "Eş sertifikaları sıralanamadı"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "Denklik sertifikası doğrulanamadı"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Dosya belirteci bir soket değil"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS sorunu %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS sorunu %d, %s içinde"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS sorunu %d, %s içinde: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS sorunu %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Sunucu çalışmıyor"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "İşaret tarafından kesildi"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Aktarılan seçenek geçersiz"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Alınan ai_flags değeri geçersiz"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "İpucu değeri geçersiz"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Kullanılan yerel adres"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Yerel bitim noktası kapatıldı"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Bellek yerleşimi sorunu"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "İleti çok uzun"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Nodename ya da servname belirtilmedi ya da bilinmiyor"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "Ağ sunucusunda istenen adres ailesine ait bir ağ adresi bulunamadı"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Ağa ulaşılamıyor"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Nodename için bir adres belirtilmemiş"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Sunucuya giden yol bulunamadı"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Ad çözümlenemedi"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Başlatılamadı, WSAStartup çağrılmalı"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "İşlem zaten yürütülüyor"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "İşlem yürütülüyor"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "İşlem desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Diğer sistem sorunu"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Bellek bitti"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Erişim reddedildi"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "İşlem dosyası tablosu doldu"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "İletişim kuralı desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "İletişim kuralı belirtilen soket türü için desteklenmiyor"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Sunucudan TLS uyarısı alındı: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr "Alınan sertifika zinciri doğrulanamadı. Doğrulama durumu: %d."
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Sunucudan bilinmeyen %d TLS uyarısı alındı"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "Uzaktaki sertifikaya güvenilmiyor."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Çözümlenen protokol bilinmiyor"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Kaynak geçici olarak kullanım dışında"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "Sunucu TLS bağlantısını düzgün bir şekilde kapatmadı"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Sunucu, TLS kuralları ile çelişen sıralanamamış bir sertifika zinciri "
+"gönderdi"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Soket adresi adres aralığının dışında"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Soket zaten bağlı"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Soket kapatılmış"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Soket bağlı değil"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Soket türü bu adres ailesinde desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Sistemde açılabilecek dosya sayısı sınırı aşıldı"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Sistemin ağ altsistemi bozuldu"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Ad geçici olarak çözümlenemedi"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Belirtilen ai_family üyesi desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Belirtilen ai_socktype üyesi desteklenmiyor"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Sertifika için yanıt içinde bir OCSP durumunun bulunması gerekiyor ancak "
+"OCSP durumu eksik."
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Sunucu adı sertifikadaki sunucu adı ile eşleşmiyor"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Servname parametresi ai_socktype için desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Belirtilen adres ailesi desteklenmiyor"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "Belirtilen ağ adı artık kullanılmıyor"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "Sertifika türü desteklenmiyor"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Sertifika doğrulanıyor..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers hiç bir sertifika bulamadı"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 işlenemedi"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "bilinmeyen"

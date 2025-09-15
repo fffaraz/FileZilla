@@ -1,0 +1,865 @@
+# This file is distributed under the same license as the FileZilla3 package.
+# Milen A. Radev <milen@radev.net>, 2005
+# Асен Генов, 07.2008
+# Стоян Димитров, 2008 – 2025
+#
+# Remove source code references (before deployment)
+#   • (^#:.+\n)+ -> ''
+#
+# Cleanup for spellcheck
+#   • ^[a-zA-Z0-9'\.\\ \(\)\?%:\/,\<\>@\-_!"\+;=\s&\[\*\|#]+\n -> '' - remove headers, source strings, translator comments etc.
+#   • ^msgstr(?:\[\d\])?\s"(.+?)"$ -> $1 - remove poedit translation metadata
+#   • ["\&]|\\n -> '' - remove mnemonics, straight double quotes and literal \n
+#   • sort and uique
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2025-03-26 09:54+0100\n"
+"PO-Revision-Date: 2025-01-20 09:00+0200\n"
+"Last-Translator: Стоян <stoyanster от гмаил>\n"
+"Language-Team: Bulgarian <dict@ludost.net>\n"
+"Language: bg\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../lib/tls_layer_impl.cpp:1951
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr ""
+"Сертификат във веригата от сертификати е подписан с незащитен алгоритъм"
+
+#: ../lib/tls_layer_impl.cpp:1955
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Един от издателите във веригата от сертификати не е сертифициращ орган"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Препълване на буфера за аргументи"
+
+#: ../lib/tls_layer_impl.cpp:216
+#, c-format
+msgid "Attempting to use PIN. Token: %s, URL: %s."
+msgstr ""
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Грешен файлов дескриптор"
+
+#: ../lib/tls_layer_impl.cpp:1941
+msgid "Beware! Certificate has been revoked"
+msgstr "Пазете се! Сертификатът е анулиран"
+
+#: ../lib/http/client.cpp:778
+msgid ""
+"Broken server, it claims to have processed a request before it got fully set"
+msgstr ""
+"Недобре работещ сървър, твърди, че е обработил заявка, преди да я е получил "
+"напълно"
+
+#: ../lib/socket_errors.cpp:108 ../lib/socket_errors.cpp:117
+msgid "Cannot assign requested address"
+msgstr "Не може да се възложи искания адрес"
+
+#: ../lib/http/client.cpp:986
+msgid "Cannot use writers without buffer pool"
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:387
+msgid "Certificate file too big."
+msgstr "Файлът със сертификата е твърде голям."
+
+#: ../lib/tls_layer_impl.cpp:2014
+msgid "Certificate of connection does not match expected certificate."
+msgstr "Сертификаът на връзката не съответства на очаквания сертификат."
+
+#: ../lib/tls_layer_impl.cpp:2587
+msgid "Certificate purposes do not match with its intended type."
+msgstr "Целите на сертификата не съответстват на предназначението му."
+
+#: ../lib/tls_layer_impl.cpp:2955 ../lib/tls_layer_impl.cpp:2961
+msgid "Certificate request has wrong key usage types set."
+msgstr ""
+"В заявката за сертификат са подадени грешни цели за използване на ключовете."
+
+#: ../lib/tls_layer_impl.cpp:2941
+msgid "Certificate request purposes do not match with its type."
+msgstr "Целите в заявката за сертификат не съответстват на вида му."
+
+#: ../lib/tls_layer_impl.cpp:1947
+msgid "Certificate signature verification failed"
+msgstr "Грешка при проверка на подписа на сертификата"
+
+#: ../lib/http/client.cpp:1008
+msgid "Chunk data improperly terminated"
+msgstr "Неправилно завършени данни в пакета"
+
+#: ../lib/tls_layer_impl.cpp:1442
+msgid "Client did not properly shut down TLS connection"
+msgstr "Клиентът неправилно прекрати връзка на TLS"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Връзката е прекратена"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Времето за изчакване при свързване изтече"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Връзката е отказана от сървъра"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Връзката е прекъсната от мрежата"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Връзката е прекъсната от отсрещната страна"
+
+#: ../lib/tls_layer_impl.cpp:2151
+msgid "Could not add certificate to temporary trust list"
+msgstr ""
+"Добавяне на сертификат във временния списък с доверени сертификати е "
+"невъзможно"
+
+#: ../lib/http/client.cpp:343 ../lib/http/client.cpp:357
+#, c-format
+msgid "Could not connect to '%s'"
+msgstr "Невъзможно свързване с/със „%s“"
+
+#: ../lib/jws.cpp:212
+#, c-format
+msgid ""
+"Could not convert private key to JWK, exporting ECC parameters failed: %s"
+msgstr ""
+
+#: ../lib/jws.cpp:176
+#, c-format
+msgid ""
+"Could not convert private key to JWK, exporting RSA parameters failed: %s"
+msgstr ""
+
+#: ../lib/jws.cpp:152
+#, c-format
+msgid "Could not convert private key to JWK, import failed: %s"
+msgstr ""
+
+#: ../lib/jws.cpp:159
+msgid ""
+"Could not convert private key to JWK, only RSA and ECDSA private keys are "
+"supported."
+msgstr ""
+
+#: ../lib/jws.cpp:219
+msgid ""
+"Could not convert private key to JWK, unsupported elliptic curve, only "
+"SECP256R1 is supported."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:2143
+msgid "Could not copy certificate"
+msgstr "Копиране на сертификата е невъзможно"
+
+#: ../lib/tls_layer_impl.cpp:1588
+msgid "Could not extract validity period of certificate"
+msgstr "Периодът на валидност на сертификата не може да бъде извлечен"
+
+#: ../lib/tls_layer_impl.cpp:2583
+#, fuzzy
+msgid "Could not get certificate purposes."
+msgstr "Файлът със сертификата не може да бъде отворен."
+
+#: ../lib/tls_layer_impl.cpp:2937
+#, fuzzy
+msgid "Could not get certificate request purposes."
+msgstr "Файлът със сертификата не може да бъде отворен."
+
+#: ../lib/tls_layer_impl.cpp:1655
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Не може да бъде взето името на издателя на сертификата, "
+"gnutls_x509_get_issuer_dn се провали"
+
+#: ../lib/tls_layer_impl.cpp:1636
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Не може да бъде взето името на обекта на сертификата, gnutls_x509_get_dn се "
+"провали"
+
+#: ../lib/tls_layer_impl.cpp:401
+#, fuzzy
+msgid "Could not key file."
+msgstr "Файлът с ключове не може да бъде отворен."
+
+#: ../lib/aio/reader.cpp:401
+#, fuzzy, c-format
+msgid "Could not open '%s' for reading: %s"
+msgstr "„%s“ не може да бъде синхронизиран с диска."
+
+#: ../lib/aio/writer.cpp:336
+#, fuzzy, c-format
+msgid "Could not open '%s' for writing: %s"
+msgstr "„%s“ не може да бъде синхронизиран с диска."
+
+#: ../lib/tls_layer_impl.cpp:376
+msgid "Could not open certificate file."
+msgstr "Файлът със сертификата не може да бъде отворен."
+
+#: ../lib/tls_layer_impl.cpp:377
+msgid "Could not open key file."
+msgstr "Файлът с ключове не може да бъде отворен."
+
+#: ../lib/tls_layer_impl.cpp:400
+msgid "Could not read certificate file."
+msgstr "Файлът със сертификата не може да бъде прочетен."
+
+#: ../lib/http/client.cpp:647 ../lib/http/client.cpp:1166
+#, c-format
+msgid "Could not read from socket: %s"
+msgstr "Грешка при четене от сокет: %s"
+
+#: ../lib/aio/writer.cpp:275 ../lib/aio/writer.cpp:344
+#, c-format
+msgid "Could not seek to offset %d within '%s'."
+msgstr "Не може да бъде достигнат позиция %d в „%s“."
+
+#: ../lib/tls_layer_impl.cpp:1922
+msgid "Could not sort peer certificates"
+msgstr "Сортирането на партньорските сертификати е невъзможно"
+
+#: ../lib/aio/writer.cpp:218
+#, c-format
+msgid "Could not sync '%s' to disk."
+msgstr "„%s“ не може да бъде синхронизиран с диска."
+
+#: ../lib/aio/writer.cpp:348
+#, c-format
+msgid "Could not truncate '%s' to offset %d."
+msgstr "„%s“ не може да бъде скъсен до %d."
+
+#: ../lib/http/client.cpp:375 ../lib/http/client.cpp:490
+#, c-format
+msgid "Could not write to socket: %s"
+msgstr "Грешка при писане в сокет: %s"
+
+#: ../lib/http/client.cpp:491
+msgid "Disconnected from server"
+msgstr "Връзката със сървъра е прекъсната"
+
+#: ../lib/http/client.cpp:468
+#, c-format
+msgid "Excess data read from '%s'"
+msgstr "Данни в повече са прочетени от „%s“"
+
+#: ../lib/tls_layer_impl.cpp:2100
+msgid "Failed to extract certificate trust path"
+msgstr "Пътят на доверие на сертификата не е извлечен"
+
+#: ../lib/tls_layer_impl.cpp:2093 ../lib/tls_layer_impl.cpp:2165
+msgid "Failed to verify peer certificate"
+msgstr "Неуспешна проверка на партньорски сертификат"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Файловият дескриптор не е сокет"
+
+#: ../lib/aio/reader.cpp:383
+#, fuzzy
+msgid "File does not exist"
+msgstr "Файловият дескриптор не е сокет"
+
+#: ../lib/windows/security_descriptor_builder.cpp:288
+#, c-format
+msgid ""
+"GetRoamingProfilePath: GetComputerNameW failed. User: '%s', Domain: '%s'. "
+"Last Error: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:360
+#, c-format
+msgid ""
+"GetRoamingProfilePath: ImpersonateLoggedOnUser failed. User: '%s', Domain: "
+"'%s'. Last Error: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:365
+#, c-format
+msgid ""
+"GetRoamingProfilePath: NetUserGetInfo failed. User: '%s', Domain: '%s'. "
+"Status: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:369
+#, c-format
+msgid ""
+"GetRoamingProfilePath: RevertToSelf failed, aborting. User: '%s', Domain: "
+"'%s'. Last Error: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:278
+msgid "GetRoamingProfilePath: couldn't import netapi32.dll functions."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:398
+#, c-format
+msgid "GetUserInfoFromToken: ConvertSidToStringSidA failed. Last Error: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:407
+#, c-format
+msgid "GetUserInfoFromToken: GetUserAndDomainFromSid failed. Last Error: %d."
+msgstr ""
+
+#: ../lib/windows/security_descriptor_builder.cpp:391
+#, c-format
+msgid "GetUserInfoFromToken: GetUserFromToken failed. Last Error: %d."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:778
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Грешка в GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:781
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS грешка %d в %s"
+
+#: ../lib/tls_layer_impl.cpp:773
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS грешка %d в %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:770
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS грешка %d: %s"
+
+#: ../lib/tls_layer_impl.cpp:3147
+msgid "GnuTLS has been compiled without PKCS#11 support"
+msgstr ""
+
+#: ../lib/http/client.cpp:619 ../lib/http/client.cpp:676
+msgid "HTTP connection closed prematurely"
+msgstr "Връзката по HTTP е затворена преждевременно"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Хостът е изключен"
+
+#: ../lib/http/client.cpp:234
+msgid "Hostname not in UTF-8"
+msgstr "Името на хоста не е UTF-8"
+
+#: ../lib/http/client.cpp:706
+msgid "Internal error, bad state"
+msgstr "Вътрешна грешка, лошо състояние"
+
+#: ../lib/tls_layer_impl.cpp:563 ../lib/tls_layer_impl.cpp:1856
+#, fuzzy
+msgid "Internal error: invalid certs"
+msgstr "Вътрешна грешка, лошо състояние"
+
+#: ../lib/tls_layer_impl.cpp:504
+#, fuzzy
+msgid "Internal error: invalid key"
+msgstr "Вътрешна грешка, лошо състояние"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Прекъснато със сигнал"
+
+#: ../lib/http/client.cpp:904
+msgid "Invalid Content-Length"
+msgstr "Невалидна заглавка „Content-Length“"
+
+#: ../lib/http/client.cpp:756
+msgid "Invalid HTTP Response"
+msgstr "Недействителен отговор на HTTP"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Подаден е невалиден аргумент"
+
+#: ../lib/socket_errors.cpp:105
+msgid "Invalid characters in hostname"
+msgstr "Невалидни знаци в името на хоста"
+
+#: ../lib/http/client.cpp:1058 ../lib/http/client.cpp:1073
+#: ../lib/http/client.cpp:1078
+msgid "Invalid chunk size"
+msgstr "Недействителна дължина на пакет"
+
+#: ../lib/tls_layer_impl.cpp:556 ../lib/tls_layer_impl.cpp:1846
+#, fuzzy
+msgid "Invalid data blob for certificates"
+msgstr "Сортирането на партньорските сертификати е невъзможно"
+
+#: ../lib/tls_layer_impl.cpp:497
+#, fuzzy
+msgid "Invalid data blob for key"
+msgstr "Невалидни данни за подсказки"
+
+#: ../lib/tls_layer_impl.cpp:542 ../lib/tls_layer_impl.cpp:1829
+#, fuzzy
+msgid "Invalid file path for certificates"
+msgstr "Невалидна стойност за ai_flags"
+
+#: ../lib/tls_layer_impl.cpp:483
+#, fuzzy
+msgid "Invalid file path for key"
+msgstr "Невалидни данни за подсказки"
+
+#: ../lib/aio/reader.cpp:385
+#, fuzzy
+msgid "Invalid filename"
+msgstr "Недействителен ред"
+
+#: ../lib/aio/writer.cpp:313
+#, fuzzy
+msgid "Invalid filename."
+msgstr "Недействителен ред"
+
+#: ../lib/http/client.cpp:798
+msgid "Invalid line"
+msgstr "Недействителен ред"
+
+#: ../lib/tls_layer_impl.cpp:447
+msgid "Invalid pkcs11 URL in key"
+msgstr ""
+
+#: ../lib/http/client.cpp:765
+msgid "Invalid response code"
+msgstr "Недействителен код на отговор"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Невалидна стойност за ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Невалидни данни за подсказки"
+
+#: ../lib/tls_layer_impl.cpp:388
+msgid "Key file too big."
+msgstr "Файлът с ключове е твърде голям."
+
+#: ../lib/http/client.cpp:1033
+msgid "Line length exceeded"
+msgstr "Надвишена дължина на ред"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Местният адрес е зает"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Местната крайна точка е била затворена"
+
+#: ../lib/http/client.cpp:1008 ../lib/http/client.cpp:1020
+#: ../lib/http/client.cpp:1026 ../lib/http/client.cpp:1033
+#: ../lib/http/client.cpp:1058 ../lib/http/client.cpp:1073
+#: ../lib/http/client.cpp:1078
+#, c-format
+msgid "Malformed chunk data: %s"
+msgstr "Деформирани пакетни данни: %s"
+
+#: ../lib/http/client.cpp:724 ../lib/http/client.cpp:730
+#: ../lib/http/client.cpp:798 ../lib/http/client.cpp:858
+#: ../lib/http/client.cpp:904
+#, c-format
+msgid "Malformed response header: %s"
+msgstr "Деформирана заглавка на отговора: %s"
+
+#: ../lib/tls_layer_impl.cpp:1998 ../lib/tls_layer_impl.cpp:2213
+msgid "Man-in-the-Middle attack detected, aborting connection."
+msgstr "Установена е атака от вида man-in-the-middle, прекъсване на връзката."
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Невъзможност за заделяне на памет"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Съобщението е твърде голямо"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Името на възела или сървъра не е указано или е неизвестно"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"Хостът няма адрес в мрежовото пространство в необходимото адресно семейство"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Мрежата недостъпна"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Няма асоцииран адрес към този възел"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Няма път към хоста"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Необратим срив в преобразуването на имена"
+
+#: ../lib/aio/writer.cpp:311
+msgid "Not enough space on device."
+msgstr "Няма достатъчно място на носителя."
+
+#: ../lib/socket_errors.cpp:113
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Неинициализирано, WSAStartup трябва да бъде извикан"
+
+#: ../lib/http/client.cpp:730 ../lib/http/client.cpp:1026
+msgid "Null character in line"
+msgstr "Знак null на реда"
+
+#: ../lib/tls_layer_impl.cpp:210
+#, c-format
+msgid ""
+"Only few PIN tries remaining before the token is locked. Token: %s, URL: %s."
+msgstr ""
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Действието вече е в ход"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Действието в ход"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Неподдържано действие"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Друга системна грешка"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Недостатъчна памет"
+
+#: ../lib/tls_layer_impl.cpp:205
+#, c-format
+msgid "PIN length (%d) exceeds the maximum (%d). Token: %s, URL: %s"
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:512 ../lib/tls_layer_impl.cpp:1820
+#, fuzzy
+msgid "PKCS11 URLs not supported yet for certificates"
+msgstr "Сортирането на партньорските сертификати е невъзможно"
+
+#: ../lib/http/client.cpp:238
+msgid "Path not in UTF-8"
+msgstr "Пътят не е UTF-8"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Недостатъчни права"
+
+#: ../lib/aio/reader.cpp:381 ../lib/aio/writer.cpp:307
+#, fuzzy
+msgid "Permission denied."
+msgstr "Недостатъчни права"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Препълване на таблицата на файла на процеса"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Неподдържан протокол"
+
+#: ../lib/socket_errors.cpp:115
+msgid "Protocol not supported on given socket type"
+msgstr "Протокол, неподдържан от този вид сокет"
+
+#: ../lib/tls_layer_impl.cpp:822
+#, c-format
+msgid "Received TLS alert from the client: %s (%d)"
+msgstr "Получено е предупреждение за TLS от клиента: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:822
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Получено предупреждение за TLS от сървър: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1968
+msgid "Received certificate chain could not be verified."
+msgstr "Получената верига от сертификати не може да бъде проверена."
+
+#: ../lib/tls_layer_impl.cpp:1971
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"Получената верига от сертификати не може да бъде проверена. Състоянието на "
+"проверката е %d."
+
+#: ../lib/tls_layer_impl.cpp:827
+#, c-format
+msgid "Received unknown TLS alert %d from the client"
+msgstr "Получено е неизвестно предупреждение %d за TLS от клиента"
+
+#: ../lib/tls_layer_impl.cpp:827
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Получен е неизвестен сигнал на TLS %d от сървъра"
+
+#: ../lib/tls_layer_impl.cpp:1561 ../lib/tls_layer_impl.cpp:2128
+msgid "Remote certificate not trusted."
+msgstr "Отдалечения сертификат не е доверен."
+
+#: ../lib/http/client.cpp:230
+msgid "Request has no host"
+msgstr "Липсва хост в заявката"
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Полученият протокол е неизвестен"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Временно недостъпен ресурс"
+
+#: ../lib/http/client.cpp:632
+msgid "Response too large"
+msgstr "Съобщението е твърде дълго"
+
+#: ../lib/tls_layer_impl.cpp:1442
+msgid "Server did not properly shut down TLS connection"
+msgstr "Сървърът неправилно прекрати връзка на TLS"
+
+#: ../lib/http/client.cpp:291
+#, c-format
+msgid "Server instructed client to wait %d seconds before sending next request"
+msgstr ""
+"Сървърът поиска изчакване от %d секунди, преди да получи следваща заявка"
+
+#: ../lib/http/client.cpp:724
+msgid "Server not sending proper line endings"
+msgstr "Сървърът не изпраща правилни знаци за край на ред"
+
+#: ../lib/http/digest.cpp:251
+#, c-format
+msgid "Server requested unsupported digest authentication algorithm: %s"
+msgstr "Сървърът поиска неподдържан алгоритъм за удостоверяване: %s"
+
+#: ../lib/http/digest.cpp:259
+#, c-format
+msgid "Server requested unsupported quality-of-protection: %s"
+msgstr "Сървърът поиска неподдържано качество на защита: %s"
+
+#: ../lib/tls_layer_impl.cpp:1925
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Сървърът изпрати неподредена верига от сертификати в разрез със "
+"спецификацията на TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Адресът на сокета е извън адресното пространство"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Сокет вече с активна връзка"
+
+#: ../lib/http/client.cpp:1204
+#, c-format
+msgid "Socket error: %s"
+msgstr "Грешка в сокета: %s"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Сокетът е бил затворен"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Сокет без осъществена връзка"
+
+#: ../lib/socket_errors.cpp:116
+msgid "Socket type not supported for address family"
+msgstr "Адресното семейство не поддържа този вид сокети"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "Достигнат предел на брой отворени файлове"
+
+#: ../lib/socket_errors.cpp:114
+msgid "System's network subsystem has failed"
+msgstr "Мрежовата подсистема пропадна"
+
+#: ../lib/aio/writer.cpp:309
+msgid "Target directory does not exist, or name refers to a directory."
+msgstr ""
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Временен срив в преобразуването на имена"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Членът ai_family не се поддържа"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Членът ai_socktype не се поддържа"
+
+#: ../lib/tls_layer_impl.cpp:1963
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Сертификатът изисква от сървъра да включва състоянието на OCSP в отговора "
+"си, но такова липсва."
+
+#: ../lib/tls_layer_impl.cpp:199
+#, c-format
+msgid "The last tried PIN was wrong. Token: %s, URL: %s."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:1959
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "Името на хоста на сървъра не отговаря на името на хоста от сертификата"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "Параметърът servname не се поддържа от ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "Посоченото адресно семейство не се поддържа"
+
+#: ../lib/socket_errors.cpp:118
+msgid "The specified network name is no longer available"
+msgstr "Указаното име на мрежа е вече недостъпно"
+
+#: ../lib/tls_layer_impl.cpp:213
+#, c-format
+msgid ""
+"This is the last PIN try remaining before the token is locked. Token: %s, "
+"URL: %s."
+msgstr ""
+
+#: ../lib/http/client.cpp:738 ../lib/http/client.cpp:815
+msgid "Too long header line"
+msgstr "Твърде дълъг ред в заглавката"
+
+#: ../lib/tls_layer_impl.cpp:224
+#, c-format
+msgid "Too many attempts (%d) while trying the PIN. Token: %s, URL: %s."
+msgstr ""
+
+#: ../lib/http/client.cpp:821
+msgid "Too many header lines"
+msgstr "Твърде много редове в заглавката"
+
+#: ../lib/http/client.cpp:460
+#, c-format
+msgid "Unexpected end-of-file on '%s'"
+msgstr "Неочакван край на файла на „%s“"
+
+#: ../lib/aio/reader.cpp:387
+#, c-format
+msgid "Unknown error %u (%u)"
+msgstr "Неочаквана грешка %u (%u)"
+
+#: ../lib/aio/writer.cpp:315
+#, c-format
+msgid "Unknown error %u (%u)."
+msgstr "Неочаквана грешка %u (%u)."
+
+#: ../lib/http/client.cpp:858
+msgid "Unknown transfer encoding"
+msgstr "Неизвестно кодиране на пренасяните данни"
+
+#: ../lib/tls_layer_impl.cpp:1986
+msgid "Unsupported certificate type"
+msgstr "Неподдържан вид сертификат"
+
+#: ../lib/http/client.cpp:1020
+msgid "Wrong line endings"
+msgstr "Грешни символи за край на ред"
+
+#: ../lib/tls_layer_impl.cpp:194
+#, c-format
+msgid "Wrong type of PIN requested. Flags: %d, Token: %s, URL: %s."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:1895
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers не върна сертификати"
+
+#: ../lib/impersonation.cpp:532
+#, c-format
+msgid ""
+"impersonation_token: DropAdminPrivilegesFromToken failed. User: '%s', "
+"Domain: '%s'. Last Error: %d."
+msgstr ""
+
+#: ../lib/impersonation.cpp:524
+#, c-format
+msgid ""
+"impersonation_token: DuplicateTokenEx failed. User: '%s', Domain: '%s'. Last "
+"Error: %d."
+msgstr ""
+
+#: ../lib/impersonation.cpp:509
+#, c-format
+msgid ""
+"impersonation_token: LogonUserW failed. User: '%s', Domain: '%s'. Last "
+"Error: %d."
+msgstr ""
+
+#: ../lib/impersonation.cpp:268
+#, c-format
+msgid "impersonation_token: could not get GID for group '%s'. User: '%s'."
+msgstr ""
+
+#: ../lib/impersonation.cpp:434
+#, c-format
+msgid ""
+"impersonation_token: could not load user profile. User: '%s', Roaming: '%s'."
+msgstr ""
+
+#: ../lib/impersonation.cpp:259
+#, c-format
+msgid "impersonation_token: invalid credentials. User: '%s'."
+msgstr ""
+
+#: ../lib/impersonation.cpp:491
+msgid ""
+"impersonation_token: password-less login is not supported under Windows."
+msgstr ""
+
+#: ../lib/impersonation.cpp:254
+#, c-format
+msgid "impersonation_token: user '%s' not found."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:2269 ../lib/tls_layer_impl.cpp:2305
+#: ../lib/tls_layer_impl.cpp:2321 ../lib/tls_layer_impl.cpp:2337
+msgid "unknown"
+msgstr "неизвестен"
+
+#~ msgid "Could not read key file."
+#~ msgstr "Файлът с ключове не може да бъде прочетен."

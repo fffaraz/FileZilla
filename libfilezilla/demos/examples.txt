@@ -1,0 +1,49 @@
+/// \example events.cpp
+/// \brief A simple demonstration of using the event system
+
+/// \example timer_fizzbuzz.cpp
+/// \brief A simple demonstration of using timers.
+///
+/// This example creates and event loop and starts two timers to
+/// print fizz and buzz every 3 respective 5 seconds.
+///
+/// The user can also configure a third timer via stdin to print woof.
+///
+/// This example assumes you already understand the \ref events.cpp example.
+
+/// \example process.cpp
+/// \brief A simple demonstration of using fz::process
+///
+/// This example spawns the \ref timer_fizzbuzz.cpp demo and controls it
+/// via the redirected IO, in blocking mode.
+
+/// \example nonblocking_process.cpp
+/// \brief A simple demonstration of using fz::process
+///
+/// This example spawns the \ref timer_fizzbuzz.cpp demo and controls it
+/// via the redirected IO, in non-blocking mode.
+
+/// \example list.cpp
+/// \brief A simple demonstration of using fz::local_filesys
+///
+/// This example lists the contents of the directory given as argument
+/// to the program, or the current working directory if no argument is given.
+
+/// \example raw_https.cpp
+/// \brief Demonstrates how to use sockets and the TLS layer.
+///
+/// This example is a most-trivial HTTPS client that requests "/" on the passed
+/// host and outputs what the server sends verbatim.
+
+/// \example aio.cpp
+/// \brief Demonstrats use of aio readers/writers
+///
+/// Accepts to filenames. Copies contents of first file into second file,
+/// calculatung file hash in the process.
+
+/// \example xml_pp.cpp
+/// \brief Pretty printer for XML received on stdin
+
+/// \example https.cpp
+/// \brief Demonstrates how to use the fz::https::client
+

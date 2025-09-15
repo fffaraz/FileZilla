@@ -1,0 +1,386 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: filezilla_nl\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-08-08 08:49+0200\n"
+"PO-Revision-Date: 2018-07-29 21:39+0200\n"
+"Last-Translator: Jan Verheijen\n"
+"Language-Team: en@li.org\n"
+"Language: nl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.0.6\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Poedit-SourceCharset: UTF-8\n"
+
+#: ../lib/tls_layer_impl.cpp:1370
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "Een certificaat in de keten is getekend met een onveilig algoritme"
+
+#: ../lib/tls_layer_impl.cpp:1374
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "Een uitgever in de certificaatketen is geen certificeringsinstantie"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Argument-buffergrootte overschreden"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Beschrijving van beschadigd bestand"
+
+#: ../lib/tls_layer_impl.cpp:1360
+msgid "Beware! Certificate has been revoked"
+msgstr "Let op! Het certificaat is ingetrokken"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "Kan het gevraagde adres niet toewijzen"
+
+#: ../lib/tls_layer_impl.cpp:265
+msgid "Certificate file too big."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:1425
+msgid "Certificate of connection does not match expected certificate."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:1366
+msgid "Certificate signature verification failed"
+msgstr "Verificatie certificaathandtekening mislukt"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Verbinding verbroken"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "Verbindingingspoging verlopen"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Verbinding geweigerd door server"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Verbinding gereset door netwerk"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Verbinding gereset door server"
+
+#: ../lib/tls_layer_impl.cpp:1507
+msgid "Could not add certificate to temporary trust list"
+msgstr "Kan certificaat niet toevoegen aan tijdelijke vertrouwenslijst"
+
+#: ../lib/tls_layer_impl.cpp:1499
+msgid "Could not copy certificate"
+msgstr "Kan certificaat niet kopiëren"
+
+#: ../lib/tls_layer_impl.cpp:1138
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Kan geen onderscheidende naam verkrijgen van certificaatverschaffer: "
+"gnutls_x509_get_issuer_dn mislukte"
+
+#: ../lib/tls_layer_impl.cpp:1124
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Kan geen onderscheidende naam verkrijgen het certificaatonderwerp: "
+"gnutls_x509_get_dn mislukte"
+
+#: ../lib/tls_layer_impl.cpp:260
+msgid "Could not open certificate file."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:241
+msgid "Could not open key file."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:272
+msgid "Could not read certificate file."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:253
+msgid "Could not read key file."
+msgstr ""
+
+#: ../lib/tls_layer_impl.cpp:1343
+msgid "Could not sort peer certificates"
+msgstr "Kan peercertificaat niet sorteren"
+
+#: ../lib/tls_layer_impl.cpp:1470 ../lib/tls_layer_impl.cpp:1521
+msgid "Failed to verify peer certificate"
+msgstr "Controleren van peercertificaat is mislukt"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Bestandsbeschrijving is geen socket"
+
+#: ../lib/tls_layer_impl.cpp:448
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS-fout voor %d"
+
+#: ../lib/tls_layer_impl.cpp:451
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS-fout %d in %s"
+
+#: ../lib/tls_layer_impl.cpp:443
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS-fout %d in %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:440
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS-fout %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "Host is down"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Onderbroken door signaal"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Ongeldig argument opgegeven"
+
+#: ../lib/socket_errors.cpp:105
+msgid "Invalid characters in hostname"
+msgstr ""
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Ongeldige waarde voor ai-vlaggen"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Ongeldige waarde voor aanwijzingen"
+
+#: ../lib/tls_layer_impl.cpp:246
+msgid "Key file too big."
+msgstr ""
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Lokaal adres is in gebruik"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "Lokaal eindpunt is gesloten"
+
+#: ../lib/tls_layer_impl.cpp:1558
+msgid "Man-in-the-Middle attack detected, aborting connection."
+msgstr ""
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Fout in geheugentoewijzing"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Bericht is te lang"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Er zijn geen nodenaam en servnaam of ze zijn niet bekend"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"De netwerkhost heeft geen netwerkadressen in de gevraagde adressenfamilie"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Netwerk onbereikbaar"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Geen programma geassocieerd met nodenaam"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Geen route naar de host"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Onherstelbare fout in de naamomzetting"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Niet geïnitialiseerd. WSAStartup moet aangeroepen worden"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Bewerking wordt al uitgevoerd"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Bewerking wordt uitgevoerd"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Bewerking wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Andere systeemfout"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Te weinig geheugen"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Toegang geweigerd"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Grootte van bestandstabel van het proces overschreden"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protocol wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "Protocol van dit sockettype wordt niet ondersteund"
+
+#: ../lib/tls_layer_impl.cpp:462
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "TLS-waarschuwing ontvangen van server: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1388
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"Ontvangen certificaatketen kon niet worden geverifieerd. Verificatiestatus "
+"is %d."
+
+#: ../lib/tls_layer_impl.cpp:465
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Onbekende TLS-waarschuwing %d van de server ontvangen"
+
+#: ../lib/tls_layer_impl.cpp:1060
+msgid "Remote certificate not trusted."
+msgstr "Externe certificaat is niet vertrouwd."
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "Gevonden protocol is onbekend"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Uitweg tijdelijk niet beschikbaar"
+
+#: ../lib/tls_layer_impl.cpp:946
+msgid "Server did not properly shut down TLS connection"
+msgstr "Server heeft de TLS-verbinding niet goed gesloten"
+
+#: ../lib/tls_layer_impl.cpp:1334
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"Server stuurde ongesorteerde certificaatketen in strijd met de TLS "
+"specificaties"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "Socket-adres buiten de adresruimte"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Socket is al verbonden"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Socket is uitgeschakeld"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Socket is niet verbonden"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "Sockettype voor deze adresfamilie wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "De systeemlimiet van open bestanden is overschreden"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "Er is een fout opgetreden in het subsysteem van het systeemnetwerk"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Tijdelijke fout in de naamomzetting"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "Dit ai-familielid wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "Dit ai-socktype-lid wordt niet ondersteund"
+
+#: ../lib/tls_layer_impl.cpp:1383
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"Het certificaat eist dat de server in het antwoord een OCSP-status insluit, "
+"maar de OCSP-status ontbreekt."
+
+#: ../lib/tls_layer_impl.cpp:1378
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr ""
+"De hostnaam van de server komt niet overeen met de hostnaam van het "
+"certificaat"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "De servernaam-parameter voor het ai-socktype wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "De opgegeven adresfamilie wordt niet ondersteund"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "De opgegeven netwerknaam is niet langer beschikbaar"
+
+#: ../lib/tls_layer_impl.cpp:1403
+msgid "Unsupported certificate type"
+msgstr "Niet-ondersteund certificaattype"
+
+#: ../lib/tls_layer_impl.cpp:1542
+msgid "Verifying certificate..."
+msgstr "Certificaat controleren...."
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers gaf geen certificaten terug"
+
+#: ../lib/tls_layer_impl.cpp:1309
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 mislukt"
+
+#: ../lib/tls_layer_impl.cpp:1602 ../lib/tls_layer_impl.cpp:1618
+#: ../lib/tls_layer_impl.cpp:1634 ../lib/tls_layer_impl.cpp:1650
+msgid "unknown"
+msgstr "onbekend"

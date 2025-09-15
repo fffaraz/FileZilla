@@ -1,0 +1,910 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: libfilezilla in Corsican\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2025-03-26 09:54+0100\n"
+"PO-Revision-Date: 2025-03-28 20:27+0100\n"
+"Last-Translator: Patriccollu di Santa Maria è Sichè <https://github.com/"
+"Patriccollu/Lingua_Corsa-Infurmatica/#readme>\n"
+"Language-Team: Patriccollu di Santa Maria è Sichè\n"
+"Language: co\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../lib/tls_layer_impl.cpp:1951
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr ""
+"Un certificatu in a catena hè statu firmatu aduprendu una cudificazione "
+"micca sicura"
+
+#: ../lib/tls_layer_impl.cpp:1955
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr ""
+"Un emettidore in a catena di certificatu ùn hè micca un auturità di "
+"certificatu"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "Trapienu di memoria di l'argumentu"
+
+#: ../lib/tls_layer_impl.cpp:216
+#, c-format
+msgid "Attempting to use PIN. Token: %s, URL: %s."
+msgstr "Tentativu d’impiegà u PIN. Gettone : %s, Indirizzu web : %s."
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "Discrittore gattive di u schedariu"
+
+#: ../lib/tls_layer_impl.cpp:1941
+msgid "Beware! Certificate has been revoked"
+msgstr "Fate casu ! U certificatu hè statu revocatu"
+
+#: ../lib/http/client.cpp:778
+msgid ""
+"Broken server, it claims to have processed a request before it got fully set"
+msgstr ""
+"Servitore dannighjatu chì dice ch’ellu hà trattatu una richiesta nanzu "
+"ch’ella sia cumpletamente definita"
+
+#: ../lib/socket_errors.cpp:108 ../lib/socket_errors.cpp:117
+msgid "Cannot assign requested address"
+msgstr "Ùn si pò micca impiegà l'indirizzu richiestu"
+
+#: ../lib/http/client.cpp:986
+msgid "Cannot use writers without buffer pool"
+msgstr "Ùn si pò micca impiegà scrittori senza riserva di stampone"
+
+#: ../lib/tls_layer_impl.cpp:387
+msgid "Certificate file too big."
+msgstr "Schedariu di certificatu troppu maiò."
+
+#: ../lib/tls_layer_impl.cpp:2014
+msgid "Certificate of connection does not match expected certificate."
+msgstr "U certificatu di cunnessione ùn currisponde micca à quellu aspettatu."
+
+#: ../lib/tls_layer_impl.cpp:2587
+msgid "Certificate purposes do not match with its intended type."
+msgstr "L’ogettivi di u certificatu ùn currispundenu micca à u tipu previstu."
+
+#: ../lib/tls_layer_impl.cpp:2955 ../lib/tls_layer_impl.cpp:2961
+msgid "Certificate request has wrong key usage types set."
+msgstr ""
+"I tipi d’impiegu di chjave definiti per a dumanda di certificatu ùn sò micca "
+"bè."
+
+#: ../lib/tls_layer_impl.cpp:2941
+msgid "Certificate request purposes do not match with its type."
+msgstr ""
+"L’ogettivi di a dumanda di certificatu ùn currispundenu micca à u so tipu."
+
+#: ../lib/tls_layer_impl.cpp:1947
+msgid "Certificate signature verification failed"
+msgstr "Fiascu di a verificazione di a firma di u certificatu"
+
+#: ../lib/http/client.cpp:1008
+msgid "Chunk data improperly terminated"
+msgstr "Ingutuppu di dati interrottu scurrettamente"
+
+#: ../lib/tls_layer_impl.cpp:1442
+msgid "Client did not properly shut down TLS connection"
+msgstr "U cliente ùn hà micca chjosu currettamente a cunnessione TLS"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "Cunnessione interrotta"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "A prova di cunnessione hà messu un tempu troppu longu"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "Cunnessione ricusata da u servitore"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "Cunnessione iniziata torna da a reta"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "Cunnessione iniziata torna da un paru"
+
+#: ../lib/tls_layer_impl.cpp:2151
+msgid "Could not add certificate to temporary trust list"
+msgstr ""
+"Ùn si pò micca aghjunghje u certificatu à a lista timpuraria di cunfidenza"
+
+#: ../lib/http/client.cpp:343 ../lib/http/client.cpp:357
+#, c-format
+msgid "Could not connect to '%s'"
+msgstr "Ùn si pò micca cunnette à « %s »"
+
+#: ../lib/jws.cpp:212
+#, c-format
+msgid ""
+"Could not convert private key to JWK, exporting ECC parameters failed: %s"
+msgstr ""
+"Ùn si pò micca convertisce a chjave privata versu JWK, l’espurtazione di i "
+"parametri ECC hà fiascata : %s"
+
+#: ../lib/jws.cpp:176
+#, c-format
+msgid ""
+"Could not convert private key to JWK, exporting RSA parameters failed: %s"
+msgstr ""
+"Ùn si pò micca convertisce a chjave privata versu JWK, l’espurtazione di i "
+"parametri RSA hà fiascata : %s"
+
+#: ../lib/jws.cpp:152
+#, c-format
+msgid "Could not convert private key to JWK, import failed: %s"
+msgstr ""
+"Ùn si pò micca convertisce a chjave privata versu JWK, l’impurtazione hà "
+"fiascata : %s"
+
+#: ../lib/jws.cpp:159
+msgid ""
+"Could not convert private key to JWK, only RSA and ECDSA private keys are "
+"supported."
+msgstr ""
+"Ùn si pò micca convertisce a chjave privata versu JWK, solu e chjavi private "
+"RSA è ECDSA sò accettate."
+
+#: ../lib/jws.cpp:219
+msgid ""
+"Could not convert private key to JWK, unsupported elliptic curve, only "
+"SECP256R1 is supported."
+msgstr ""
+"Ùn si pò micca convertisce a chjave privata versu JWK, curva ellittica non "
+"ricunnisciuta, solu SECP256R1 hè accettata."
+
+#: ../lib/tls_layer_impl.cpp:2143
+msgid "Could not copy certificate"
+msgstr "Ùn si pò micca cupià u certificatu"
+
+#: ../lib/tls_layer_impl.cpp:1588
+msgid "Could not extract validity period of certificate"
+msgstr "Ùn si pò micca estrae u periodu di validità di u certificatu"
+
+#: ../lib/tls_layer_impl.cpp:2583
+msgid "Could not get certificate purposes."
+msgstr "Ùn si pò micca ottene l’ogettivi di u certificatu."
+
+#: ../lib/tls_layer_impl.cpp:2937
+msgid "Could not get certificate request purposes."
+msgstr "Ùn si pò micca ottene l’ogettivi di a dumanda di certificatu."
+
+#: ../lib/tls_layer_impl.cpp:1655
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr ""
+"Ùn si pò micca ottene u nome di l'emettore di u certificatu, "
+"gnutls_x509_get_issuer_dn hà fiascatu"
+
+#: ../lib/tls_layer_impl.cpp:1636
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr ""
+"Ùn si pò micca ottene u nome di sughjettu di u certificatu, "
+"gnutls_x509_get_dn hà fiascatu"
+
+#: ../lib/tls_layer_impl.cpp:401
+msgid "Could not key file."
+msgstr "Ùn si pò micca accede à u schedariu di chjave."
+
+#: ../lib/aio/reader.cpp:401
+#, c-format
+msgid "Could not open '%s' for reading: %s"
+msgstr "Ùn si pò micca apre « %s » per leghjelu : %s"
+
+#: ../lib/aio/writer.cpp:336
+#, c-format
+msgid "Could not open '%s' for writing: %s"
+msgstr "Ùn si pò micca apre « %s » per scrivelu : %s"
+
+#: ../lib/tls_layer_impl.cpp:376
+msgid "Could not open certificate file."
+msgstr "Ùn si pò micca apre u schedariu di certificatu."
+
+#: ../lib/tls_layer_impl.cpp:377
+msgid "Could not open key file."
+msgstr "Ùn si pò micca apre u schedariu di chjave."
+
+#: ../lib/tls_layer_impl.cpp:400
+msgid "Could not read certificate file."
+msgstr "Ùn si pò micca leghje u schedariu di certificatu."
+
+#: ../lib/http/client.cpp:647 ../lib/http/client.cpp:1166
+#, c-format
+msgid "Could not read from socket: %s"
+msgstr "Ùn si pò micca leghje u socket : %s"
+
+#: ../lib/aio/writer.cpp:275 ../lib/aio/writer.cpp:344
+#, c-format
+msgid "Could not seek to offset %d within '%s'."
+msgstr "Ùn si pò micca andà à u spiazzamentu %d dentru « %s »."
+
+#: ../lib/tls_layer_impl.cpp:1922
+msgid "Could not sort peer certificates"
+msgstr "Ùn si pò micca classificà i certificati pari"
+
+#: ../lib/aio/writer.cpp:218
+#, c-format
+msgid "Could not sync '%s' to disk."
+msgstr "Ùn si pò micca sincrunizà « %s » cù u discu."
+
+#: ../lib/aio/writer.cpp:348
+#, c-format
+msgid "Could not truncate '%s' to offset %d."
+msgstr "Ùn si pò micca ammuzzà « %s » à u spiazzamentu %d."
+
+#: ../lib/http/client.cpp:375 ../lib/http/client.cpp:490
+#, c-format
+msgid "Could not write to socket: %s"
+msgstr "Ùn si pò micca scrive in socket : %s"
+
+#: ../lib/http/client.cpp:491
+msgid "Disconnected from server"
+msgstr "Disghjuntu da u servitore"
+
+#: ../lib/http/client.cpp:468
+#, c-format
+msgid "Excess data read from '%s'"
+msgstr "Troppu dati letti nant’à « %s »"
+
+#: ../lib/tls_layer_impl.cpp:2100
+msgid "Failed to extract certificate trust path"
+msgstr "Fiascu per estrae u chjassu di cunfidenza di u certificatu"
+
+#: ../lib/tls_layer_impl.cpp:2093 ../lib/tls_layer_impl.cpp:2165
+msgid "Failed to verify peer certificate"
+msgstr "Fiascu per verificà u certificatu paru"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "Descrittore di schedariu ùn hè micca socket"
+
+#: ../lib/aio/reader.cpp:383
+msgid "File does not exist"
+msgstr "U schedariu ùn esiste micca"
+
+#: ../lib/windows/security_descriptor_builder.cpp:288
+#, c-format
+msgid ""
+"GetRoamingProfilePath: GetComputerNameW failed. User: '%s', Domain: '%s'. "
+"Last Error: %d."
+msgstr ""
+"GetRoamingProfilePath : Fiascu di GetComputerNameW. Utilizatore : « %s », "
+"duminiu : « %s ». Ultimu sbagliu : %d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:360
+#, c-format
+msgid ""
+"GetRoamingProfilePath: ImpersonateLoggedOnUser failed. User: '%s', Domain: "
+"'%s'. Last Error: %d."
+msgstr ""
+"GetRoamingProfilePath : Fiascu di ImpersonateLoggedOnUser. Utilizatore : "
+"« %s », duminiu : « %s ». Ultimu sbagliu : %d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:365
+#, c-format
+msgid ""
+"GetRoamingProfilePath: NetUserGetInfo failed. User: '%s', Domain: '%s'. "
+"Status: %d."
+msgstr ""
+"GetRoamingProfilePath : Fiascu di NetUserGetInfo. Utilizatore : « %s », "
+"duminiu : « %s ». Statu : %d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:369
+#, c-format
+msgid ""
+"GetRoamingProfilePath: RevertToSelf failed, aborting. User: '%s', Domain: "
+"'%s'. Last Error: %d."
+msgstr ""
+"GetRoamingProfilePath : Fiascu di RevertToSelf è abbandonu. Utilizatore : "
+"« %s », duminiu : « %s ». Ultimu sbagliu : %d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:278
+msgid "GetRoamingProfilePath: couldn't import netapi32.dll functions."
+msgstr ""
+"GetRoamingProfilePath : Ùn si pò micca impurtà e funzioni netapi32.dll."
+
+#: ../lib/windows/security_descriptor_builder.cpp:398
+#, c-format
+msgid "GetUserInfoFromToken: ConvertSidToStringSidA failed. Last Error: %d."
+msgstr ""
+"GetUserInfoFromToken : Fiascu di ConvertSidToStringSidA. Ultimu sbagliu : %d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:407
+#, c-format
+msgid "GetUserInfoFromToken: GetUserAndDomainFromSid failed. Last Error: %d."
+msgstr ""
+"GetUserInfoFromToken : Fiascu di GetUserAndDomainFromSid. Ultimu sbagliu : "
+"%d."
+
+#: ../lib/windows/security_descriptor_builder.cpp:391
+#, c-format
+msgid "GetUserInfoFromToken: GetUserFromToken failed. Last Error: %d."
+msgstr ""
+"GetUserInfoFromToken : Fiascu di GetUserFromToken. Ultimu sbagliu : %d."
+
+#: ../lib/tls_layer_impl.cpp:778
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "Sbagliu GnuTLS %d"
+
+#: ../lib/tls_layer_impl.cpp:781
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "Sbagliu GnuTLS %d in %s"
+
+#: ../lib/tls_layer_impl.cpp:773
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "Sbagliu GnuTLS %d in %s : %s"
+
+#: ../lib/tls_layer_impl.cpp:770
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "Sbagliu GnuTLS %d : %s"
+
+#: ../lib/tls_layer_impl.cpp:3147
+msgid "GnuTLS has been compiled without PKCS#11 support"
+msgstr "GnuTLS hè statu custruitu senza accettà PKCS#11"
+
+#: ../lib/http/client.cpp:619 ../lib/http/client.cpp:676
+msgid "HTTP connection closed prematurely"
+msgstr "Cunnessione HTTP chjosa anticipatamente"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "L'ospite ùn funziona più"
+
+#: ../lib/http/client.cpp:234
+msgid "Hostname not in UTF-8"
+msgstr "Nome d’ospite micca in UTF-8"
+
+#: ../lib/http/client.cpp:706
+msgid "Internal error, bad state"
+msgstr "Sbagliu internu, statu gattivu"
+
+#: ../lib/tls_layer_impl.cpp:563 ../lib/tls_layer_impl.cpp:1856
+msgid "Internal error: invalid certs"
+msgstr "Sbagliu internu : certificati inaccettevule"
+
+#: ../lib/tls_layer_impl.cpp:504
+msgid "Internal error: invalid key"
+msgstr "Sbagliu internu : chjave inaccettevule"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "Interrottu da u signale"
+
+#: ../lib/http/client.cpp:904
+msgid "Invalid Content-Length"
+msgstr "Lunghezza di cuntenutu inaccettevule"
+
+#: ../lib/http/client.cpp:756
+msgid "Invalid HTTP Response"
+msgstr "Risposta HTTP inaccettevule"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "Parametru passatu inaccettevule"
+
+#: ../lib/socket_errors.cpp:105
+msgid "Invalid characters in hostname"
+msgstr "Caratteri inaccettevule in u nome d’ospite"
+
+#: ../lib/http/client.cpp:1058 ../lib/http/client.cpp:1073
+#: ../lib/http/client.cpp:1078
+msgid "Invalid chunk size"
+msgstr "Dimensione di l’ingutuppu inaccettevule"
+
+#: ../lib/tls_layer_impl.cpp:556 ../lib/tls_layer_impl.cpp:1846
+msgid "Invalid data blob for certificates"
+msgstr "Blob di dati inaccettevule per i certificati"
+
+#: ../lib/tls_layer_impl.cpp:497
+msgid "Invalid data blob for key"
+msgstr "Blob di dati inaccettevule per a chjave"
+
+#: ../lib/tls_layer_impl.cpp:542 ../lib/tls_layer_impl.cpp:1829
+msgid "Invalid file path for certificates"
+msgstr "Chjassu di schedariu inaccettevule per i certificati"
+
+#: ../lib/tls_layer_impl.cpp:483
+msgid "Invalid file path for key"
+msgstr "Chjassu di schedariu inaccettevule per a chjave"
+
+#: ../lib/aio/reader.cpp:385
+msgid "Invalid filename"
+msgstr "Nome di schedariu inaccettevule"
+
+#: ../lib/aio/writer.cpp:313
+msgid "Invalid filename."
+msgstr "Nome di schedariu inaccettevule."
+
+#: ../lib/http/client.cpp:798
+msgid "Invalid line"
+msgstr "Linea inaccettevule"
+
+#: ../lib/tls_layer_impl.cpp:447
+msgid "Invalid pkcs11 URL in key"
+msgstr "Indirizzu web pkcs11 inaccettevule in a chjave"
+
+#: ../lib/http/client.cpp:765
+msgid "Invalid response code"
+msgstr "Codice di risposta inaccettevule"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "Valore inaccettevule per ai_flags"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "Valore inaccettevule per i cunsiglii"
+
+#: ../lib/tls_layer_impl.cpp:388
+msgid "Key file too big."
+msgstr "Schedariu di chjave troppu maiò."
+
+#: ../lib/http/client.cpp:1033
+msgid "Line length exceeded"
+msgstr "Lunghezza di a linea trapassata"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "Indirizzu lucale impiegatu"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "U puntu lucale di cumpiitura hè statu chjosu"
+
+#: ../lib/http/client.cpp:1008 ../lib/http/client.cpp:1020
+#: ../lib/http/client.cpp:1026 ../lib/http/client.cpp:1033
+#: ../lib/http/client.cpp:1058 ../lib/http/client.cpp:1073
+#: ../lib/http/client.cpp:1078
+#, c-format
+msgid "Malformed chunk data: %s"
+msgstr "Ingutuppu malcunciliu di dati : %s"
+
+#: ../lib/http/client.cpp:724 ../lib/http/client.cpp:730
+#: ../lib/http/client.cpp:798 ../lib/http/client.cpp:858
+#: ../lib/http/client.cpp:904
+#, c-format
+msgid "Malformed response header: %s"
+msgstr "In-capu di risposta malcunciliu : %s"
+
+#: ../lib/tls_layer_impl.cpp:1998 ../lib/tls_layer_impl.cpp:2213
+msgid "Man-in-the-Middle attack detected, aborting connection."
+msgstr ""
+"Abbandonu di a cunnessione per via d’un attaccu di l’intercettore (Man-in-"
+"the-Middle)."
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "Fiascu per riservà memoria"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "Messaghju troppu maiò"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "Nome di nodu o di servitore micca specificatu, o scunnisciuti"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr ""
+"L'ospite di a reta ùn hà mancunu indirizzu di reta in a famiglia d'indirizzi "
+"richiesta"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Reta inaccessibile"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "Nisunu indirizzu assuciatu cù u nome di nodu"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "Nisunu trasferimentu ver di l'ospite"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "Fiascu definitivu in a risuluzione di u nome"
+
+#: ../lib/aio/writer.cpp:311
+msgid "Not enough space on device."
+msgstr "Ùn ci hè abbastanza spaziu nant’à l’apparechju."
+
+#: ../lib/socket_errors.cpp:113
+msgid "Not initialized, need to call WSAStartup"
+msgstr "Micca dimaratu, ci vole à chjamà WSAStartup"
+
+#: ../lib/http/client.cpp:730 ../lib/http/client.cpp:1026
+msgid "Null character in line"
+msgstr "Caratteru nullu in a linea"
+
+#: ../lib/tls_layer_impl.cpp:210
+#, c-format
+msgid ""
+"Only few PIN tries remaining before the token is locked. Token: %s, URL: %s."
+msgstr ""
+"Solu pocchi tentativi di PIN fermanu nanzu chì u gettone sia ammarchjunatu. "
+"Gettone : %s, Indirizzu web : %s."
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "Operazione dighjà in corsu"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "Operazione in corsu"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "Operazione micca accettata"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "Altru sbagliu di u sistema"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "Mancanza di memoria"
+
+#: ../lib/tls_layer_impl.cpp:205
+#, c-format
+msgid "PIN length (%d) exceeds the maximum (%d). Token: %s, URL: %s"
+msgstr ""
+"A longhezza di u PIN (%d) eccede u massimu (%d). Gettone : %s, Indirizzu "
+"web : %s"
+
+#: ../lib/tls_layer_impl.cpp:512 ../lib/tls_layer_impl.cpp:1820
+msgid "PKCS11 URLs not supported yet for certificates"
+msgstr "L’indirizzi web PKCS11 ùn sò ancu accettati per i certificati"
+
+#: ../lib/http/client.cpp:238
+msgid "Path not in UTF-8"
+msgstr "Chjassu micca in UTF-8"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "Permessu ricusatu"
+
+#: ../lib/aio/reader.cpp:381 ../lib/aio/writer.cpp:307
+msgid "Permission denied."
+msgstr "Permessu ricusatu."
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "Trapienu di a tavula di schedariu di prucedutu"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "Protocollu micca accettatu"
+
+#: ../lib/socket_errors.cpp:115
+msgid "Protocol not supported on given socket type"
+msgstr "Protocollu micca accettatu per u tipu di socket specificatu"
+
+#: ../lib/tls_layer_impl.cpp:822
+#, c-format
+msgid "Received TLS alert from the client: %s (%d)"
+msgstr "Alerta TLS ricevuta da u cliente : %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:822
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "Alerta TLS ricevuta da u servitore : %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1968
+msgid "Received certificate chain could not be verified."
+msgstr "A catena di certificatu ricevuta ùn pò micca esse verificata."
+
+#: ../lib/tls_layer_impl.cpp:1971
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr ""
+"A catena di certificatu ricevuta ùn pò micca esse verificata. U statu di "
+"verificazione hè %d."
+
+#: ../lib/tls_layer_impl.cpp:827
+#, c-format
+msgid "Received unknown TLS alert %d from the client"
+msgstr "Alerta TLS scunnisciuta %d ricevuta da u cliente"
+
+#: ../lib/tls_layer_impl.cpp:827
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "Alerta TLS scunnisciuta %d ricevuta da u servitore"
+
+#: ../lib/tls_layer_impl.cpp:1561 ../lib/tls_layer_impl.cpp:2128
+msgid "Remote certificate not trusted."
+msgstr "Certificatu alluntanatu micca degnu di cunfidenza."
+
+#: ../lib/http/client.cpp:230
+msgid "Request has no host"
+msgstr "A richiesta ùn hà micca ospite"
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "U protoccollu risoltu hè scunnisciutu"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "Risorse timpurariamente indispunibule"
+
+#: ../lib/http/client.cpp:632
+msgid "Response too large"
+msgstr "A risposta hè troppu maiò"
+
+#: ../lib/tls_layer_impl.cpp:1442
+msgid "Server did not properly shut down TLS connection"
+msgstr "U servitore ùn hà micca chjosu currettamente a cunnessione TLS"
+
+#: ../lib/http/client.cpp:291
+#, c-format
+msgid "Server instructed client to wait %d seconds before sending next request"
+msgstr ""
+"U servitore hà dumandatu à u cliente d’aspettà %d seconde nanzu di mandà a "
+"prossima richiesta"
+
+#: ../lib/http/client.cpp:724
+msgid "Server not sending proper line endings"
+msgstr "U servitore ùn manda micca fine di linea currette"
+
+#: ../lib/http/digest.cpp:251
+#, c-format
+msgid "Server requested unsupported digest authentication algorithm: %s"
+msgstr ""
+"U servitore hà richiestu una cudificazione riassunta d’autenticazione micca "
+"accettata : %s"
+
+#: ../lib/http/digest.cpp:259
+#, c-format
+msgid "Server requested unsupported quality-of-protection: %s"
+msgstr ""
+"U servitore hà richiestu una qualità di prutezzione micca accettata : %s"
+
+#: ../lib/tls_layer_impl.cpp:1925
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr ""
+"U servitore hà mandatu una catena di certificatu micca ordinata in "
+"viulazione cù e specificazioni TLS"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "L'indirizzu di socket hè fora di u spaziu d'indirizzi"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "Socket dighjà cunnettu"
+
+#: ../lib/http/client.cpp:1204
+#, c-format
+msgid "Socket error: %s"
+msgstr "Sbagliu di socket : %s"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "Socket hè statu piantatu"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "Socket micca cunnettu"
+
+#: ../lib/socket_errors.cpp:116
+msgid "Socket type not supported for address family"
+msgstr "Tipu di socket micca accettatu per a famiglia d'indirizzi"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "U limitu di u numeru di schedarii aperti hè ghjuntu"
+
+#: ../lib/socket_errors.cpp:114
+msgid "System's network subsystem has failed"
+msgstr "U sottusistema di reta di u sistema hà fiascatu"
+
+#: ../lib/aio/writer.cpp:309
+msgid "Target directory does not exist, or name refers to a directory."
+msgstr ""
+"U cartulare di destinazione ùn esiste micca, o u nome si referisce à un "
+"cartulare."
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "Fiascu timpurariu in a risuluzione di u nome"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "U membru ai_family ùn hè micca accettatu"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "U membru ai_socktype ùn hè micca accettatu"
+
+#: ../lib/tls_layer_impl.cpp:1963
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr ""
+"U certificatu richiede chì u servitore includi un statu OCSP in a so "
+"risposta, ma quessa manca."
+
+#: ../lib/tls_layer_impl.cpp:199
+#, c-format
+msgid "The last tried PIN was wrong. Token: %s, URL: %s."
+msgstr "L’ultimu PIN pruvatu era falsu. Gettone : %s, Indirizzu web : %s."
+
+#: ../lib/tls_layer_impl.cpp:1959
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr ""
+"U nome d'ospite di u servitore ùn currisponde micca à u nome d'ospite di u "
+"certificatu"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "U parametru nome di servitore ùn hè micca accettatu per ai_socktype"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "A famiglia d'indirizzi specificata ùn hè micca accettata"
+
+#: ../lib/socket_errors.cpp:118
+msgid "The specified network name is no longer available"
+msgstr "U nome di reta specificatu ùn hè più dispunibule"
+
+#: ../lib/tls_layer_impl.cpp:213
+#, c-format
+msgid ""
+"This is the last PIN try remaining before the token is locked. Token: %s, "
+"URL: %s."
+msgstr ""
+"Què hè l’ultimu tentativu di PIN chì ferma nanzu chì u gettone sia "
+"ammarchjunatu. Gettone : %s, Indirizzu web : %s."
+
+#: ../lib/http/client.cpp:738 ../lib/http/client.cpp:815
+msgid "Too long header line"
+msgstr "Linea d’in-capu troppu longa"
+
+#: ../lib/tls_layer_impl.cpp:224
+#, c-format
+msgid "Too many attempts (%d) while trying the PIN. Token: %s, URL: %s."
+msgstr ""
+"Troppu tentativi (%d) per pruvà u PIN. Gettone : %s, Indirizzu web : %s."
+
+#: ../lib/http/client.cpp:821
+msgid "Too many header lines"
+msgstr "Troppu linee d’in-capu"
+
+#: ../lib/http/client.cpp:460
+#, c-format
+msgid "Unexpected end-of-file on '%s'"
+msgstr "Fine di schedariu inaspettata nant’à « %s »"
+
+#: ../lib/aio/reader.cpp:387
+#, c-format
+msgid "Unknown error %u (%u)"
+msgstr "Sbagliu scunnisciutu %u (%u)"
+
+#: ../lib/aio/writer.cpp:315
+#, c-format
+msgid "Unknown error %u (%u)."
+msgstr "Sbagliu scunnisciutu %u (%u)."
+
+#: ../lib/http/client.cpp:858
+msgid "Unknown transfer encoding"
+msgstr "Cudificazione di trasferimentu scunnisciuta"
+
+#: ../lib/tls_layer_impl.cpp:1986
+msgid "Unsupported certificate type"
+msgstr "Tipu di certificatu micca accettatu"
+
+#: ../lib/http/client.cpp:1020
+msgid "Wrong line endings"
+msgstr "Fine di linea gattive"
+
+#: ../lib/tls_layer_impl.cpp:194
+#, c-format
+msgid "Wrong type of PIN requested. Flags: %d, Token: %s, URL: %s."
+msgstr ""
+"U tipu di PIN richiestu hè falsu. Indicatori Indicatori : %d, Gettone : %s, "
+"Indirizzu web : %s."
+
+#: ../lib/tls_layer_impl.cpp:1895
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers ùn hà restituitu nisunu certificatu"
+
+#: ../lib/impersonation.cpp:532
+#, c-format
+msgid ""
+"impersonation_token: DropAdminPrivilegesFromToken failed. User: '%s', "
+"Domain: '%s'. Last Error: %d."
+msgstr ""
+"impersonation_token : Fiascu di DropAdminPrivilegesFromToken. Utilizatore : "
+"« %s », duminiu : « %s ». Ultimu sbagliu : %d."
+
+#: ../lib/impersonation.cpp:524
+#, c-format
+msgid ""
+"impersonation_token: DuplicateTokenEx failed. User: '%s', Domain: '%s'. Last "
+"Error: %d."
+msgstr ""
+"impersonation_token : Fiascu di DuplicateTokenEx. Utilizatore : « %s », "
+"duminiu : « %s ». Ultimu sbagliu : %d."
+
+#: ../lib/impersonation.cpp:509
+#, c-format
+msgid ""
+"impersonation_token: LogonUserW failed. User: '%s', Domain: '%s'. Last "
+"Error: %d."
+msgstr ""
+"impersonation_token : Fiascu di LogonUserW. Utilizatore : « %s », duminiu : "
+"« %s ». Ultimu sbagliu : %d."
+
+#: ../lib/impersonation.cpp:268
+#, c-format
+msgid "impersonation_token: could not get GID for group '%s'. User: '%s'."
+msgstr ""
+"impersonation_token : Ùn si pò micca ottene u GID per u gruppu « %s ». "
+"Utilizatore : « %s »."
+
+#: ../lib/impersonation.cpp:434
+#, c-format
+msgid ""
+"impersonation_token: could not load user profile. User: '%s', Roaming: '%s'."
+msgstr ""
+"impersonation_token : Ùn si pò micca caricà u prufilu di l’utilizatore. "
+"Utilizatore : « %s », itineranza : « %s »."
+
+#: ../lib/impersonation.cpp:259
+#, c-format
+msgid "impersonation_token: invalid credentials. User: '%s'."
+msgstr ""
+"impersonation_token : Infurmazioni d’identificazione inaccettevule. "
+"Utilizatore : « %s »."
+
+#: ../lib/impersonation.cpp:491
+msgid ""
+"impersonation_token: password-less login is not supported under Windows."
+msgstr ""
+"impersonation_token : L identificazione di cunnessione senza parolla "
+"d’intesa ùn hè micca accettata cù Windows."
+
+#: ../lib/impersonation.cpp:254
+#, c-format
+msgid "impersonation_token: user '%s' not found."
+msgstr "impersonation_token : L’utilizatore « %s » ùn esiste micca."
+
+#: ../lib/tls_layer_impl.cpp:2269 ../lib/tls_layer_impl.cpp:2305
+#: ../lib/tls_layer_impl.cpp:2321 ../lib/tls_layer_impl.cpp:2337
+msgid "unknown"
+msgstr "scunnisciutu"
+
+#~ msgid "Could not read key file."
+#~ msgstr "Ùn si pò micca leghje u schedariu di chjave."
+
+#~ msgid "Verifying certificate..."
+#~ msgstr "Verificazione di u certificatu in corsu..."
+
+#~ msgid "gnutls_pem_base64_encode2 failed"
+#~ msgstr "Fiascu di gnutls_pem_base64_encode2"

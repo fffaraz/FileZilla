@@ -1,0 +1,343 @@
+# Chinese simplified translation for FileZilla Client.
+# Thanks to translation contributors.
+# Wylmer Wang <wantinghard@gmail.com>, 2011, 2012, 2013, 2014.
+# Jeff Bai <jeffbaichina@members.fsf.org>, 2014.
+# Sun Junwen <sunjw8888@gmail.com>, 2010, 2015.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: FileZilla 3\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2018-12-29 15:11+0800\n"
+"Last-Translator: Sun Junwen <sunjw8888@gmail.com>\n"
+"Language-Team: Chinese (simplified) <i18n-zh@googlegroups.com>\n"
+"Language: zh_CN\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Poedit-SourceCharset: utf-8\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Poedit 1.8.11\n"
+
+#: ../lib/tls_layer_impl.cpp:1324
+msgid "A certificate in the chain was signed using an insecure algorithm"
+msgstr "证书链中某张证书的签名使用了不安全的算法"
+
+#: ../lib/tls_layer_impl.cpp:1328
+msgid "An issuer in the certificate chain is not a certificate authority"
+msgstr "证书链中某张证书的颁发者不可信"
+
+#: ../lib/socket_errors.cpp:94
+msgid "Argument buffer overflow"
+msgstr "参数缓冲区溢出"
+
+#: ../lib/socket_errors.cpp:58
+msgid "Bad file descriptor"
+msgstr "错误的文件描述符"
+
+#: ../lib/tls_layer_impl.cpp:1314
+msgid "Beware! Certificate has been revoked"
+msgstr "注意！证书已被撤销"
+
+#: ../lib/socket_errors.cpp:114
+msgid "Cannot assign requested address"
+msgstr "无法分配请求的地址"
+
+#: ../lib/tls_layer_impl.cpp:1320
+msgid "Certificate signature verification failed"
+msgstr "证书签名验证失败"
+
+#: ../lib/socket_errors.cpp:72
+msgid "Connection aborted"
+msgstr "连接中止"
+
+#: ../lib/socket_errors.cpp:65
+msgid "Connection attempt timed out"
+msgstr "连接尝试超时"
+
+#: ../lib/socket_errors.cpp:59
+msgid "Connection refused by server"
+msgstr "连接被服务器拒绝"
+
+#: ../lib/socket_errors.cpp:68
+msgid "Connection reset by network"
+msgstr "连接被网络复位"
+
+#: ../lib/socket_errors.cpp:73
+msgid "Connection reset by peer"
+msgstr "连接被对方复位"
+
+#: ../lib/tls_layer_impl.cpp:1461
+msgid "Could not add certificate to temporary trust list"
+msgstr "无法将证书加入临时信任列表"
+
+#: ../lib/tls_layer_impl.cpp:1453
+msgid "Could not copy certificate"
+msgstr "无法复制证书"
+
+#: ../lib/tls_layer_impl.cpp:1109
+msgid ""
+"Could not get distinguished name of certificate issuer, "
+"gnutls_x509_get_issuer_dn failed"
+msgstr "无法获得明确的证书颁发者名称，gnutls_x509_get_issuer_dn 失败"
+
+#: ../lib/tls_layer_impl.cpp:1095
+msgid ""
+"Could not get distinguished name of certificate subject, gnutls_x509_get_dn "
+"failed"
+msgstr "无法获得明确的证书主题名称，gnutls_x509_get_dn 失败"
+
+#: ../lib/tls_layer_impl.cpp:1297
+msgid "Could not sort peer certificates"
+msgstr "无法排序对等证书"
+
+#: ../lib/tls_layer_impl.cpp:1424 ../lib/tls_layer_impl.cpp:1475
+msgid "Failed to verify peer certificate"
+msgstr "验证对等证书失败"
+
+#: ../lib/socket_errors.cpp:64
+msgid "File descriptor not a socket"
+msgstr "文件描述符不是套接字"
+
+#: ../lib/tls_layer_impl.cpp:447
+#, c-format
+msgid "GnuTLS error %d"
+msgstr "GnuTLS 错误 %d"
+
+#: ../lib/tls_layer_impl.cpp:450
+#, c-format
+msgid "GnuTLS error %d in %s"
+msgstr "GnuTLS 错误 %d，位于 %s"
+
+#: ../lib/tls_layer_impl.cpp:442
+#, c-format
+msgid "GnuTLS error %d in %s: %s"
+msgstr "GnuTLS 错误 %d，位于 %s: %s"
+
+#: ../lib/tls_layer_impl.cpp:439
+#, c-format
+msgid "GnuTLS error %d: %s"
+msgstr "GnuTLS 错误 %d: %s"
+
+#: ../lib/socket_errors.cpp:75
+msgid "Host is down"
+msgstr "主机已关闭"
+
+#: ../lib/socket_errors.cpp:61
+msgid "Interrupted by signal"
+msgstr "被信号量中断"
+
+#: ../lib/socket_errors.cpp:49
+msgid "Invalid argument passed"
+msgstr "传递了无效参数"
+
+#: ../lib/socket_errors.cpp:82
+msgid "Invalid value for ai_flags"
+msgstr "ai_flags 的值无效"
+
+#: ../lib/socket_errors.cpp:84
+msgid "Invalid value for hints"
+msgstr "提示的值无效"
+
+#: ../lib/socket_errors.cpp:46
+msgid "Local address in use"
+msgstr "本地地址正在使用中"
+
+#: ../lib/socket_errors.cpp:74
+msgid "Local endpoint has been closed"
+msgstr "本地端点 (endpoint) 已关闭"
+
+#: ../lib/socket_errors.cpp:88
+msgid "Memory allocation failure"
+msgstr "分配内存失败"
+
+#: ../lib/socket_errors.cpp:71
+msgid "Message too large"
+msgstr "消息过长"
+
+#: ../lib/socket_errors.cpp:92
+msgid "Neither nodename nor servname provided, or not known"
+msgstr "未提供，或不知道节点名或服务名"
+
+#: ../lib/socket_errors.cpp:79
+msgid ""
+"Network host does not have any network addresses in the requested address "
+"family"
+msgstr "在请求的地址集中，网络主机没有任何网络地址"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "无法连接网络"
+
+#: ../lib/socket_errors.cpp:90
+msgid "No address associated with nodename"
+msgstr "节点名称没有关联地址"
+
+#: ../lib/socket_errors.cpp:66
+msgid "No route to host"
+msgstr "无法连通主机"
+
+#: ../lib/socket_errors.cpp:86
+msgid "Nonrecoverable failure in name resolution"
+msgstr "名字解析中有无法恢复的错误"
+
+#: ../lib/socket_errors.cpp:110
+msgid "Not initialized, need to call WSAStartup"
+msgstr "尚未初始化，需要调用 WSAStartup"
+
+#: ../lib/socket_errors.cpp:57
+msgid "Operation already in progress"
+msgstr "操作已经在进行"
+
+#: ../lib/socket_errors.cpp:48
+msgid "Operation in progress"
+msgstr "操作正在进行"
+
+#: ../lib/socket_errors.cpp:69
+msgid "Operation not supported"
+msgstr "不支持该操作"
+
+#: ../lib/socket_errors.cpp:102
+msgid "Other system error"
+msgstr "其他系统错误"
+
+#: ../lib/socket_errors.cpp:52 ../lib/socket_errors.cpp:53
+msgid "Out of memory"
+msgstr "内存不足"
+
+#: ../lib/socket_errors.cpp:45 ../lib/socket_errors.cpp:54
+msgid "Permission denied"
+msgstr "权限不足"
+
+#: ../lib/socket_errors.cpp:50
+msgid "Process file table overflow"
+msgstr "进程文件表溢出"
+
+#: ../lib/socket_errors.cpp:55
+msgid "Protocol not supported"
+msgstr "不支持该协议"
+
+#: ../lib/socket_errors.cpp:112
+msgid "Protocol not supported on given socket type"
+msgstr "指定的套接字类型不支持该协议"
+
+#: ../lib/tls_layer_impl.cpp:461
+#, c-format
+msgid "Received TLS alert from the server: %s (%d)"
+msgstr "收到服务器的 TLS 警告: %s (%d)"
+
+#: ../lib/tls_layer_impl.cpp:1342
+#, c-format
+msgid ""
+"Received certificate chain could not be verified. Verification status is %d."
+msgstr "无法验证收到的证书链。验证状态为 %d。"
+
+#: ../lib/tls_layer_impl.cpp:464
+#, c-format
+msgid "Received unknown TLS alert %d from the server"
+msgstr "收到了服务器的未知 TLS 警告 %d"
+
+#: ../lib/tls_layer_impl.cpp:1031
+msgid "Remote certificate not trusted."
+msgstr "远程证书不被信任。"
+
+#: ../lib/socket_errors.cpp:97
+msgid "Resolved protocol is unknown"
+msgstr "解析的协议为未知协议"
+
+#: ../lib/socket_errors.cpp:56
+msgid "Resource temporarily unavailable"
+msgstr "资源暂不可用"
+
+#: ../lib/tls_layer_impl.cpp:923
+msgid "Server did not properly shut down TLS connection"
+msgstr "服务器没有正常的关闭 TLS 连接"
+
+#: ../lib/tls_layer_impl.cpp:1288
+msgid ""
+"Server sent unsorted certificate chain in violation of the TLS specifications"
+msgstr "服务器发送了不符合 TLS 规范的未排序证书链"
+
+#: ../lib/socket_errors.cpp:60
+msgid "Socket address outside address space"
+msgstr "套接字地址超出了地址空间范围"
+
+#: ../lib/socket_errors.cpp:62
+msgid "Socket already connected"
+msgstr "套接字已连接"
+
+#: ../lib/socket_errors.cpp:70
+msgid "Socket has been shut down"
+msgstr "套接字已关闭"
+
+#: ../lib/socket_errors.cpp:67
+msgid "Socket not connected"
+msgstr "套接字未连接"
+
+#: ../lib/socket_errors.cpp:113
+msgid "Socket type not supported for address family"
+msgstr "地址集不支持此套接字类型"
+
+#: ../lib/socket_errors.cpp:51
+msgid "System limit of open files exceeded"
+msgstr "达到了系统打开文件数限制"
+
+#: ../lib/socket_errors.cpp:111
+msgid "System's network subsystem has failed"
+msgstr "系统的网络子系统出错"
+
+#: ../lib/socket_errors.cpp:81
+msgid "Temporary failure in name resolution"
+msgstr "名字解析中临时出错"
+
+#: ../lib/socket_errors.cpp:87
+msgid "The ai_family member is not supported"
+msgstr "不支持 ai_family 成员"
+
+#: ../lib/socket_errors.cpp:100
+msgid "The ai_socktype member is not supported"
+msgstr "不支持 ai_socktype 成员"
+
+#: ../lib/tls_layer_impl.cpp:1337
+msgid ""
+"The certificate requires the server to include an OCSP status in its "
+"response, but the OCSP status is missing."
+msgstr "该证书要求服务器在响应中包含 OCSP 状态，但是未收到。"
+
+#: ../lib/tls_layer_impl.cpp:1332
+msgid "The server's hostname does not match the certificate's hostname"
+msgstr "服务器的主机名与证书的主机名不匹配"
+
+#: ../lib/socket_errors.cpp:99
+msgid "The servname parameter is not supported for ai_socktype"
+msgstr "ai_socktype 不支持 servname 参数"
+
+#: ../lib/socket_errors.cpp:47
+msgid "The specified address family is not supported"
+msgstr "不支持指定的地址集"
+
+#: ../lib/socket_errors.cpp:115
+msgid "The specified network name is no longer available"
+msgstr "指定的网络名称已不可用"
+
+#: ../lib/tls_layer_impl.cpp:1357
+msgid "Unsupported certificate type"
+msgstr "不支持的证书类型"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "正在验证证书..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers 没有返回证书"
+
+#: ../lib/tls_layer_impl.cpp:1263
+msgid "gnutls_pem_base64_encode2 failed"
+msgstr "gnutls_pem_base64_encode2 失败"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "未知"

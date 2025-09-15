@@ -1,0 +1,35 @@
+# translation of is.po to icelandic
+# Sveinn í Felli <sveinki@nett.is>, 2011.
+# Þórhallur Hálfdánarson, <thorhallur@gmail.com>, 2010.
+msgid ""
+msgstr ""
+"Project-Id-Version: is\n"
+"Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
+"POT-Creation-Date: 2019-06-10 12:22+0200\n"
+"PO-Revision-Date: 2011-01-20 13:20+0000\n"
+"Last-Translator: Sveinn í Felli <sveinki@nett.is>\n"
+"Language-Team: icelandic <openoffice@openoffice.is>\n"
+"Language: is\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: KBabel 1.11.4\n"
+"X-Poedit-Basepath: C:\\dev\\FileZilla\\Translations\n"
+
+#: ../lib/socket_errors.cpp:63
+msgid "Network unreachable"
+msgstr "Ekki næst samband við netið"
+
+#: ../lib/tls_layer_impl.cpp:1496
+msgid "Verifying certificate..."
+msgstr "Sannreyni skilríki..."
+
+#: ../lib/tls_layer_impl.cpp:1251
+msgid "gnutls_certificate_get_peers returned no certificates"
+msgstr "gnutls_certificate_get_peers fann engin skilríki"
+
+#: ../lib/tls_layer_impl.cpp:1555 ../lib/tls_layer_impl.cpp:1571
+#: ../lib/tls_layer_impl.cpp:1587 ../lib/tls_layer_impl.cpp:1603
+msgid "unknown"
+msgstr "óþekkt"
