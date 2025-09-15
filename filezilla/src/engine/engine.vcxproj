@@ -1,0 +1,286 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{AAD2642D-D07A-4415-BB32-D678D89D546F}</ProjectGuid>
+    <RootNamespace>engine</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="..\Dependencies.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets" />
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.50727.1</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup>
+    <OutDir>$(ProjectDir)$(Configuration)\</OutDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/MP -Zm200 /permissive- %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.;../include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ENGINE;_CRT_SECURE_NO_DEPRECATE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>filezilla.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AdditionalOptions>/MP -Zm200 /permissive- %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>.;../include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;ENGINE;_CRT_SECURE_NO_DEPRECATE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <BufferSecurityCheck>true</BufferSecurityCheck>
+      <PrecompiledHeaderFile>filezilla.h</PrecompiledHeaderFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+    <Lib />
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>.;../include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>filezilla.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)filezilla.pch</PrecompiledHeaderOutputFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AdditionalOptions>/MP %(AdditionalOptions)</AdditionalOptions>
+      <Optimization>MaxSpeed</Optimization>
+      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
+      <OmitFramePointers>true</OmitFramePointers>
+      <AdditionalIncludeDirectories>.;../include/;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;_CRT_SECURE_NO_DEPRECATE=1;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <StringPooling>true</StringPooling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <PrecompiledHeaderFile>filezilla.h</PrecompiledHeaderFile>
+      <PrecompiledHeaderOutputFile>$(IntDir)filezilla.pch</PrecompiledHeaderOutputFile>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ObjectFileName>$(IntDir)%(RelativeDir)</ObjectFileName>
+      <AssemblerListingLocation>$(IntDir)%(RelativeDir)</AssemblerListingLocation>
+      <LanguageStandard>stdcpp17</LanguageStandard>
+    </ClCompile>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="activity_logger.cpp" />
+    <ClCompile Include="activity_logger_layer.cpp" />
+    <ClCompile Include="aio.cpp" />
+    <ClCompile Include="commands.cpp" />
+    <ClCompile Include="controlsocket.cpp" />
+    <ClCompile Include="directorycache.cpp" />
+    <ClCompile Include="directorylisting.cpp" />
+    <ClCompile Include="directorylistingparser.cpp" />
+    <ClCompile Include="engineprivate.cpp" />
+    <ClCompile Include="engine_context.cpp" />
+    <ClCompile Include="engine_options.cpp" />
+    <ClCompile Include="externalipresolver.cpp" />
+    <ClCompile Include="FileZillaEngine.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="ftp\chmod.cpp" />
+    <ClCompile Include="ftp\cwd.cpp" />
+    <ClCompile Include="ftp\delete.cpp" />
+    <ClCompile Include="ftp\filetransfer.cpp" />
+    <ClCompile Include="ftp\ftpcontrolsocket.cpp" />
+    <ClCompile Include="ftp\list.cpp" />
+    <ClCompile Include="ftp\logon.cpp" />
+    <ClCompile Include="ftp\mkd.cpp" />
+    <ClCompile Include="ftp\rawcommand.cpp" />
+    <ClCompile Include="ftp\rawtransfer.cpp" />
+    <ClCompile Include="ftp\rename.cpp" />
+    <ClCompile Include="ftp\rmd.cpp" />
+    <ClCompile Include="ftp\transfersocket.cpp" />
+    <ClCompile Include="http\digest.cpp" />
+    <ClCompile Include="http\filetransfer.cpp" />
+    <ClCompile Include="http\httpcontrolsocket.cpp" />
+    <ClCompile Include="http\internalconnect.cpp" />
+    <ClCompile Include="http\request.cpp" />
+    <ClCompile Include="local_path.cpp" />
+    <ClCompile Include="logging.cpp" />
+    <ClCompile Include="lookup.cpp" />
+    <ClCompile Include="misc.cpp" />
+    <ClCompile Include="notification.cpp" />
+    <ClCompile Include="oplock_manager.cpp" />
+    <ClCompile Include="optionsbase.cpp" />
+    <ClCompile Include="pathcache.cpp" />
+    <ClCompile Include="proxy.cpp">
+      <PrecompiledHeader />
+    </ClCompile>
+    <ClCompile Include="reader.cpp" />
+    <ClCompile Include="rtt.cpp" />
+    <ClCompile Include="server.cpp" />
+    <ClCompile Include="servercapabilities.cpp" />
+    <ClCompile Include="serverpath.cpp" />
+    <ClCompile Include="sftp\chmod.cpp" />
+    <ClCompile Include="sftp\connect.cpp" />
+    <ClCompile Include="sftp\cwd.cpp" />
+    <ClCompile Include="sftp\delete.cpp" />
+    <ClCompile Include="sftp\filetransfer.cpp" />
+    <ClCompile Include="sftp\input_parser.cpp" />
+    <ClCompile Include="sftp\list.cpp" />
+    <ClCompile Include="sftp\mkd.cpp" />
+    <ClCompile Include="sftp\rename.cpp" />
+    <ClCompile Include="sftp\rmd.cpp" />
+    <ClCompile Include="sftp\sftpcontrolsocket.cpp" />
+    <ClCompile Include="sizeformatting_base.cpp" />
+    <ClCompile Include="storj\connect.cpp" />
+    <ClCompile Include="storj\delete.cpp" />
+    <ClCompile Include="storj\file_transfer.cpp" />
+    <ClCompile Include="storj\input_thread.cpp" />
+    <ClCompile Include="storj\list.cpp" />
+    <ClCompile Include="storj\mkd.cpp" />
+    <ClCompile Include="storj\rmd.cpp" />
+    <ClCompile Include="storj\storjcontrolsocket.cpp" />
+    <ClCompile Include="string_reader.cpp" />
+    <ClCompile Include="version.cpp" />
+    <ClCompile Include="writer.cpp" />
+    <ClCompile Include="xmlutils.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\include\activity_logger.h" />
+    <ClInclude Include="..\include\aio.h" />
+    <ClInclude Include="..\include\engine_context.h" />
+    <ClInclude Include="..\include\commands.h" />
+    <ClInclude Include="..\include\engine_options.h" />
+    <ClInclude Include="..\include\httpheaders.h" />
+    <ClInclude Include="..\include\reader.h" />
+    <ClInclude Include="..\include\version.h" />
+    <ClInclude Include="..\include\writer.h" />
+    <ClInclude Include="activity_logger_layer.h" />
+    <ClInclude Include="controlsocket.h" />
+    <ClInclude Include="directorycache.h" />
+    <ClInclude Include="..\include\directorylisting.h" />
+    <ClInclude Include="directorylistingparser.h" />
+    <ClInclude Include="..\include\externalipresolver.h" />
+    <ClInclude Include="engineprivate.h" />
+    <ClInclude Include="filezilla.h" />
+    <ClInclude Include="..\include\FileZillaEngine.h" />
+    <ClInclude Include="ftp\chmod.h" />
+    <ClInclude Include="ftp\cwd.h" />
+    <ClInclude Include="ftp\delete.h" />
+    <ClInclude Include="ftp\filetransfer.h" />
+    <ClInclude Include="ftp\ftpcontrolsocket.h" />
+    <ClInclude Include="ftp\list.h" />
+    <ClInclude Include="ftp\logon.h" />
+    <ClInclude Include="ftp\mkd.h" />
+    <ClInclude Include="ftp\rawcommand.h" />
+    <ClInclude Include="ftp\rawtransfer.h" />
+    <ClInclude Include="ftp\rename.h" />
+    <ClInclude Include="ftp\rmd.h" />
+    <ClInclude Include="ftp\transfersocket.h" />
+    <ClInclude Include="http\connect.h" />
+    <ClInclude Include="http\digest.h" />
+    <ClInclude Include="http\filetransfer.h" />
+    <ClInclude Include="http\httpcontrolsocket.h" />
+    <ClInclude Include="http\internalconnect.h" />
+    <ClInclude Include="http\request.h" />
+    <ClInclude Include="..\include\libfilezilla_engine.h" />
+    <ClInclude Include="..\include\local_path.h" />
+    <ClInclude Include="..\include\logging.h" />
+    <ClInclude Include="..\include\misc.h" />
+    <ClInclude Include="..\include\notification.h" />
+    <ClInclude Include="..\include\optionsbase.h" />
+    <ClInclude Include="..\include\xmlutils.h" />
+    <ClInclude Include="logging_private.h" />
+    <ClInclude Include="lookup.h" />
+    <ClInclude Include="oplock_manager.h" />
+    <ClInclude Include="pathcache.h" />
+    <ClInclude Include="proxy.h" />
+    <ClInclude Include="..\include\Server.h" />
+    <ClInclude Include="rtt.h" />
+    <ClInclude Include="servercapabilities.h" />
+    <ClInclude Include="..\include\serverpath.h" />
+    <ClInclude Include="..\include\sizeformatting_base.h" />
+    <ClInclude Include="sftp\chmod.h" />
+    <ClInclude Include="sftp\connect.h" />
+    <ClInclude Include="sftp\cwd.h" />
+    <ClInclude Include="sftp\delete.h" />
+    <ClInclude Include="sftp\event.h" />
+    <ClInclude Include="sftp\filetransfer.h" />
+    <ClInclude Include="sftp\input_parser.h" />
+    <ClInclude Include="sftp\list.h" />
+    <ClInclude Include="sftp\mkd.h" />
+    <ClInclude Include="sftp\rename.h" />
+    <ClInclude Include="sftp\rmd.h" />
+    <ClInclude Include="sftp\sftpcontrolsocket.h" />
+    <ClInclude Include="storj\connect.h" />
+    <ClInclude Include="storj\delete.h" />
+    <ClInclude Include="storj\event.h" />
+    <ClInclude Include="storj\file_transfer.h" />
+    <ClInclude Include="storj\input_thread.h" />
+    <ClInclude Include="storj\list.h" />
+    <ClInclude Include="storj\mkd.h" />
+    <ClInclude Include="storj\rmd.h" />
+    <ClInclude Include="storj\storjcontrolsocket.h" />
+    <ClInclude Include="string_reader.h" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
