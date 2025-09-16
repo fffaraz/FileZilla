@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+
+Name=FileZilla
+Comment=FTP client.
+Categories=Utility;
+Keywords=tools;
+
+Icon=/opt/filezilla/icon
+Exec=/opt/filezilla/filezilla
+Terminal=false
+StartupNotify=false
