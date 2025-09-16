@@ -19,6 +19,7 @@ RUN \
 ADD ./filezilla /opt/filezilla
 RUN \
 	cd /opt/filezilla && \
+	autoreconf -f -i && \
 	PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure && \
 	make -j$(nproc) && \
 	make install && \
