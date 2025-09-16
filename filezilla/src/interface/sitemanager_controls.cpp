@@ -1319,7 +1319,7 @@ TransferSettingsSiteControls::TransferSettingsSiteControls(wxWindow & parent, Di
 	row->Add(new wxStaticText(&parent, nullID, _("&Maximum number of connections:")), lay.valign);
 	impl_->max_conns_ = new wxSpinCtrlEx(&parent, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
 	impl_->max_conns_->SetMaxLength(2);
-	impl_->max_conns_->SetRange(1, 10);
+	impl_->max_conns_->SetRange(1, 50);
 	row->Add(impl_->max_conns_, lay.valign);
 
 	impl_->limit_max_conns_->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent const& ev){ impl_->max_conns_->Enable(ev.IsChecked()); });
