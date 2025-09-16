@@ -42,10 +42,10 @@ static unsigned int register_interface_options()
 		{ "Cache directory", L"", option_flags::predefined_priority | option_flags::platform },
 
 		// Normal UI options
-		{ "Number of Transfers", 2, option_flags::numeric_clamp, 1, 10 },
+		{ "Number of Transfers", 2, option_flags::numeric_clamp, 1, 50 },
 		{ "Language Code", L"", option_flags::normal, 50 },
-		{ "Concurrent download limit", 0, option_flags::numeric_clamp, 0, 10 },
-		{ "Concurrent upload limit", 0, option_flags::numeric_clamp, 0, 10 },
+		{ "Concurrent download limit", 0, option_flags::numeric_clamp, 0, 50 },
+		{ "Concurrent upload limit", 0, option_flags::numeric_clamp, 0, 50 },
 		{ "Show debug menu", false, option_flags::normal },
 		{ "File exists action download", 0, option_flags::normal, 0, 7 },
 		{ "File exists action upload", 0, option_flags::normal, 0, 7 },
