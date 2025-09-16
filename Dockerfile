@@ -7,6 +7,9 @@ RUN \
 	chmod +x ./appimagetool-x86_64.AppImage && \
 	exit 0
 
+ENV CFLAGS="-O3 -march=native"
+ENV CXXFLAGS="-O3 -march=native"
+
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
 	cd /opt/libfilezilla && \
