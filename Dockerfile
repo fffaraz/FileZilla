@@ -19,6 +19,8 @@ RUN \
 ADD ./filezilla /opt/filezilla
 RUN \
 	cd /opt/filezilla && \
+	mkdir -p ./src/fzshellext/32 && \
+	mkdir -p ./src/fzshellext/64 && \
 	autoreconf -f -i && \
 	PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure && \
 	make -j$(nproc) && \
