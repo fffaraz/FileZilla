@@ -184,16 +184,16 @@ bool COptionsPageTransfer::SavePage()
 
 bool COptionsPageTransfer::Validate()
 {
-	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 10) {
-		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 10 for the number of concurrent transfers."));
+	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 50) {
+		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 50 for the number of concurrent transfers."));
 	}
 
-	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 10) {
-		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 10 for the number of concurrent downloads."));
+	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 50) {
+		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 50 for the number of concurrent downloads."));
 	}
 
-	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 10) {
-		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 10 for the number of concurrent uploads."));
+	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 50) {
+		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 50 for the number of concurrent uploads."));
 	}
 
 	if (fz::to_integral<int>(impl_->dllimit_->GetValue().ToStdWstring(), -1) < 0) {
