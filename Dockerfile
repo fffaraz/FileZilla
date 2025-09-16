@@ -10,6 +10,7 @@ RUN \
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
 	cd /opt/libfilezilla && \
+	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
 	make install && \
