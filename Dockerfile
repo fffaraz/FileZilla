@@ -1,5 +1,5 @@
 FROM fedora:latest
-RUN dnf install -y appstream curl file make automake gcc gcc-c++ boost-devel gmp-devel nettle-devel gnutls-devel gettext-devel wxGTK-devel pugixml-devel xdg-utils sqlite-devel
+RUN dnf install -y appstream curl file make automake libtool gcc gcc-c++ boost-devel gmp-devel nettle-devel gnutls-devel gettext-devel wxGTK-devel pugixml-devel xdg-utils sqlite-devel
 
 RUN \
 	cd /opt && \
