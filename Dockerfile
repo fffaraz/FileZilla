@@ -37,6 +37,7 @@ RUN \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/opt/filezilla/icon.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
+	strip -s /opt/approot/opt/filezilla && \
 	chmod +x /opt/approot/AppRun && \
 	exit 0
 
