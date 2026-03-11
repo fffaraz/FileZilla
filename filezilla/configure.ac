@@ -1,4 +1,4 @@
-AC_INIT([FileZilla],[3.69.3], [tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
+AC_INIT([FileZilla],[3.69.6], [tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
 
 ENGINE_VERSION="$PACKAGE_VERSION"
 

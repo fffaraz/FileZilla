@@ -10,6 +10,19 @@ Legend:
     *nix: Unix (e.g BSD) and Unix-like systems (e.g. Linux)
     macOS/OS X: Apple macOS
 
+3.69.6 (2026-02-12)
+
+! Official binaries are now linked against GnuTLS 3.8.12
+
+3.69.5 (2025-11-12)
+
+- macOS: Fixed issue with toolbar size
+
+3.69.4 (2025-11-11)
+
+- Fixed an issue whith the certificate verification dialog not becoming scrollable on certificates with many subject alternative names
+- Updated to libfilezilla 0.52.0
+
 3.69.3 (2025-07-31)
 
 + For files and directories that are symbolic links, a small overlay symbol is now shown on icons in local file list and directory tree

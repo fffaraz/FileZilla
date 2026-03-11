@@ -219,6 +219,8 @@ std::wstring CBuildInfo::GetCPUCaps(char separator)
 			ret += std::get<4>(cap);
 		}
 	}
+#else
+	(void)separator;
 #endif
 
 	return ret;

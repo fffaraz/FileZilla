@@ -154,6 +154,10 @@ libfzclient_private_la_LDFLAGS = -no-undefined -release $(ENGINE_VERSION_MAJOR).
 libfzclient_private_la_LDFLAGS += $(LIBFILEZILLA_LIBS)
 libfzclient_private_la_LDFLAGS += $(IDN_LIB)
 
+if FZ_MAC
+libfzclient_private_la_LDFLAGS += -framework CoreServices
+endif
+
 dist_noinst_DATA = engine.vcxproj
 
 CLEANFILES = filezilla.h.gch

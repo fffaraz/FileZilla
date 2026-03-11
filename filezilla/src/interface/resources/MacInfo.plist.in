@@ -54,5 +54,7 @@
 	<string>Listing available files and folders, allowing you to select these items for uploading to remote server and to download files from remote servers into your Downloads folder.</string>
 	<key>NSRemovableVolumsUsageDescription</key>
 	<string>Listing available files and folders, allowing you to select these items for uploading to remote server and to download files from remote servers to your removable volumes.</string>
+	<key>UIDesignRequiresCompatibility</key>
+	<true/>
 </dict>
 </plist>

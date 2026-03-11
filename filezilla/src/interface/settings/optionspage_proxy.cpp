@@ -58,17 +58,17 @@ bool COptionsPageProxy::CreateControls(wxWindow* parent)
 		rows->AddGrowableCol(1);
 		inner->Add(rows, lay.grow);
 
-		rows->Add(new wxStaticText(box, nullID, _("P&roxy host:")));
+		rows->Add(new wxStaticText(box, nullID, _("P&roxy host:")), lay.valign);
 		impl_->host_ = new wxTextCtrlEx(box, nullID);
 		rows->Add(impl_->host_, lay.grow);
-		rows->Add(new wxStaticText(box, nullID, _("Proxy &port:")));
+		rows->Add(new wxStaticText(box, nullID, _("Proxy &port:")), lay.valign);
 		impl_->port_ = new wxTextCtrlEx(box, nullID, wxString(), wxDefaultPosition, lay.defTextCtrlSize);
 		impl_->port_->SetMaxLength(5);
 		rows->Add(impl_->port_);
-		rows->Add(new wxStaticText(box, nullID, _("Proxy &user:")));
+		rows->Add(new wxStaticText(box, nullID, _("Proxy &user:")), lay.valign);
 		impl_->user_ = new wxTextCtrlEx(box, nullID);
 		rows->Add(impl_->user_, lay.grow);
-		rows->Add(new wxStaticText(box, nullID, _("Pro&xy password:")));
+		rows->Add(new wxStaticText(box, nullID, _("Pro&xy password:")), lay.valign);
 		impl_->pass_ = new wxTextCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxDefaultSize, wxTE_PASSWORD);
 		rows->Add(impl_->pass_, lay.grow);
 

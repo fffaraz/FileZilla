@@ -49,19 +49,19 @@ bool COptionsPageTransfer::CreateControls(wxWindow* parent)
 		auto [box, inner] = lay.createStatBox(main, _("Concurrent transfers"), 3);
 		inner->Add(new wxStaticText(box, nullID, _("Maximum simultaneous &transfers:")), lay.valign);
 		impl_->transfers_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
-		impl_->transfers_->SetRange(1, 50);
+		impl_->transfers_->SetRange(1, 10);
 		impl_->transfers_->SetMaxLength(2);
 		inner->Add(impl_->transfers_, lay.valign);
-		inner->Add(new wxStaticText(box, nullID, _("(1-50)")), lay.valign);
+		inner->Add(new wxStaticText(box, nullID, _("(1-10)")), lay.valign);
 		inner->Add(new wxStaticText(box, nullID, _("Limit for concurrent &downloads:")), lay.valign);
 		impl_->downloads_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
-		impl_->downloads_->SetRange(0, 50);
+		impl_->downloads_->SetRange(0, 10);
 		impl_->downloads_->SetMaxLength(2);
 		inner->Add(impl_->downloads_, lay.valign);
 		inner->Add(new wxStaticText(box, nullID, _("(0 for no limit)")), lay.valign);
 		inner->Add(new wxStaticText(box, nullID, _("Limit for concurrent &uploads:")), lay.valign);
 		impl_->uploads_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
-		impl_->uploads_->SetRange(0, 50);
+		impl_->uploads_->SetRange(0, 10);
 		impl_->uploads_->SetMaxLength(2);
 		inner->Add(impl_->uploads_, lay.valign);
 		inner->Add(new wxStaticText(box, nullID, _("(0 for no limit)")), lay.valign);
@@ -184,16 +184,16 @@ bool COptionsPageTransfer::SavePage()
 
 bool COptionsPageTransfer::Validate()
 {
-	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 50) {
-		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 50 for the number of concurrent transfers."));
+	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 10) {
+		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 10 for the number of concurrent transfers."));
 	}
 
-	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 50) {
-		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 50 for the number of concurrent downloads."));
+	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 10) {
+		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 10 for the number of concurrent downloads."));
 	}
 
-	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 50) {
-		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 50 for the number of concurrent uploads."));
+	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 10) {
+		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 10 for the number of concurrent uploads."));
 	}
 
 	if (fz::to_integral<int>(impl_->dllimit_->GetValue().ToStdWstring(), -1) < 0) {

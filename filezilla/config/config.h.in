@@ -35,23 +35,23 @@
 /* define if the compiler supports basic C++17 syntax */
 #undef HAVE_CXX17
 
-/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+/* Define to 1 if you have the declaration of 'CLOCK_MONOTONIC', and to 0 if
    you don't. */
 #undef HAVE_DECL_CLOCK_MONOTONIC
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
-/* Define to 1 if you have the `ftime' function. */
+/* Define to 1 if you have the 'ftime' function. */
 #undef HAVE_FTIME
 
-/* Define to 1 if you have the `getaddrinfo' function. */
+/* Define to 1 if you have the 'getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
-/* Define to 1 if you have the `gettimeofday' function. */
+/* Define to 1 if you have the 'gettimeofday' function. */
 #undef HAVE_GETTIMEOFDAY
 
-/* Define to 1 if you have the `gmtime_r' function. */
+/* Define to 1 if you have the 'gmtime_r' function. */
 #undef HAVE_GMTIME_R
 
 /* gmtime_s can be used */
@@ -60,10 +60,10 @@
 /* Headers delare ICopyHookW */
 #undef HAVE_ICOPYHOOKW
 
-/* Define to 1 if you have the `in6addr_any' function. */
+/* Define to 1 if you have the 'in6addr_any' function. */
 #undef HAVE_IN6ADDR_ANY
 
-/* Define to 1 if you have the `in6addr_loopback' function. */
+/* Define to 1 if you have the 'in6addr_loopback' function. */
 #undef HAVE_IN6ADDR_LOOPBACK
 
 /* Define to 1 if you have the <inttypes.h> header file. */
@@ -72,16 +72,16 @@
 /* Define to 1 if your system has the `pugixml' library (-lpugixml). */
 #undef HAVE_LIBPUGIXML
 
-/* Define to 1 if you have the `localtime_r' function. */
+/* Define to 1 if you have the 'localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
 /* localtime_s can be used */
 #undef HAVE_LOCALTIME_S
 
-/* Define to 1 if you have the `posix_fadvise' function. */
+/* Define to 1 if you have the 'posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
-/* Define to 1 if you have the `ptsname' function. */
+/* Define to 1 if you have the 'ptsname' function. */
 #undef HAVE_PTSNAME
 
 /* Define to 1 if putenv function is available. */
@@ -90,7 +90,7 @@
 /* Define to 1 if setenv function is available. */
 #undef HAVE_SETENV
 
-/* Define to 1 if you have the `setresuid' function. */
+/* Define to 1 if you have the 'setresuid' function. */
 #undef HAVE_SETRESUID
 
 /* Define if SO_PEERCRED works in the Linux fashion. */
@@ -111,7 +111,7 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the `strsignal' function. */
+/* Define to 1 if you have the 'strsignal' function. */
 #undef HAVE_STRSIGNAL
 
 /* Define to 1 if you have the <sys/select.h> header file. */
@@ -123,13 +123,13 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
-/* Define to 1 if you have the `timegm' function. */
+/* Define to 1 if you have the 'timegm' function. */
 #undef HAVE_TIMEGM
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* Define to 1 if you have the `updwtmpx' function. */
+/* Define to 1 if you have the 'updwtmpx' function. */
 #undef HAVE_UPDWTMPX
 
 /* Define to 1 if you have the <utmpx.h> header file. */
@@ -162,7 +162,7 @@
 /* Shortened package version number */
 #undef PACKAGE_VERSION_SHORT
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS

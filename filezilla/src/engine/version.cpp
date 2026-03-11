@@ -149,9 +149,9 @@ SystemVersion GetSystemVersion()
 	Gestalt(gestaltSystemVersionMajor, &major);
 
 	SInt32 minor{};
-    Gestalt(gestaltSystemVersionMinor, &minor);
+	Gestalt(gestaltSystemVersionMinor, &minor);
 
-    return {static_cast<unsigned int>(major), static_cast<unsigned int>(minor)};
+	return {static_cast<unsigned int>(major), static_cast<unsigned int>(minor)};
 }
 
 #else

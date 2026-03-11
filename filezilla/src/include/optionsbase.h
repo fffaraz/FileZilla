@@ -13,6 +13,10 @@
 #include <libfilezilla/rwmutex.hpp>
 #include <libfilezilla/string.hpp>
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #ifdef HAVE_LIBPUGIXML
 #include <pugixml.hpp>
 #else
@@ -85,7 +89,7 @@ struct FZC_PUBLIC_SYMBOL option_def final
 	std::vector<std::wstring_view> const& mnemonics() const { return mnemonics_; }
 
 	int val_from_mnemonic(std::wstring_view const& val) const {
-		return std::distance(mnemonics_.begin(), std::find(mnemonics_.begin(), mnemonics_.end(), val));
+		return static_cast<int>(std::distance(mnemonics_.begin(), std::find(mnemonics_.begin(), mnemonics_.end(), val)));
 	}
 
 private:

@@ -870,6 +870,7 @@ bool CQueueStorage::Impl::SaveFile(CFileItem const& file)
 	else {
 		BindNull(insertFileQuery_, file_table_column_names::target_file);
 		BindNull(insertFileQuery_, file_table_column_names::extra_flags);
+		BindNull(insertFileQuery_, file_table_column_names::persistent_state);
 	}
 
 	int64_t localPathId = SaveLocalPath(file.GetLocalPath());

@@ -4,6 +4,8 @@ set -e
 
 bundle="$1"
 searchdirs="$2"
+executabledir="${3:-${bundle}/Contents/MacOS/}"
+relframeworks="${4:-../Frameworks}"
 
 if [ ! -d "$bundle" ]; then
   echo "$bundle is not an application bundle"
@@ -33,10 +35,46 @@ absreadlink()
   fi
 }
 
+find_dylib()
+{
+  local path="$1"
+  local dylib="$2"
+
+  local name="${dylib##*/}"
+  if [ -f "$path/$name" ]; then
+    echo "$path/$name"
+    exit    
+  fi
+
+  local dirs="$LD_LIBRARY_PATH"
+  while [ ! -z ${dirs} ]; do
+    local dir="${dirs%%:*}"
+    dirs="${dirs#*:}"
+    if [ -f "$dir/$name" ]; then
+      echo "$dir/$name"
+      exit    
+    fi
+  done
+  
+  echo $dylib
+}
+
 process_dylib()
 {
   local file="$1"
-  local dylib="$2"
+  local origin="$2"
+  local dylib="$3"
+  local original_dylib="$dylib"
+
+  case $dylib in
+    @rpath/*)
+      dylib=`find_dylib "${origin%/*}" "$dylib"`;;
+  esac
+
+  case $dylib in
+    /usr/*|/System/*)
+      exit;;
+  esac
 
   local resolved=`absreadlink "$dylib"`
   local name="${resolved##*/}"
@@ -75,17 +113,22 @@ process_dylib()
     install_name_tool -id "$name" "${frameworks}/$name"
 
     # dylibs themselves have dependencies. Process them too
-    process_file "${frameworks}/$name"
+    process_file "${frameworks}/$name" "$dylib"
   fi
 
-  install_name_tool -change "$dylib" "@executable_path/../Frameworks/$name" "$file"
+  if echo "$file" | grep '.\(dylib\|so\)$' >/dev/null 2>&1; then
+    install_name_tool -change "${original_dylib}" "@loader_path/$name" "$file"
+  else
+    install_name_tool -change "${original_dylib}" "@executable_path/${relframeworks}/$name" "$file"
+  fi
 }
 
 process_dylibs()
 {
   local file="$1"
-  while [ ! -z "$2" ]; do
-    process_dylib "$file" "$2"
+  local origin="$2"
+  while [ ! -z "$3" ]; do
+    process_dylib "$file" "$origin" "$3"
     shift
   done
 }
@@ -93,13 +136,17 @@ process_dylibs()
 process_file()
 {
   local file="$1"
-  process_dylibs "$file" `otool -L "$file" | grep -v ':$' | grep "dylib\\|\\.so" | sed 's/^[[:blank:]]*//' | sed 's/ .*//' | grep -v '^/usr/\|^/System/'`
-  process_dylibs "$file" `otool -L "$file" | grep -v ':$' | grep "dylib\\|\\.so" | sed 's/^[[:blank:]]*//' | sed 's/ .*//' | grep '^/usr/local/'`
+  local origin="${2:-$1}"
+
+  process_dylibs "$file" "$origin" `otool -L "$file" | grep -v ':$' | grep "dylib\\|\\.so" | sed 's/^[[:blank:]]*//' | sed 's/ .*//' | grep -v '^/usr/\|^/System/'`
+  process_dylibs "$file" "$origin" `otool -L "$file" | grep -v ':$' | grep "dylib\\|\\.so" | sed 's/^[[:blank:]]*//' | sed 's/ .*//' | grep '^/usr/local/'`
 }
 
-rm -f "${frameworks}/"*.dylib
+if [ -z "$3" ]; then
+  rm -f "${frameworks}/"*.dylib
+fi
 
-for file in "${bundle}/Contents/MacOS/"*; do
+for file in "${executabledir}"*; do
   process_file "$file"
 done
 

@@ -113,7 +113,7 @@ bool CVerifyCertDialog::DisplayCert(fz::x509_certificate const& cert)
 		if (d != wxNOT_FOUND) {
 			wxDisplay display(d);
 			wxRect r = display.GetClientArea();
-			int h = r.GetHeight() - line_height_ * 25; // Assume rest of the dialog is about 25 lines
+			int h = std::max(line_height_ * 4, r.GetHeight() - line_height_ * 25); // Assume rest of the dialog is about 25 lines
 			if (maxHeight > h) {
 				maxHeight = h;
 			}
