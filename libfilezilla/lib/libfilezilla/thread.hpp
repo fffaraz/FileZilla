@@ -73,6 +73,9 @@ private:
 	friend class impl;
 	impl* impl_{};
 };
+
+size_t FZ_PUBLIC_SYMBOL processor_count();
+
 }
 
 #endif

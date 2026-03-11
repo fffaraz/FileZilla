@@ -51,6 +51,12 @@ Usage example:
 	h.SendEvent<foo_event>(42, "Don't Panic");
 \endcode
 */
+
+enum event_handler_option
+{
+	child_event_handler
+};
+
 class FZ_PUBLIC_SYMBOL event_handler
 {
 public:
@@ -60,6 +66,8 @@ public:
 	virtual ~event_handler();
 
 	event_handler(event_handler const& h);
+	event_handler(event_handler & h, event_handler_option opt);
+
 	event_handler& operator=(event_handler const&) = delete;
 
 	/** \brief Deactivates handler, removes all pending events and stops all timers for this handler.
@@ -175,10 +183,17 @@ public:
 		event_loop_.resend_current_event();
 	}
 
+	void remove_events(event_source const* const source);
+
 	event_loop & event_loop_;
 private:
 	friend class event_loop;
 	bool removing_{};
+
+	void remove_from_parent();
+	event_handler* parent_{};
+	event_handler* next_{};
+	event_handler* child_{};
 };
 
 /** \brief Dispatch for simple_event<> based events to simple functors

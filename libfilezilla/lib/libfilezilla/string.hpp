@@ -30,7 +30,7 @@ public:
 		return reinterpret_cast<char_type*>(base_traits::copy(reinterpret_cast<base_type*>(dest), reinterpret_cast<base_type const*>(src), count));
 	}
 	static void assign( char_type& c1, char_type const& c2 ) noexcept {
-	c1 = c2;
+		c1 = c2;
 	}
 	static char_type const* find(char_type const* ptr, std::size_t count, char_type const& ch) {
 		return reinterpret_cast<char_type const*>(base_traits::find(reinterpret_cast<base_type const*>(ptr), count, reinterpret_cast<base_type const&>(ch)));
@@ -375,6 +375,26 @@ bool FZ_PUBLIC_SYMBOL replace_substrings(std::wstring& in, std::wstring_view con
 bool FZ_PUBLIC_SYMBOL replace_substrings(std::string& in, char find, char replacement);
 bool FZ_PUBLIC_SYMBOL replace_substrings(std::wstring& in, wchar_t find, wchar_t replacement);
 
+namespace detail {
+/// \private
+template <typename T>
+struct operator_arrow_proxy
+{
+	T v_;
+
+	T* operator->() { return &v_; }
+};
+
+template <typename T>
+struct operator_arrow_proxy<const T>
+{
+	T v_;
+
+	T* operator->() const { return &v_; }
+};
+
+}
+
 /**
  * \brief Container-like class that can be used to iterate over tokens in a string.
  *
@@ -420,36 +440,18 @@ public:
 	{}
 
 	using value_type = const view_type;
-	using pointer = value_type*;
+	using pointer = detail::operator_arrow_proxy<value_type>;
 	using reference = value_type&;
 	using size_type = std::size_t;
 	using difference_type = std::ptrdiff_t;
 
-	struct sentinel{};
-
 	struct iterator
 	{
-		using iterator_category = std::input_iterator_tag;
+		using iterator_category = std::forward_iterator_tag;
 		using difference_type   = strtokenizer::difference_type;
 		using value_type        = strtokenizer::value_type;
 		using pointer           = strtokenizer::pointer;
 		using reference         = strtokenizer::reference;
-
-		constexpr bool operator !=(sentinel) const
-		{
-			return !s_.empty();
-		}
-
-		constexpr bool operator ==(sentinel) const
-		{
-			return s_.empty();
-		}
-
-		constexpr iterator& operator =(sentinel)
-		{
-			s_ = {};
-			return *this;
-		}
 
 		constexpr bool operator ==(iterator const& op) const
 		{
@@ -464,6 +466,11 @@ public:
 		constexpr value_type operator*() const
 		{
 			return s_.substr(0, pos_);
+		}
+
+		constexpr pointer operator->() const
+		{
+			return { s_.substr(0, pos_) };
 		}
 
 		constexpr iterator &operator++()
@@ -490,25 +497,30 @@ public:
 			return *this;
 		}
 
+		constexpr iterator operator++(int)
+		{
+			iterator copy(*this);
+			operator++();
+			return copy;
+		}
+
+		constexpr iterator() = default;
+
 	private:
 		friend strtokenizer;
 
 		constexpr iterator(const strtokenizer *t)
 			: t_(t)
 			, s_(view_type(t_->string_))
-			, pos_(view_type::npos)
 		{
 			operator++();
 		}
 
-		const strtokenizer *t_;
-		view_type s_;
-		size_type pos_;
+		const strtokenizer *t_{};
+		view_type s_{};
+		size_type pos_{view_type::npos};
 	};
 
-	using const_value_type = value_type;
-	using const_pointer = pointer;
-	using const_reference = reference;
 	using const_iterator = iterator;
 
 	constexpr iterator begin() const
@@ -516,7 +528,7 @@ public:
 		return { this };
 	}
 
-	constexpr sentinel end() const
+	constexpr iterator end() const
 	{
 		return {};
 	}
@@ -526,7 +538,7 @@ public:
 		return { this };
 	}
 
-	constexpr sentinel cend() const
+	constexpr const_iterator cend() const
 	{
 		return {};
 	}
@@ -547,6 +559,24 @@ template <typename String, typename Delims>
 strtokenizer(String && string, Delims &&delims, bool ignore_empty) -> strtokenizer<String, Delims>;
 
 /**
+ * \brief strtokenizer class less-than comparator.
+ */
+template <typename LhsString, typename LhsDelims, typename RhsString, typename RhsDelims>
+bool operator<(strtokenizer<LhsString, LhsDelims> const &lhs, strtokenizer<RhsString, RhsDelims> const &rhs)
+{
+	return std::lexicographical_compare(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+/**
+ * \brief strtokenizer class equal comparator.
+ */
+template <typename LhsString, typename LhsDelims, typename RhsString, typename RhsDelims>
+bool operator==(strtokenizer<LhsString, LhsDelims> const &lhs, strtokenizer<RhsString, RhsDelims> const &rhs)
+{
+	return std::equal(lhs.begin(), lhs.end(), rhs.begin(), rhs.end());
+}
+
+/**
  * \brief Tokenizes string.
  *
  * \param delims the delimiters to look for
@@ -554,10 +584,10 @@ strtokenizer(String && string, Delims &&delims, bool ignore_empty) -> strtokeniz
  */
 std::vector<std::string> FZ_PUBLIC_SYMBOL strtok(std::string_view const& tokens, std::string_view const& delims, bool const ignore_empty = true);
 std::vector<std::wstring> FZ_PUBLIC_SYMBOL strtok(std::wstring_view const& tokens, std::wstring_view const& delims, bool const ignore_empty = true);
-inline auto FZ_PUBLIC_SYMBOL strtok(std::string_view const& tokens, char const delim, bool const ignore_empty = true) {
+inline auto strtok(std::string_view const& tokens, char const delim, bool const ignore_empty = true) {
 	return strtok(tokens, std::string_view(&delim, 1), ignore_empty);
 }
-inline auto FZ_PUBLIC_SYMBOL strtok(std::wstring_view const& tokens, wchar_t const delim, bool const ignore_empty = true) {
+inline auto strtok(std::wstring_view const& tokens, wchar_t const delim, bool const ignore_empty = true) {
 	return strtok(tokens, std::wstring_view(&delim, 1), ignore_empty);
 }
 
@@ -571,10 +601,10 @@ inline auto FZ_PUBLIC_SYMBOL strtok(std::wstring_view const& tokens, wchar_t con
  */
 std::vector<std::string_view> FZ_PUBLIC_SYMBOL strtok_view(std::string_view const& tokens, std::string_view const& delims, bool const ignore_empty = true);
 std::vector<std::wstring_view> FZ_PUBLIC_SYMBOL strtok_view(std::wstring_view const& tokens, std::wstring_view const& delims, bool const ignore_empty = true);
-inline auto FZ_PUBLIC_SYMBOL strtok_view(std::string_view const& tokens, char const delim, bool const ignore_empty = true) {
+inline auto strtok_view(std::string_view const& tokens, char const delim, bool const ignore_empty = true) {
 	return strtok_view(tokens, std::string_view(&delim, 1), ignore_empty);
 }
-inline auto FZ_PUBLIC_SYMBOL strtok_view(std::wstring_view const& tokens, wchar_t const delim, bool const ignore_empty = true) {
+inline auto strtok_view(std::wstring_view const& tokens, wchar_t const delim, bool const ignore_empty = true) {
 	return strtok_view(tokens, std::wstring_view(&delim, 1), ignore_empty);
 }
 
@@ -748,37 +778,37 @@ void trim_impl(String & s, Chars const& chars, bool fromLeft, bool fromRight) {
 }
 
 /// \brief Return passed string with all leading and trailing whitespace removed
-inline std::string FZ_PUBLIC_SYMBOL trimmed(std::string_view s, std::string_view const& chars = " \r\n\t", bool fromLeft = true, bool fromRight = true)
+inline std::string trimmed(std::string_view s, std::string_view const& chars = " \r\n\t", bool fromLeft = true, bool fromRight = true)
 {
 	trim_impl(s, chars, fromLeft, fromRight);
 	return std::string(s);
 }
 
-inline std::wstring FZ_PUBLIC_SYMBOL trimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t", bool fromLeft = true, bool fromRight = true)
+inline std::wstring trimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t", bool fromLeft = true, bool fromRight = true)
 {
 	trim_impl(s, chars, fromLeft, fromRight);
 	return std::wstring(s);
 }
 
-inline std::string FZ_PUBLIC_SYMBOL ltrimmed(std::string_view s, std::string_view const& chars = " \r\n\t")
+inline std::string ltrimmed(std::string_view s, std::string_view const& chars = " \r\n\t")
 {
 	trim_impl(s, chars, true, false);
 	return std::string(s);
 }
 
-inline std::wstring FZ_PUBLIC_SYMBOL ltrimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t")
+inline std::wstring ltrimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t")
 {
 	trim_impl(s, chars, true, false);
 	return std::wstring(s);
 }
 
-inline std::string FZ_PUBLIC_SYMBOL rtrimmed(std::string_view s, std::string_view const& chars = " \r\n\t")
+inline std::string rtrimmed(std::string_view s, std::string_view const& chars = " \r\n\t")
 {
 	trim_impl(s, chars, false, true);
 	return std::string(s);
 }
 
-inline std::wstring FZ_PUBLIC_SYMBOL rtrimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t")
+inline std::wstring rtrimmed(std::wstring_view s, std::wstring_view const& chars = L" \r\n\t")
 {
 	trim_impl(s, chars, false, true);
 	return std::wstring(s);

@@ -248,6 +248,8 @@ public:
 
 	virtual bool seekable() const override;
 
+	virtual datetime mtime() const override;
+
 private:
 	virtual void FZ_PRIVATE_SYMBOL do_close(scoped_lock & l) override;
 	virtual bool FZ_PRIVATE_SYMBOL do_seek(scoped_lock & l) override;

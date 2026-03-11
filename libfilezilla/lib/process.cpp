@@ -8,6 +8,7 @@
 
 #include "libfilezilla/buffer.hpp"
 #include "libfilezilla/encode.hpp"
+#include "libfilezilla/glue/async_pipe.hpp"
 #include "libfilezilla/glue/windows.hpp"
 #include "windows/security_descriptor_builder.hpp"
 
@@ -19,13 +20,6 @@ void reset_handle(HANDLE& handle)
 	if (handle != INVALID_HANDLE_VALUE) {
 		CloseHandle(handle);
 		handle = INVALID_HANDLE_VALUE;
-	}
-}
-void reset_event(HANDLE& handle)
-{
-	if (handle && handle != INVALID_HANDLE_VALUE) {
-		CloseHandle(handle);
-		handle = 0;
 	}
 }
 
@@ -150,19 +144,27 @@ native_string get_cmd_line(native_string const& cmd, std::vector<native_string>:
 
 	return cmdline;
 }
+
+event_loop& get_unused_loop()
+{
+	static event_loop unused_loop(event_loop::threadless);
+	return unused_loop;
+}
 }
 
 HANDLE get_handle(impersonation_token const& t);
-class process::impl
+class process::impl : public event_handler
 {
 public:
 	impl(process& p)
-		: process_(p)
+		: event_handler(get_unused_loop())
+		, process_(p)
 	{
 	}
 
 	impl(process& p, thread_pool& pool, event_handler& handler)
-		: process_(p)
+		: event_handler(handler.event_loop_)
+		, process_(p)
 		, pool_(&pool)
 		, handler_(&handler)
 	{
@@ -170,6 +172,7 @@ public:
 
 	~impl()
 	{
+		remove_handler();
 		kill();
 	}
 
@@ -182,74 +185,6 @@ public:
 			in_.create(false, handler_ != nullptr) &&
 			out_.create(true, handler_ != nullptr) &&
 			(!include_stderr || err_.create(true, false));
-	}
-
-	void thread_entry()
-	{
-		scoped_lock l(mutex_);
-		HANDLE handles[3];
-		handles[0] = sync_;
-
-		while (!quit_) {
-
-			DWORD n = 1;
-			if (waiting_read_) {
-				handles[n++] = ol_read_.hEvent;
-			}
-			if (!write_buffer_.empty()) {
-				handles[n++] = ol_write_.hEvent;
-			}
-
-			l.unlock();
-			DWORD res = WaitForMultipleObjects(n, handles, false, INFINITE);
-			l.lock();
-			if (quit_) {
-				break;
-			}
-
-			if (res > WAIT_OBJECT_0 && res < (WAIT_OBJECT_0 + n)) {
-				HANDLE h = handles[res - WAIT_OBJECT_0];
-				if (h == ol_read_.hEvent) {
-					waiting_read_ = false;
-					handler_->send_event<process_event>(&process_, process_event_flag::read);
-				}
-				else if (h == ol_write_.hEvent && !write_buffer_.empty()) {
-
-					DWORD written{};
-					DWORD res = GetOverlappedResult(in_.write_, &ol_write_, &written, false);
-					if (res) {
-						write_buffer_.consume(written);
-						if (!write_buffer_.empty()) {
-							DWORD res = WriteFile(in_.write_, write_buffer_.get(), clamped_cast<DWORD>(write_buffer_.size()), nullptr, &ol_write_);
-							DWORD err = GetLastError();
-							if (res || err == ERROR_IO_PENDING) {
-								continue;
-							}
-							in_.reset();
-							write_buffer_.clear();
-							write_error_ = rwresult{ rwresult::other, err };
-						}
-					}
-					else {
-						DWORD err = GetLastError();
-						if (err == ERROR_IO_PENDING || err == ERROR_IO_INCOMPLETE) {
-							continue;
-						}
-						in_.reset();
-						write_buffer_.clear();
-						write_error_ = rwresult{ rwresult::other, err };
-					}
-
-					if (waiting_write_) {
-						waiting_write_ = false;
-						handler_->send_event<process_event>(&process_, process_event_flag::write);
-					}
-				}
-			}
-			else if (res != WAIT_OBJECT_0) {
-				break;
-			}
-		}
 	}
 
 	bool spawn(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, io_redirection redirect_mode, impersonation_token const* it = nullptr)
@@ -267,32 +202,10 @@ public:
 			}
 		}
 
-		scoped_lock l(mutex_);
-		if (handler_) {
-			sync_ = CreateEvent(nullptr, false, false, nullptr);
-			ol_read_.hEvent = CreateEvent(nullptr, true, false, nullptr);
-			ol_write_.hEvent = CreateEvent(nullptr, true, false, nullptr);
-			if (!sync_ || !ol_read_.hEvent || !ol_write_.hEvent) {
-				kill();
-				return false;
-			}
-
-			if (redirect_mode == io_redirection::redirect || redirect_mode == io_redirection::redirect_except_stderr) {
-				DWORD res = ReadFile(out_.read_, read_buffer_.get(64 * 1024), 64 * 1024, nullptr, &ol_read_);
-				DWORD err = GetLastError();
-				if (!res && err != ERROR_IO_PENDING) {
-					kill();
-					return false;
-				}
-				waiting_read_ = true;
-				write_error_ = rwresult{0};
-			}
-
-			task_ = pool_->spawn([this]() { thread_entry(); });
-			if (!task_) {
-				kill();
-				return false;
-			}
+		if (handler_ && inherit && redirect_mode != io_redirection::closeall) {
+			async_pipe_.emplace(*pool_, *this, out_.read_, in_.write_);
+			in_.write_ = INVALID_HANDLE_VALUE;
+			out_.read_ = INVALID_HANDLE_VALUE;
 		}
 
 		DWORD flags = CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW;
@@ -344,6 +257,7 @@ public:
 		}
 
 		if (!res) {
+			kill();
 			return false;
 		}
 
@@ -384,37 +298,9 @@ public:
 	bool kill(bool force = true, duration const& timeout = {})
 	{
 		if (handler_) {
-			{
-				scoped_lock l(mutex_);
-				if (task_) {
-					quit_ = true;
-					SetEvent(sync_);
-				}
-			}
-			task_.join();
-			quit_ = false;
-
-			if (out_.read_ != INVALID_HANDLE_VALUE) {
-				CancelIoEx(out_.read_, &ol_read_);
-				DWORD read{};
-				while (!GetOverlappedResult(out_.read_, &ol_read_, &read, false) && (GetLastError() == ERROR_IO_PENDING || GetLastError() == ERROR_IO_INCOMPLETE)) {
-					yield();
-				}
-			}
-			if (in_.write_ != INVALID_HANDLE_VALUE) {
-				CancelIoEx(in_.write_, &ol_write_);
-				DWORD written{};
-				while (!GetOverlappedResult(in_.write_, &ol_write_, &written, false) && (GetLastError() == ERROR_IO_PENDING || GetLastError() == ERROR_IO_INCOMPLETE)) {
-					yield();
-				}
-			}
-
+			async_pipe_.reset();
 			remove_pending_events();
 		}
-
-		reset_event(ol_read_.hEvent);
-		reset_event(ol_write_.hEvent);
-		reset_event(sync_);
 
 		in_.reset();
 		if (process_handle_ != INVALID_HANDLE_VALUE) {
@@ -437,53 +323,16 @@ public:
 
 	rwresult read(void* buffer, size_t len)
 	{
-		if (!len || out_.read_ == INVALID_HANDLE_VALUE) {
-			return rwresult{rwresult::invalid, 0};
-		}
-
 		if (handler_) {
-			scoped_lock l(mutex_);
-			while (true) {
-				if (!read_buffer_.empty()) {
-					len = std::min(read_buffer_.size(), len);
-					memcpy(buffer, read_buffer_.get(), len);
-					read_buffer_.consume(len);
-
-					if (read_buffer_.empty()) {
-						DWORD res = ReadFile(out_.read_, read_buffer_.get(64 * 1024), 64 * 1024, nullptr, &ol_read_);
-						DWORD err = GetLastError();
-						if (!res) {
-							if (err != ERROR_IO_PENDING) {
-								return rwresult{ rwresult::other, err };
-							}
-						}
-					}
-					return rwresult(len);
-				}
-				if (waiting_read_) {
-					return rwresult{ rwresult::wouldblock, 0 };
-				}
-
-				DWORD read{};
-				DWORD res = GetOverlappedResult(out_.read_, &ol_read_, &read, false);
-				if (res) {
-					read_buffer_.add(read);
-				}
-				else {
-					DWORD err = GetLastError();
-					if (err == ERROR_IO_PENDING || err == ERROR_IO_INCOMPLETE) {
-						waiting_read_ = true;
-						SetEvent(sync_);
-						return rwresult{ rwresult::wouldblock, 0 };
-					}
-					else if (err == ERROR_HANDLE_EOF || err == ERROR_BROKEN_PIPE) {
-						return rwresult(0);
-					}
-					return rwresult{ rwresult::other, err };
-				}
+			if (!async_pipe_) {
+				return rwresult{rwresult::invalid, 0};
 			}
+			return async_pipe_->read(buffer, len);
 		}
 		else {
+			if (!len || out_.read_ == INVALID_HANDLE_VALUE) {
+				return rwresult{rwresult::invalid, 0};
+			}
 			DWORD read = 0;
 			DWORD to_read = clamped_cast<DWORD>(len);
 			BOOL res = ReadFile(out_.read_, buffer, to_read, &read, nullptr);
@@ -502,27 +351,16 @@ public:
 	rwresult write(void const* buffer, size_t len)
 	{
 		if (handler_) {
-			scoped_lock l(mutex_);
-			if (waiting_write_ || !write_buffer_.empty()) {
-				waiting_write_ = true;
-				return rwresult{rwresult::wouldblock, 0};
+			if (!async_pipe_) {
+				return rwresult{rwresult::invalid, 0};
 			}
-			if (write_error_.error_) {
-				return write_error_;
-			}
-			write_buffer_.append(reinterpret_cast<unsigned char const*>(buffer), len);
-
-			DWORD res = WriteFile(in_.write_, write_buffer_.get(), clamped_cast<DWORD>(write_buffer_.size()), nullptr, &ol_write_);
-			DWORD err = GetLastError();
-			if (res || err == ERROR_IO_PENDING) {
-				SetEvent(sync_);
-				return rwresult(len);
-			}
-			in_.reset();
-			write_error_ = rwresult{ rwresult::other, err };
-			return write_error_;
+			return async_pipe_->write(buffer, len);
 		}
 		else {
+			if (!len || in_.write_ == INVALID_HANDLE_VALUE) {
+				return rwresult{rwresult::invalid, 0};
+			}
+
 			DWORD written = 0;
 			DWORD to_write = clamped_cast<DWORD>(len);
 			BOOL res = WriteFile(in_.write_, buffer, to_write, &written, nullptr);
@@ -535,28 +373,30 @@ public:
 
 	HANDLE handle() const { return process_handle_; }
 
+	virtual void operator()(fz::event_base const& ev) override
+	{
+		fz::dispatch<fz::pipe_event>(ev, this, &impl::on_pipe_event);
+	}
+
+	void on_pipe_event(async_pipe*, pipe_event_flag type)
+	{
+		if (!handler_) {
+			return;
+		}
+		handler_->send_event<process_event>(&process_, type == pipe_event_flag::read ? process_event_flag::read : process_event_flag::write);
+	}
+
 private:
 	process & process_;
 	thread_pool * pool_{};
 	event_handler * handler_{};
-
-	mutex mutex_;
-	async_task task_;
-	buffer read_buffer_;
-	buffer write_buffer_;
-	HANDLE sync_{INVALID_HANDLE_VALUE};
-	OVERLAPPED ol_read_{};
-	OVERLAPPED ol_write_{};
-	rwresult write_error_{0};
-	bool waiting_read_{true};
-	bool waiting_write_{};
-	bool quit_{};
 
 	HANDLE process_handle_{INVALID_HANDLE_VALUE};
 
 	pipe in_;
 	pipe out_;
 	pipe err_;
+	std::optional<async_pipe> async_pipe_;
 };
 
 #else

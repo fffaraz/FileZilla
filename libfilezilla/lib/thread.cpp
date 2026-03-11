@@ -3,9 +3,14 @@
 #include <cstdlib>
 #include <thread>
 
-#if defined(FZ_WINDOWS) && (defined(__MINGW32__) || defined(__MINGW64__))
-#define USE_CUSTOM_THREADS 1
+#if FZ_WINDOWS
 #include "libfilezilla/glue/windows.hpp"
+#else
+#include <unistd.h>
+#endif
+
+#if defined(__MINGW32__) || defined(__MINGW64__)
+#define USE_CUSTOM_THREADS 1
 #include <process.h>
 #endif
 
@@ -128,6 +133,16 @@ thread::~thread()
 {
 	join();
 	delete impl_;
+}
+
+size_t processor_count()
+{
+#if FZ_WINDOWS
+	DWORD n = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+#else
+	int n = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+	return (n > 0) ? static_cast<size_t>(n) : size_t(1);
 }
 
 }

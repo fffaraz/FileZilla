@@ -269,7 +269,7 @@ bool file::set_modification_time(datetime const& t)
 	return SetFileTime(fd_, nullptr, &ft, &ft) == TRUE;
 }
 
-datetime file::get_modification_time()
+datetime file::get_modification_time() const
 {
 	FILETIME ft{};
 
@@ -527,7 +527,7 @@ bool file::set_modification_time(datetime const& t)
 	return futimens(fd_, times) == 0;
 }
 
-datetime file::get_modification_time()
+datetime file::get_modification_time() const
 {
 	struct stat buf;
 
@@ -545,7 +545,7 @@ datetime file::get_modification_time()
 
 rwresult read_file(fz::file & f, buffer & out, size_t max_size)
 {
-	if (std::numeric_limits<size_t>::max() - max_size > out.size()) {
+	if (std::numeric_limits<size_t>::max() - max_size < out.size()) {
 		return rwresult{rwresult::invalid, 0};
 	}
 
@@ -586,6 +586,27 @@ rwresult read_file(fz::file & f, buffer & out, size_t max_size)
 	}
 
 	return rwresult{out.size() - old_size};
+}
+
+result read_file(native_string const& name, buffer & b, size_t max_size)
+{
+	file f;
+	auto res = f.open(name, file::reading);
+	if (!res) {
+		return res;
+	}
+
+	auto rwres = read_file(f, b, max_size);
+	if (rwres) {
+		return {result::ok};
+	}
+
+	switch (rwres.error_) {
+	case rwresult::invalid:
+		return {result::invalid, rwres.raw_};
+	default:
+		return {result::other, rwres.raw_};
+	}
 }
 
 }

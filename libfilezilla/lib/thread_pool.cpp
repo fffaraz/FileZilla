@@ -10,6 +10,7 @@ class async_task_impl final
 {
 public:
 	pooled_thread_impl * thread_{};
+	condition task_cond_;
 };
 
 class pooled_thread_impl final
@@ -39,13 +40,12 @@ public:
 				l.unlock();
 				f_();
 				l.lock();
-				task_ = nullptr;
+				if (task_) {
+					task_->task_cond_.signal(l);
+					task_ = nullptr;
+				}
 				f_ = std::function<void()>();
 				pool_.idle_.emplace_back(this);
-				if (task_waiting_) {
-					task_waiting_ = false;
-					task_cond_.signal(l);
-				}
 			}
 		}
 	}
@@ -62,11 +62,8 @@ public:
 	mutex & m_;
 	condition thread_cond_;
 
-	condition task_cond_;
-
 	thread_pool& pool_;
 
-	bool task_waiting_{};
 private:
 	bool quit_{};
 };
@@ -93,8 +90,7 @@ void async_task::join()
 	if (impl_) {
 		scoped_lock l(impl_->thread_->m_);
 		if (impl_->thread_->task_ == impl_) {
-			impl_->thread_->task_waiting_ = true;
-			impl_->thread_->task_cond_.wait(l);
+			impl_->task_cond_.wait(l);
 		}
 		delete impl_;
 		impl_ = nullptr;

@@ -4,6 +4,7 @@
 #include "fsresult.hpp"
 #include "libfilezilla.hpp"
 #include "time.hpp"
+#include "file.hpp"
 
 #ifdef FZ_WINDOWS
 #include "glue/windows.hpp"
@@ -89,21 +90,12 @@ public:
 	/// \param dirs_only If true, only directories are enumerated.
 	result begin_find_files(native_string path, bool dirs_only = false, bool query_symlink_targets = true);
 
-#if FZ_WINDOWS
 	/**
-	 * \brief Begin enumerating a directory represented by a HANDLE
+	 * \brief Begin enumerating a directory represented by a descriptor.
 	 *
-	 * Takes ownership of the HANDLE.
+	 * Takes ownership of descriptor/handle.
 	 */
-	result begin_find_files(HANDLE dir, bool dirs_only = false, bool query_symlink_targets = true);
-#else
-	/**
-	 * \brief Begin enumerating a directory represented by a file descriptor.
-	 *
-	 * Takes ownership of the descriptor.
-	 */
-	result begin_find_files(int fd, bool dirs_only = false, bool query_symlink_targets = true);
-#endif
+	result begin_find_files(file::file_t fd, bool dirs_only = false, bool query_symlink_targets = true);
 
 	/// Gets the next file in the directory. Call until it returns false.
 	bool get_next_file(native_string& name);
@@ -135,6 +127,9 @@ public:
 	 * Result is absolute.
 	 */
 	static native_string get_final_link_target(native_string const& path);
+
+	/// Returns the raw descriptor/handle, but retains ownership.
+	file::file_t fd();
 
 private:
 #ifdef FZ_WINDOWS
@@ -190,11 +185,6 @@ result FZ_PUBLIC_SYMBOL mkdir(native_string const& absolute_path, bool recurse, 
  * For recursive remove, see \ref fz::recursive_remove
  */
 result FZ_PUBLIC_SYMBOL remove_dir(native_string const& absolute_path, bool missing_dir_is_error);
-
-/// \private
-[[deprecated]] inline result FZ_PUBLIC_SYMBOL remove_dir(native_string const& absolute_path) {
-	return remove_dir(absolute_path, true);
-}
 
 /**
  * \brief Rename/move the passed file or directory

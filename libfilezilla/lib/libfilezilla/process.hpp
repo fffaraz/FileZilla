@@ -146,8 +146,6 @@ public:
 
 	/** \brief Read data from process
 	 *
-	 * This function blocks
-	 *
 	 * \return >0 Number of octets read, can be less than requested
 	 * \return 0 on EOF
 	 * \return -1 on error.
@@ -155,8 +153,6 @@ public:
 	rwresult read(void* buffer, size_t len);
 
 	/** \brief Write data data process
-	 *
-	 * This function blocks
 	 *
 	 * \return true if all octets have been written.
 	 * \return false on error.

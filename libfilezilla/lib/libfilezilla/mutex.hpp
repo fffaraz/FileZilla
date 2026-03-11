@@ -39,11 +39,29 @@ struct FZ_PUBLIC_SYMBOL mutex_debug final
 	size_t count_{};
 	std::thread::id id_{};
 	std::vector<std::list<lock_order>::iterator> own_orders_;
+	bool unchecked_{};
 };
 }
 #endif
 
 namespace fz {
+enum class mutex_flags
+{
+	recursive,
+
+#ifdef LFZ_DEBUG_MUTEXES
+	/// \private
+	debug_unchecked,
+#endif
+};
+inline bool operator&(mutex_flags lhs, mutex_flags rhs) {
+	return (static_cast<std::underlying_type_t<mutex_flags>>(lhs) & static_cast<std::underlying_type_t<mutex_flags>>(rhs)) != 0;
+}
+inline mutex_flags operator|(mutex_flags lhs, mutex_flags rhs)
+{
+	return static_cast<mutex_flags>(static_cast<std::underlying_type_t<mutex_flags>>(lhs) | static_cast<std::underlying_type_t<mutex_flags>>(rhs));
+}
+
 /**
  * \brief Lean replacement for std::(recursive_)mutex
  *
@@ -57,6 +75,7 @@ class FZ_PUBLIC_SYMBOL mutex final
 {
 public:
 	explicit mutex(bool recursive = true);
+	explicit mutex(mutex_flags flags);
 	~mutex();
 
 	mutex(mutex const&) = delete;

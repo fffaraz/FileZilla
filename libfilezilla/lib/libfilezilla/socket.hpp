@@ -755,6 +755,19 @@ std::string FZ_PUBLIC_SYMBOL socket_error_string(int error);
  */
 native_string FZ_PUBLIC_SYMBOL socket_error_description(int error);
 
+/**
+ * \brief Creates a pair of connected TCP sockets
+ *
+ * Unfortunately Windows lacks POSIX' socketpair(). While some support for
+ * Unix Domain Sockets has been added to Windows, it omits socketpair, and
+ * abstract AF_UNIX cannot be connected to (WSAEINVAL).
+ *
+ * This function creates a listen socket on localhost, connects to it,
+ * accepts the connection, closes the listen socket again and returns
+ * the connected TCP socket pair.
+ */
+std::optional<std::pair<std::unique_ptr<fz::socket>, std::unique_ptr<fz::socket>>> FZ_PUBLIC_SYMBOL create_tcp_socketpair(fz::thread_pool & pool);
+
 
 #ifdef FZ_WINDOWS
 

@@ -165,11 +165,11 @@ private:
 	size_t capacity_{};
 };
 
-inline void FZ_PUBLIC_SYMBOL wipe(buffer & b) {
+inline void wipe(buffer & b) {
 	b.wipe();
 }
 
-inline void FZ_PUBLIC_SYMBOL wipe_unused(buffer & b) {
+inline void wipe_unused(buffer & b) {
 	b.wipe_unused();
 }
 

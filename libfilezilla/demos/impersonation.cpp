@@ -42,7 +42,10 @@ int main(int argc, char *argv[])
 
 		// Wait until after parent has dropped its privileges
 		char v;
-		assert(recv(sockfd, &v, 1, 0) == 1);
+		if (recv(sockfd, &v, 1, 0) != 1) {
+			std::cerr << "Child: Could not read from socket\n";
+			abort();
+		}
 
 		std::cerr << "Child: Opening /tmp/test.txt\n";
 		fz::file f;
@@ -115,7 +118,10 @@ int main(int argc, char *argv[])
 	}
 
 	char v{};
-	assert(send(spair[0], &v, 1, 0) == 1);
+	if (send(spair[0], &v, 1, 0) != 1) {
+		std::cerr << "Parent: Could not write to socket\n";
+		abort();
+	}
 
 	fz::buffer b;
 	std::deque<int> fds;
@@ -132,8 +138,10 @@ int main(int argc, char *argv[])
 		}
 
 		if (!ret) {
-			assert(success);
-			assert(fds.empty());
+			if (!success || !fds.empty()) {
+				std::cerr << "Parent: Premature eof on socket\n";
+				abort();
+			}
 			break;
 		}
 
@@ -145,7 +153,10 @@ int main(int argc, char *argv[])
 			fds.pop_front();
 
 			auto written = f.write2("Hello world!\n", 13);
-			assert(written && written.value_ == 13);
+			if (!written || written.value_ != 13) {
+				std::cerr << "Parent: Could not write to file\n";
+				abort();
+			}
 			std::cerr << "Parent: Wrote data to file\n";
 			b.consume(5);
 

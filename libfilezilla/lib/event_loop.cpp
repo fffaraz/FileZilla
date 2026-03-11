@@ -72,15 +72,43 @@ void event_loop::remove_handler(event_handler* handler)
 {
 	scoped_lock l(sync_);
 
-	handler->removing_ = true;
+	auto is_part_of_group = [&](event_handler* h, event_handler* group) {
+		while (h) {
+			if (h == group) {
+				return true;
+			}
+			h = h->parent_;
+		}
+		return false;
+	};
 
+	// Walk the subtree, setting removing_ to true in all nodes
+	auto *cur = handler;
+	do {
+		cur->removing_ = true;
+		if (cur->child_) {
+			cur = cur->child_;
+		}
+		else {
+			while (cur && !cur->next_ && cur != handler) {
+				cur = cur->parent_;
+			}
+			if (cur && cur != handler) {
+				cur = cur->next_;
+			}
+		}
+	}
+	while (cur && cur != handler);
+
+	// Now that no new events/timers can be added for the whole subtree
 	pending_events_.erase(
 		std::remove_if(pending_events_.begin(), pending_events_.end(),
 			[&](Events::value_type const& v) {
-				if (std::get<0>(v) == handler && std::get<2>(v)) {
+				bool remove = is_part_of_group(std::get<0>(v), handler);
+				if (remove && std::get<2>(v)) {
 					delete std::get<1>(v);
 				}
-				return std::get<0>(v) == handler;
+				return remove;
 			}
 		),
 		pending_events_.end()
@@ -89,7 +117,7 @@ void event_loop::remove_handler(event_handler* handler)
 	timers_.erase(
 		std::remove_if(timers_.begin(), timers_.end(),
 			[&](timer_data const& v) {
-				return v.handler_ == handler;
+				return is_part_of_group(v.handler_, handler);
 			}
 		),
 		timers_.end()
@@ -98,9 +126,9 @@ void event_loop::remove_handler(event_handler* handler)
 		deadline_ = monotonic_clock();
 	}
 
-	if (active_handler_ == handler) {
+	if (is_part_of_group(active_handler_, handler)) {
 		if (thread::own_id() != thread_id_) {
-			while (active_handler_ == handler) {
+			while (is_part_of_group(active_handler_, handler)) {
 				l.unlock();
 				yield();
 				l.lock();
@@ -110,6 +138,9 @@ void event_loop::remove_handler(event_handler* handler)
 			resend_ = false;
 		}
 	}
+
+	// Must remove self from parents here, otherwise event handler destructor would need to lock mutex
+	handler->remove_from_parent();
 }
 
 void event_loop::filter_events(std::function<bool(event_handler*& h, event_base& ev)> const& filter)

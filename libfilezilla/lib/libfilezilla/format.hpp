@@ -29,7 +29,8 @@ enum : char {
 	pad_blank = 2,
 	with_width = 4,
 	left_align = 8,
-	always_sign = 16
+	always_sign = 16,
+	thousands = 32
 };
 
 struct field final {
@@ -329,6 +330,9 @@ parse_start:
 		else if (fmt[pos] == '+') {
 			f.flags &= ~pad_blank;
 			f.flags |= always_sign;
+		}
+		else if (fmt[pos] == '\'') {
+			f.flags |= thousands;
 		}
 		else {
 			break;

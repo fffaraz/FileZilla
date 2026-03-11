@@ -366,6 +366,11 @@ void file_reader::entry()
 }
 
 
+datetime file_reader::mtime() const
+{
+	return file_.get_modification_time();
+}
+
 file_reader_factory::file_reader_factory(std::wstring const& file, thread_pool & tpool)
 	: reader_factory(file)
 	, thread_pool_(tpool)

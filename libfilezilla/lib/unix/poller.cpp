@@ -33,12 +33,12 @@ poller::~poller()
 int poller::init()
 {
 #ifdef HAVE_EVENTFD
-   if (event_fd_ == -1) {
-	   event_fd_ = eventfd(0, EFD_CLOEXEC|EFD_NONBLOCK);
-	   if (event_fd_ == -1) {
-		   return errno;
-	   }
-    }
+	if (event_fd_ == -1) {
+		event_fd_ = eventfd(0, EFD_CLOEXEC|EFD_NONBLOCK);
+		if (event_fd_ == -1) {
+			return errno;
+		}
+	}
 #else
 	if (pipe_[0] == -1) {
 		if (!create_pipe(pipe_)) {

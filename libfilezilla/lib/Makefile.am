@@ -131,15 +131,17 @@ dist_noinst_HEADERS = \
 if FZ_WINDOWS
 
 libfilezilla_la_SOURCES += \
+	windows/async_pipe.cpp \
 	windows/dll.cpp \
 	windows/poller.cpp \
 	windows/registry.cpp \
 	windows/security_descriptor_builder.cpp
 
 nobase_include_HEADERS += \
+	libfilezilla/glue/async_pipe.hpp \
+	libfilezilla/glue/dll.hpp \
 	libfilezilla/glue/registry.hpp \
-	libfilezilla/glue/windows.hpp \
-	libfilezilla/glue/dll.hpp
+	libfilezilla/glue/windows.hpp
 
 windows/libfilezilla_rc.o: $(srcdir)/windows/libfilezilla.rc $(srcdir)/windows/manifest.xml windows/version.rc
 	@if [ -f $@~ ]; then rm $@~; fi

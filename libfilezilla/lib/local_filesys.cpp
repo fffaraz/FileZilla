@@ -243,6 +243,8 @@ static result stat2result(int res)
 		case EACCES:
 		case EPERM:
 			return {result::noperm, err};
+		case ENOENT:
+			return {result::nofile, err};
 		default:
 			return {result::other, err};
 		}
@@ -269,7 +271,11 @@ result do_get_file_info(native_string const& path, bool& is_link, local_filesys:
 		switch (err) {
 		case ERROR_ACCESS_DENIED:
 		case ERROR_LOGON_FAILURE:
+		case ERROR_INVALID_PASSWORD:
 			return {result::noperm, err};
+		case ERROR_FILE_NOT_FOUND:
+		case ERROR_PATH_NOT_FOUND:
+			return {result::nofile, err};
 		default:
 			return {result::other, err};
 		}
@@ -393,7 +399,7 @@ result do_get_file_info(native_string const& path, bool& is_link, local_filesys:
 	auto do_stat = [](struct stat& buf, char const* path, DIR*, bool follow)
 	{
 		if (follow) {
-			stat2result(stat(path, &buf));
+			return stat2result(stat(path, &buf));
 		}
 
 		return stat2result(lstat(path, &buf));
@@ -1063,6 +1069,15 @@ native_string local_filesys::get_final_link_target(native_string const& path)
 
 #endif
 	return target;
+}
+
+file::file_t local_filesys::fd()
+{
+#ifdef FZ_WINDOWS
+	return dir_;
+#else
+	return dir_ ? dirfd(dir_) : -1;
+#endif
 }
 
 native_string local_filesys::get_link_target(native_string const& path)

@@ -1629,10 +1629,6 @@ bool tls_layer_impl::extract_cert(gnutls_x509_crt_t const& cert, x509_certificat
 	else {
 		if (logger) {
 			logger->log(logmsg::debug_warning, "gnutls_x509_crt_get_dn3 failed with %d", res);
-		}
-	}
-	if (subject.empty()) {
-		if (logger) {
 			logger->log(logmsg::error, fztranslate("Could not get distinguished name of certificate subject, gnutls_x509_get_dn failed"));
 		}
 		return false;
@@ -1962,6 +1958,10 @@ void tls_layer_impl::log_verification_error(int status)
 	if (status & GNUTLS_CERT_MISSING_OCSP_STATUS) {
 		logger_.log(logmsg::error, fztranslate("The certificate requires the server to include an OCSP status in its response, but the OCSP status is missing."));
 		status &= ~GNUTLS_CERT_MISSING_OCSP_STATUS;
+	}
+	if (status & GNUTLS_CERT_INVALID_OCSP_STATUS) {
+		logger_.log(logmsg::error, fztranslate("The received OCSP status is invalid."));
+		status &= ~GNUTLS_CERT_INVALID_OCSP_STATUS;
 	}
 	if (status) {
 		if (status == GNUTLS_CERT_INVALID) {

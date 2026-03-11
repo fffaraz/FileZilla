@@ -98,6 +98,56 @@ public:
 	mutable tuple_type v_;
 };
 
+class event_source{};
+
+/// \private
+class event_with_source_base : public event_base
+{
+public:
+	using event_base::event_base;
+	virtual event_source* source() const  = 0;
+};
+
+/**
+\brief Events with associated source
+ *
+ * This is similar to simple_event, except that the type of the first event value
+ * is derived from event_source.
+ *
+ * Pending events from a given source can easily be removed
+ * using \ref event_handler::remove_events
+ */
+template<typename UniqueType, typename...Values>
+class event_with_source final : public event_with_source_base
+{
+public:
+	typedef UniqueType unique_type;
+	typedef std::tuple<Values...> tuple_type;
+
+	using event_with_source_base::event_with_source_base;
+
+	template<typename First_Value, typename...Remaining_Values>
+	explicit event_with_source(First_Value&& value, Remaining_Values&& ...values)
+		: v_(std::forward<First_Value>(value), std::forward<Remaining_Values>(values)...)
+	{
+	}
+
+	inline static size_t type() {
+		static size_t const v = get_unique_type_id(typeid(UniqueType*));
+		return v;
+	}
+
+	virtual size_t derived_type() const override {
+		return type();
+	}
+
+	virtual event_source* source() const override {
+		return static_cast<event_source*>(std::get<0>(v_));
+	}
+
+	mutable tuple_type v_;
+};
+
 /// Used as lightweight RTTI alternative during \ref dispatch
 /// \return true iff T& t = ...; t.derived_type() == ev.derived_type()
 template<typename T>

@@ -629,8 +629,6 @@ protected:
 #ifndef FZ_WINDOWS
 
 		if (socket_->family_ == AF_UNIX) {
-			host = fz::to_native(host);
-
 			sockaddr_u u{};
 			u.un.sun_family = AF_UNIX;
 			if (host.size() >= sizeof(u.un.sun_path)) {
@@ -682,6 +680,7 @@ protected:
 		addrinfo hints{};
 		hints.ai_family = socket_->family_;
 
+		in_blocking_call_ = true;
 		l.unlock();
 
 		hints.ai_socktype = SOCK_STREAM;
@@ -693,6 +692,7 @@ protected:
 		int res = getaddrinfo(host.c_str(), port.c_str(), &hints, &addressList);
 
 		l.lock();
+		in_blocking_call_ = false;
 
 		if (should_quit()) {
 			if (!res && addressList) {
@@ -758,7 +758,7 @@ protected:
 #ifdef FZ_WINDOWS
 			pollinfo info;
 			info.fd_ = socket_->fd_;
-			
+
 			if (waiting_ & WAIT_CONNECT) {
 				info.events_ |= FD_CONNECT;
 			}
@@ -963,7 +963,9 @@ protected:
 		}
 		else {
 			l.unlock();
-			delete this;
+			if (detached_) {
+				delete this;
+			}
 		}
 		return;
 	}
@@ -990,6 +992,8 @@ protected:
 	int triggered_errors_[WAIT_EVENTCOUNT];
 
 	bool quit_{};
+	bool detached_{};
+	bool in_blocking_call_{};
 };
 
 socket_base::socket_base(thread_pool& pool, event_handler* evt_handler, socket_event_source* ev_source)
@@ -1011,26 +1015,21 @@ void socket_base::detach_thread(scoped_lock & l)
 	}
 
 	socket_thread_->set_socket(nullptr, l);
-	if (socket_thread_->quit_) {
+	if (socket_thread_->in_blocking_call_) {
+		socket_thread_->quit_ = true;
+		socket_thread_->detached_ = true;
 		socket_thread_->wakeup_thread(l);
-		l.unlock();
-		delete socket_thread_;
+		socket_thread_->thread_.detach();
 		socket_thread_ = nullptr;
+		l.unlock();
 	}
 	else {
-		if (!socket_thread_->thread_) {
-			auto thread = socket_thread_;
-			socket_thread_ = nullptr;
-			l.unlock();
-			delete thread;
-		}
-		else {
-			socket_thread_->wakeup_thread(l);
-			socket_thread_->thread_.detach();
-			socket_thread_->quit_ = true;
-			socket_thread_ = nullptr;
-			l.unlock();
-		}
+		socket_thread_->quit_ = true;
+		socket_thread_->wakeup_thread(l);
+		auto thread = socket_thread_;
+		socket_thread_ = nullptr;
+		l.unlock();
+		delete thread;
 	}
 }
 
@@ -1982,14 +1981,14 @@ void socket_layer::set_event_handler(event_handler* handler, fz::socket_event_fl
 void socket_layer::forward_socket_event(socket_event_source* source, socket_event_flag t, int error)
 {
 	if (event_handler_) {
-		(*event_handler_)(socket_event(source, t, error));
+		event_handler_->send_event<socket_event>(source, t, error);
 	}
 }
 
 void socket_layer::forward_hostaddress_event(socket_event_source* source, std::string const& address)
 {
 	if (event_handler_) {
-		(*event_handler_)(hostaddress_event(source, address));
+		event_handler_->send_event<hostaddress_event>(source, address);
 	}
 }
 
@@ -2013,4 +2012,89 @@ socket_base::socket_t socket::get_descriptor()
 	scoped_lock l(socket_thread_->mutex_);
 	return fd_; // Mutex as fd_ might change during connect
 }
+
+
+
+
+namespace {
+class acceptor final : public fz::event_handler
+{
+public:
+	acceptor(fz::thread_pool & pool, fz::event_loop & loop)
+		: fz::event_handler(loop)
+	{
+		l_ = std::make_unique<fz::listen_socket>(pool, this);
+		l_->bind("127.0.0.1");
+		if (l_->listen(fz::address_type::unknown)) {
+			event_loop_.stop();
+			return;
+		}
+
+		c_ = std::make_unique<fz::socket>(pool, this);
+		int err{};
+		if (c_->connect(fz::to_native(l_->local_ip()), l_->local_port(err), l_->address_family())) {
+			event_loop_.stop();
+			return;
+		}
+
+		add_timer(fz::duration::from_milliseconds(100), true);
+	}
+
+	~acceptor()
+	{
+		remove_handler();
+	}
+
+	void operator()(fz::event_base const& ev)
+	{
+		fz::dispatch<fz::socket_event, fz::timer_event>(ev, this, &acceptor::on_socket_event, &acceptor::on_timer);
+	}
+
+	void on_socket_event(fz::socket_event_source* s, fz::socket_event_flag f, int err)
+	{
+		if (err) {
+			event_loop_.stop();
+			return;
+		}
+
+		if (s == l_.get() && f == fz::socket_event_flag::connection) {
+			s_ = l_->accept(err, nullptr);
+			if (connected_) {
+				event_loop_.stop();
+			}
+		}
+		else if (s == c_.get() && f == fz::socket_event_flag::connection) {
+			connected_ = true;
+			if (s_) {
+				event_loop_.stop();
+			}
+		}
+	}
+
+	void on_timer(fz::timer_id)
+	{
+		event_loop_.stop();
+	}
+
+	std::unique_ptr<fz::listen_socket> l_;
+	std::unique_ptr<fz::socket> c_;
+	std::unique_ptr<fz::socket> s_;
+	bool connected_{};
+};
+}
+
+std::optional<std::pair<std::unique_ptr<fz::socket>, std::unique_ptr<fz::socket>>> create_tcp_socketpair(fz::thread_pool & pool)
+{
+	fz::event_loop loop(fz::event_loop::threadless);
+	acceptor a(pool, loop);
+	loop.run();
+
+	if (a.s_ && a.connected_) {
+		a.c_->set_event_handler(nullptr);
+		return {std::make_pair(std::move(a.c_), std::move(a.s_))};
+	}
+
+	return {};
+}
+
 }

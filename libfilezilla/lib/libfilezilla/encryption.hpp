@@ -220,7 +220,7 @@ private:
 
 /// Side-channel safe comparison
 bool FZ_PUBLIC_SYMBOL operator==(symmetric_key const& lhs, symmetric_key const& rhs);
-inline bool FZ_PUBLIC_SYMBOL operator!=(symmetric_key const& lhs, symmetric_key const& rhs) {
+inline bool operator!=(symmetric_key const& lhs, symmetric_key const& rhs) {
 	return !(lhs == rhs);
 }
 

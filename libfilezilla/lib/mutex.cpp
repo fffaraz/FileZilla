@@ -8,7 +8,9 @@
 
 #ifdef LFZ_DEBUG_MUTEXES
 #include <assert.h>
+#ifndef FZ_WINDOWS
 #include <execinfo.h>
+#endif
 #include <stdlib.h>
 #include <cstddef>
 #include <memory>
@@ -18,8 +20,23 @@
 
 namespace fz {
 namespace debug {
-static mutex m_;
-thread_local std::vector<mutex*> lock_stack;
+static mutex m_{mutex_flags::debug_unchecked};
+
+// We need stack per thread, but thread_locals get destroyed too early
+// Use ordinary static in the main thread only
+static auto main_thread = std::this_thread::get_id();
+static std::vector<mutex*> mainthread_lock_stack;
+thread_local std::vector<mutex*> workerthread_lock_stack;
+std::vector<mutex*>& lock_stack()
+{
+	if (std::this_thread::get_id() == main_thread) {
+		return mainthread_lock_stack;
+	}
+	else {
+
+		return workerthread_lock_stack;
+	}
+}
 
 std::list<lock_order> orders;
 
@@ -110,6 +127,11 @@ void check_inversion(lock_order const& order, std::vector<mutex*> & stack)
 
 void order_cleanup(mutex& m)
 {
+	if (m.debug_.unchecked_) {
+		return;
+	}
+	assert(!m.debug_.count_);
+
 	scoped_lock l(debug::m_);
 	std::vector<std::list<lock_order>::iterator> own_orders;
 	std::swap(own_orders, m.debug_.own_orders_);
@@ -132,13 +154,14 @@ void order_cleanup(mutex& m)
 // Returns true if it's a new order
 void record_order(mutex& m, bool from_try)
 {
-	if (lock_stack.size() < 2) {
+	auto & stack = lock_stack();
+	if (stack.size() < 2) {
 		return;
 	}
 
 	scoped_lock l(debug::m_);
 	for (auto & order : m.debug_.own_orders_) {
-		if (match(*order, lock_stack)) {
+		if (match(*order, stack)) {
 			// Order has already been seen
 			return;
 		}
@@ -147,38 +170,40 @@ void record_order(mutex& m, bool from_try)
 	// It's a new order, if not from a try_lock, check for inversion
 	if (!from_try) {
 		for (auto const& order : m.debug_.own_orders_) {
-			check_inversion(*order, lock_stack);
+			check_inversion(*order, stack);
 		}
 	}
 
 	// Record the new order
 	orders.push_front({});
 	auto & order = orders.front();
-	order.mutexes_ = lock_stack;
+	order.mutexes_ = stack;
 #if FZ_UNIX
 	order.backtrace_.resize(100);
 	order.backtrace_.resize(backtrace(order.backtrace_.data(), 100));
 #endif
-	for (auto & sm : lock_stack) {
+	for (auto & sm : stack) {
 		sm->debug_.own_orders_.push_back(orders.begin());
 	}
 }
 
-void lock(mutex* m, bool from_try) {
-	if (m == &debug::m_) {
+void lock(mutex* m, bool from_try)
+{
+	if (m->debug_.unchecked_) {
 		return;
 	}
 
 	if (!m->debug_.count_++) {
 		m->debug_.id_ = std::this_thread::get_id();
-		lock_stack.push_back(m);
+		lock_stack().push_back(m);
 		record_order(*m, from_try);
 	}
 }
 }
 
-void unlock(mutex* m) {
-	if (m == &debug::m_) {
+void unlock(mutex* m)
+{
+	if (m->debug_.unchecked_) {
 		return;
 	}
 
@@ -189,18 +214,19 @@ void unlock(mutex* m) {
 		return;
 	}
 
-	for (size_t i = lock_stack.size() - 1; i != size_t(-1); --i) {
-		if (lock_stack[i] == m) {
-			if (i != lock_stack.size() - 1) {
-				for(; i < lock_stack.size() - 1; ++i) {
-					lock_stack[i] = lock_stack[i + 1];
+	auto & stack  = lock_stack();
+	for (size_t i = stack.size() - 1; i != size_t(-1); --i) {
+		if (stack[i] == m) {
+			if (i != stack.size() - 1) {
+				for(; i < stack.size() - 1; ++i) {
+					stack[i] = stack[i + 1];
 				}
 				// This may establish a new order
-				lock_stack.pop_back();
+				stack.pop_back();
 				record_order(*m, true);
 			}
 			else {
-				lock_stack.pop_back();
+				stack.pop_back();
 			}
 			return;
 		}
@@ -222,6 +248,9 @@ void mutex_debug::record_unlock(void* m)
 void debug_prepare_wait(void* p)
 {
 	auto m = reinterpret_cast<mutex*>(reinterpret_cast<unsigned char*>(p) - debug::mutex_offset);
+	if (m->debug_.unchecked_) {
+		return;
+	}
 	debug::waitcounter = m->debug_.count_;
 	assert(debug::waitcounter);
 	assert(m->debug_.id_ == std::this_thread::get_id());
@@ -231,6 +260,9 @@ void debug_prepare_wait(void* p)
 void debug_post_wait(void* p)
 {
 	auto m = reinterpret_cast<mutex*>(reinterpret_cast<unsigned char*>(p) - debug::mutex_offset);
+	if (m->debug_.unchecked_) {
+		return;
+	}
 	assert(!m->debug_.count_);
 	m->debug_.count_ = debug::waitcounter;
 	m->debug_.id_ = std::this_thread::get_id();
@@ -298,10 +330,29 @@ mutex::mutex(bool recursive)
 #endif
 }
 
+mutex::mutex(mutex_flags flags)
+{
+#ifdef FZ_WINDOWS
+	// Critical sections are always recursive
+	InitializeCriticalSectionEx(&m_, 0, CRITICAL_SECTION_NO_DEBUG_INFO);
+	(void)flags;
+#else
+	pthread_mutex_init(&m_, get_mutex_attributes(flags & mutex_flags::recursive));
+#endif
+#ifdef LFZ_DEBUG_MUTEXES
+	if (flags & mutex_flags::debug_unchecked) {
+		debug_.unchecked_ = true;
+	}
+	[[maybe_unused]] static bool init = [this]() {
+		debug::mutex_offset = reinterpret_cast<unsigned char*>(&m_) - reinterpret_cast<unsigned char*>(this);
+		return true;
+	}();
+#endif
+}
+
 mutex::~mutex()
 {
 #ifdef LFZ_DEBUG_MUTEXES
-	assert(!debug_.count_);
 	debug::order_cleanup(*this);
 #endif
 #ifdef FZ_WINDOWS

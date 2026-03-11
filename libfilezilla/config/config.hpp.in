@@ -11,7 +11,7 @@
 /* Set to 1 to use ciphers defined in system policy. */
 #undef FZ_USE_GNUTLS_SYSTEM_CIPHERS
 
-/* Define to 1 if you have the `accept4' function. */
+/* Define to 1 if you have the 'accept4' function. */
 #undef HAVE_ACCEPT4
 
 /* clock_gettime can be used */
@@ -20,11 +20,11 @@
 /* define if the compiler supports basic C++17 syntax */
 #undef HAVE_CXX17
 
-/* Define to 1 if you have the declaration of `CLOCK_MONOTONIC', and to 0 if
+/* Define to 1 if you have the declaration of 'CLOCK_MONOTONIC', and to 0 if
    you don't. */
 #undef HAVE_DECL_CLOCK_MONOTONIC
 
-/* Define to 1 if you have the declaration of `pthread_condattr_setclock', and
+/* Define to 1 if you have the declaration of 'pthread_condattr_setclock', and
    to 0 if you don't. */
 #undef HAVE_DECL_PTHREAD_CONDATTR_SETCLOCK
 
@@ -40,7 +40,7 @@
 /* getrandom can be used */
 #undef HAVE_GETRANDOM
 
-/* Define to 1 if you have the `gmtime_r' function. */
+/* Define to 1 if you have the 'gmtime_r' function. */
 #undef HAVE_GMTIME_R
 
 /* gmtime_s can be used */
@@ -49,7 +49,7 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `localtime_r' function. */
+/* Define to 1 if you have the 'localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
 /* localtime_s can be used */
@@ -61,10 +61,10 @@
 /* Define if thread_local isn't supported */
 #undef HAVE_NO_THREAD_LOCAL
 
-/* Define to 1 if you have the `pipe2' function. */
+/* Define to 1 if you have the 'pipe2' function. */
 #undef HAVE_PIPE2
 
-/* Define to 1 if you have the `posix_fadvise' function. */
+/* Define to 1 if you have the 'posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
 /* Define to 1 if you have the <stdint.h> header file. */
@@ -98,7 +98,7 @@
 /* Define if TCP_INFO is supported */
 #undef HAVE_TCP_INFO
 
-/* Define to 1 if you have the `timegm' function. */
+/* Define to 1 if you have the 'timegm' function. */
 #undef HAVE_TIMEGM
 
 /* Define to 1 if you have the <unistd.h> header file. */
@@ -128,7 +128,7 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* Define to 1 if all of the C90 standard headers exist (not just the ones
+/* Define to 1 if all of the C89 standard headers exist (not just the ones
    required in a freestanding environment). This macro is provided for
    backward compatibility; new code need not use it. */
 #undef STDC_HEADERS
@@ -151,8 +151,14 @@
 /* Number of bits in a file offset, on hosts where this is settable. */
 #undef _FILE_OFFSET_BITS
 
-/* Define for large files, on AIX-style hosts. */
+/* Define to 1 on platforms where this makes off_t a 64-bit type. */
 #undef _LARGE_FILES
+
+/* Number of bits in time_t, on hosts where this is settable. */
+#undef _TIME_BITS
+
+/* Define to 1 on platforms where this makes time_t a 64-bit type. */
+#undef __MINGW_USE_VC2005_COMPAT
 
 
 #endif

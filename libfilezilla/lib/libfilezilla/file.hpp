@@ -218,7 +218,7 @@ public:
 	 *
 	 * File must be opened for reading, or the call will fail.
 	 */
-	datetime get_modification_time();
+	datetime get_modification_time() const;
 
 private:
 #ifdef FZ_WINDOWS
@@ -259,6 +259,14 @@ inline file::creation_flags& operator|=(file::creation_flags & lhs, file::creati
  * On error, the size of the output buffer remains unchanged.
  */
 rwresult FZ_PUBLIC_SYMBOL read_file(fz::file & f, buffer & out, size_t max_size);
+
+/** \brief Reads the entire source file and appends if to the buffer.
+ *
+ * If file is larger than max_size, result::nospace is returned.
+ *
+ * On error, the size of the output buffer remains unchanged.
+ */
+result FZ_PUBLIC_SYMBOL read_file(native_string const& name, buffer & b, size_t max_size);
 
 }
 #endif

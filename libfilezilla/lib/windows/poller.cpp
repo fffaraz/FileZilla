@@ -24,7 +24,7 @@ int poller::init()
 
 bool poller::wait(scoped_lock & l)
 {
-    if (!signalled_) {
+	if (!signalled_) {
 		idle_wait_ = true;
 		cond_.wait(l);
 		idle_wait_ = false;
@@ -41,7 +41,7 @@ bool poller::wait(pollinfo* fds, size_t n, scoped_lock& l)
 	}
 
 	l.unlock();
-	// We intentionally ignore return code
+
 	DWORD res = WSAWaitForMultipleEvents(1, &sync_event_, false, INFINITE, false);
 
 	l.lock();
