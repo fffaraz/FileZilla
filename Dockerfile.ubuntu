@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-RUN apt-get update && apt-get install -yq curl file make automake libtool gcc g++ libboost-all-dev libgmp-dev nettle-dev libgnutls28-dev gettext libwxgtk3.2-dev libpugixml-dev xdg-utils libsqlite3-dev patch
+RUN apt-get update && apt-get install -yq automake curl file g++ gcc gettext libboost-all-dev libgmp-dev libgnutls28-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make nettle-dev patch pkg-config xdg-utils
 
 RUN \
 	cd /opt && \
