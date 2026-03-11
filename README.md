@@ -4,7 +4,8 @@ This is a fork of FileZilla, mirrored from the project's official Subversion rep
 
 ## What's changed
 
-The maximum number of simultaneous connections has been increased from 10 to 50. This patch exists because the original maintainer declined to make this change — see [ticket #5062](https://trac.filezilla-project.org/ticket/5062) for context.
+The maximum number of simultaneous connections has been increased from 10 to 50.
+This patch exists because the original maintainer refused to make this change — see [ticket #5062](https://trac.filezilla-project.org/ticket/5062) for context.
 
 ## Building
 
