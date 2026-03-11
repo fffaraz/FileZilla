@@ -1,6 +1,16 @@
 # FileZilla
-Fork of FileZilla source code from the project's Subversion repository
 
-I have also increased the maximum number of simultaneous connections from 10 to 50.
+This is a fork of FileZilla, mirrored from the project's official Subversion repository.
 
-To compile FileZilla in a docker container and create an AppImage executable, simply run `./build.sh`
+## What's changed
+
+The maximum number of simultaneous connections has been increased from 10 to 50. This patch exists because the original maintainer declined to make this change — see [ticket #5062](https://trac.filezilla-project.org/ticket/5062) for context.
+
+## Building
+
+To compile FileZilla inside a Docker container and produce an AppImage executable, simply run:
+
+```sh
+./build.sh
+./FileZilla.AppImage
+```
