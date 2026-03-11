@@ -4,7 +4,11 @@ set -exuo pipefail
 rm -f ./FileZilla.AppImage
 docker rm -f filezilla
 
-if [ -f /etc/fedora-release ]; then
+if [ "${1:-}" = "--fedora" ]; then
+	DOCKERFILE=Dockerfile.fedora
+elif [ "${1:-}" = "--ubuntu" ]; then
+	DOCKERFILE=Dockerfile.ubuntu
+elif [ -f /etc/fedora-release ]; then
 	DOCKERFILE=Dockerfile.fedora
 else
 	DOCKERFILE=Dockerfile.ubuntu
