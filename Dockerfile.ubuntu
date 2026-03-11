@@ -41,6 +41,7 @@ RUN \
 	mkdir -p /opt/approot/opt/filezilla && \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/opt/filezilla/icon.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
+	cp -P /lib/x86_64-linux-gnu/libcrypt.so* /opt/approot/opt/filezilla && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so && \
