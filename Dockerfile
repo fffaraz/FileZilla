@@ -1,5 +1,5 @@
 FROM fedora:latest
-RUN dnf install -y appstream curl file make automake libtool gcc gcc-c++ boost-devel gmp-devel nettle-devel gnutls-devel gettext-devel wxGTK-devel pugixml-devel xdg-utils sqlite-devel
+RUN dnf install -y appstream curl file make automake libtool gcc gcc-c++ boost-devel gmp-devel nettle-devel gnutls-devel gettext-devel wxGTK-devel pugixml-devel xdg-utils sqlite-devel patch
 
 RUN \
 	cd /opt && \
@@ -20,6 +20,11 @@ RUN \
 	exit 0
 
 ADD ./filezilla /opt/filezilla
+ADD ./transfer-limits.patch /opt/transfer-limits.patch
+RUN \
+	cd /opt && \
+	patch -p1 < /opt/transfer-limits.patch && \
+	exit 0
 RUN \
 	cd /opt/filezilla && \
 	mkdir -p ./src/fzshellext/32 && \
