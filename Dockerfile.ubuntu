@@ -38,7 +38,7 @@ ADD ./AppRun.sh /opt/approot/AppRun
 ADD ./filezilla.desktop /opt/approot
 RUN \
 	mkdir -p /opt/approot/opt/filezilla && \
-	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/opt/filezilla/icon.png && \
+	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/filezilla.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
 	cp -P /lib/x86_64-linux-gnu/libcrypt.so* /opt/approot/opt/filezilla && \
 	cp -P /lib/x86_64-linux-gnu/libpugixml.so* /opt/approot/opt/filezilla && \
