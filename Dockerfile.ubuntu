@@ -42,6 +42,7 @@ RUN \
 	cp -P /lib/x86_64-linux-gnu/libcrypt.so* /opt/approot/opt/filezilla && \
 	cp -P /lib/x86_64-linux-gnu/libpugixml.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
+	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so && \

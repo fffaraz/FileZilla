@@ -6,5 +6,6 @@ HERE=${SELF%/*}
 EXEC="${HERE}/opt/filezilla/filezilla"
 
 export LD_LIBRARY_PATH="/usr/lib:${HERE}/opt/filezilla"
+export FZ_DATADIR="${HERE}/opt/filezilla/share"
 
 exec "${EXEC}"
