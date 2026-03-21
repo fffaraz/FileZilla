@@ -1,6 +1,6 @@
 # FileZilla
 
-This is a fork of FileZilla, mirrored from the project's official Subversion repository.
+This is an unofficial fork of FileZilla, mirrored from the project's official Subversion repository.
 
 ## What's changed
 
