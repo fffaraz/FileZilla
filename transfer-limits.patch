@@ -7,12 +7,12 @@ index b48063e..9933e59 100644
  
  		// Normal UI options
 -		{ "Number of Transfers", 2, option_flags::numeric_clamp, 1, 10 },
-+		{ "Number of Transfers", 2, option_flags::numeric_clamp, 1, 50 },
++		{ "Number of Transfers", 2, option_flags::numeric_clamp, 1, 99 },
  		{ "Language Code", L"", option_flags::normal, 50 },
 -		{ "Concurrent download limit", 0, option_flags::numeric_clamp, 0, 10 },
 -		{ "Concurrent upload limit", 0, option_flags::numeric_clamp, 0, 10 },
-+		{ "Concurrent download limit", 0, option_flags::numeric_clamp, 0, 50 },
-+		{ "Concurrent upload limit", 0, option_flags::numeric_clamp, 0, 50 },
++		{ "Concurrent download limit", 0, option_flags::numeric_clamp, 0, 99 },
++		{ "Concurrent upload limit", 0, option_flags::numeric_clamp, 0, 99 },
  		{ "Show debug menu", false, option_flags::normal },
  		{ "File exists action download", 0, option_flags::normal, 0, 7 },
  		{ "File exists action upload", 0, option_flags::normal, 0, 7 },
@@ -25,22 +25,22 @@ index 6b5f223..0256665 100644
  		inner->Add(new wxStaticText(box, nullID, _("Maximum simultaneous &transfers:")), lay.valign);
  		impl_->transfers_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
 -		impl_->transfers_->SetRange(1, 10);
-+		impl_->transfers_->SetRange(1, 50);
++		impl_->transfers_->SetRange(1, 99);
  		impl_->transfers_->SetMaxLength(2);
  		inner->Add(impl_->transfers_, lay.valign);
 -		inner->Add(new wxStaticText(box, nullID, _("(1-10)")), lay.valign);
-+		inner->Add(new wxStaticText(box, nullID, _("(1-50)")), lay.valign);
++		inner->Add(new wxStaticText(box, nullID, _("(1-99)")), lay.valign);
  		inner->Add(new wxStaticText(box, nullID, _("Limit for concurrent &downloads:")), lay.valign);
  		impl_->downloads_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
 -		impl_->downloads_->SetRange(0, 10);
-+		impl_->downloads_->SetRange(0, 50);
++		impl_->downloads_->SetRange(0, 99);
  		impl_->downloads_->SetMaxLength(2);
  		inner->Add(impl_->downloads_, lay.valign);
  		inner->Add(new wxStaticText(box, nullID, _("(0 for no limit)")), lay.valign);
  		inner->Add(new wxStaticText(box, nullID, _("Limit for concurrent &uploads:")), lay.valign);
  		impl_->uploads_ = new wxSpinCtrlEx(box, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
 -		impl_->uploads_->SetRange(0, 10);
-+		impl_->uploads_->SetRange(0, 50);
++		impl_->uploads_->SetRange(0, 99);
  		impl_->uploads_->SetMaxLength(2);
  		inner->Add(impl_->uploads_, lay.valign);
  		inner->Add(new wxStaticText(box, nullID, _("(0 for no limit)")), lay.valign);
@@ -50,20 +50,20 @@ index 6b5f223..0256665 100644
  {
 -	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 10) {
 -		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 10 for the number of concurrent transfers."));
-+	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 50) {
-+		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 50 for the number of concurrent transfers."));
++	if (impl_->transfers_->GetValue() < 1 || impl_->transfers_->GetValue() > 99) {
++		return DisplayError(impl_->transfers_, _("Please enter a number between 1 and 99 for the number of concurrent transfers."));
  	}
  
 -	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 10) {
 -		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 10 for the number of concurrent downloads."));
-+	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 50) {
-+		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 50 for the number of concurrent downloads."));
++	if (impl_->downloads_->GetValue() < 0 || impl_->downloads_->GetValue() > 99) {
++		return DisplayError(impl_->downloads_, _("Please enter a number between 0 and 99 for the number of concurrent downloads."));
  	}
  
 -	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 10) {
 -		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 10 for the number of concurrent uploads."));
-+	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 50) {
-+		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 50 for the number of concurrent uploads."));
++	if (impl_->uploads_->GetValue() < 0 || impl_->uploads_->GetValue() > 99) {
++		return DisplayError(impl_->uploads_, _("Please enter a number between 0 and 99 for the number of concurrent uploads."));
  	}
  
  	if (fz::to_integral<int>(impl_->dllimit_->GetValue().ToStdWstring(), -1) < 0) {
@@ -76,7 +76,7 @@ index a8b254b..1217c16 100644
  	impl_->max_conns_ = new wxSpinCtrlEx(&parent, nullID, wxString(), wxDefaultPosition, wxSize(lay.dlgUnits(26), -1));
  	impl_->max_conns_->SetMaxLength(2);
 -	impl_->max_conns_->SetRange(1, 10);
-+	impl_->max_conns_->SetRange(1, 50);
++	impl_->max_conns_->SetRange(1, 99);
  	row->Add(impl_->max_conns_, lay.valign);
  
  	impl_->limit_max_conns_->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent const& ev){ impl_->max_conns_->Enable(ev.IsChecked()); });
