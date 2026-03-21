@@ -39,7 +39,13 @@ RUN \
 	mkdir -p /opt/approot/opt/filezilla && \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/opt/filezilla/icon.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
+	cp -P /lib64/libcrypt.so* /opt/approot/opt/filezilla && \
+	cp -P /lib64/libpugixml.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib64/libwx_*.so* /opt/approot/opt/filezilla && \
+	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
+	cp /usr/local/bin/fzsftp /opt/approot/opt/filezilla && \
+	cp /usr/local/bin/fzputtygen /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so && \
 	chmod +x /opt/approot/AppRun && \
