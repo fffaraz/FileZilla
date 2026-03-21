@@ -47,7 +47,7 @@ RUN \
 	cp /usr/local/bin/fzsftp /opt/approot/opt/filezilla && \
 	cp /usr/local/bin/fzputtygen /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
-	strip -s /opt/approot/opt/filezilla/*.so && \
+	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun && \
 	exit 0
 
