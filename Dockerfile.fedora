@@ -24,8 +24,6 @@ ADD ./transfer-limits.patch /opt/transfer-limits.patch
 RUN \
 	cd /opt && \
 	patch -p1 < /opt/transfer-limits.patch && \
-	exit 0
-RUN \
 	cd /opt/filezilla && \
 	mkdir -p ./src/fzshellext/32 && \
 	mkdir -p ./src/fzshellext/64 && \
