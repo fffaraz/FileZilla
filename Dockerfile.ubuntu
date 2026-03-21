@@ -7,8 +7,9 @@ RUN \
 	chmod +x ./appimagetool-x86_64.AppImage && \
 	exit 0
 
-ENV CFLAGS="-O3 -march=native"
-ENV CXXFLAGS="-O3 -march=native"
+ENV CFLAGS="-O3 -march=native -flto"
+ENV CXXFLAGS="-O3 -march=native -flto"
+ENV LDFLAGS="-flto"
 
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
@@ -47,8 +48,10 @@ RUN \
 	cp /usr/local/bin/fzsftp /opt/approot/opt/filezilla && \
 	cp /usr/local/bin/fzputtygen /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
+	strip -s /opt/approot/opt/filezilla/fzsftp && \
+	strip -s /opt/approot/opt/filezilla/fzputtygen && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun && \
 	exit 0
 
-ENTRYPOINT ["/opt/appimagetool-x86_64.AppImage", "/opt/approot", "/opt/FileZilla.AppImage"]
+ENTRYPOINT ["/opt/appimagetool-x86_64.AppImage", "--comp", "zstd", "/opt/approot", "/opt/FileZilla.AppImage"]
