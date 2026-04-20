@@ -10,6 +10,7 @@ class CSiteManagerDropTarget;
 class CSiteManagerSite;
 class COptionsBase;
 class wxTreeCtrlEx;
+class login_manager;
 
 class CSiteManagerDialog final : public wxDialogEx
 {
@@ -25,7 +26,7 @@ public:
 	};
 
 	/// Constructors
-	CSiteManagerDialog(COptionsBase & options);
+	CSiteManagerDialog(COptionsBase & options, login_manager & lim);
 	virtual ~CSiteManagerDialog();
 
 	// Creation. If pServer is set, it will cause a new item to be created.
@@ -83,6 +84,7 @@ protected:
 	void OnSearch(wxCommandEvent&);
 
 	COptionsBase & options_;
+	login_manager & login_manager_;
 
 	CInterProcessMutex* m_pSiteManagerMutex{};
 

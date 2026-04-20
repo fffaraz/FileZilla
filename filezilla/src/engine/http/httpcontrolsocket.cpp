@@ -220,11 +220,7 @@ void CHttpControlSocket::SetSocketBufferSizes()
 	}
 
 	const int size_read = engine_.GetOptions().get_int(OPTION_SOCKET_BUFFERSIZE_RECV);
-#if FZ_WINDOWS
 	const int size_write = -1;
-#else
-	const int size_write = engine_.GetOptions().get_int(OPTION_SOCKET_BUFFERSIZE_SEND);
-#endif
 	socket_->set_buffer_sizes(size_read, size_write);
 }
 

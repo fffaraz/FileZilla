@@ -8,10 +8,11 @@ class COptions;
 class COptionsPage;
 class CMainFrame;
 class wxTreeCtrlEx;
+class login_manager;
 class CSettingsDialog final : public wxDialogEx
 {
 public:
-	CSettingsDialog(COptions& options, CFileZillaEngineContext & engine_context);
+	CSettingsDialog(COptions& options, login_manager & lim, CFileZillaEngineContext & engine_context);
 	virtual ~CSettingsDialog();
 
 	bool Create(CMainFrame* pMainFrame);
@@ -27,6 +28,7 @@ protected:
 	bool LoadPages();
 
 	COptions & options_;
+	login_manager & login_manager_;
 
 	wxPanel* pagePanel_{};
 

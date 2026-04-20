@@ -94,7 +94,6 @@ enum class ServerFormat
 
 enum CharsetEncoding
 {
-	ENCODING_AUTO,
 	ENCODING_UTF8,
 	ENCODING_CUSTOM
 };
@@ -230,7 +229,7 @@ protected:
 	int m_timezoneOffset{};
 	PasvMode m_pasvMode{MODE_DEFAULT};
 	bool m_bypassProxy{};
-	CharsetEncoding m_encodingType{ENCODING_AUTO};
+	CharsetEncoding m_encodingType{ENCODING_UTF8};
 	std::wstring m_customEncoding;
 
 	std::vector<std::wstring> m_postLoginCommands;

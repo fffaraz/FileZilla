@@ -5,23 +5,24 @@
 #include "listctrlex.h"
 #include "treectrlex.h"
 
-template<class Control, class Base>
-CScrollableDropTarget<Control, Base>::CScrollableDropTarget(Control* pCtrl)
-	: m_pCtrl(pCtrl)
+template<class Control, class Base, typename ...Args>
+CScrollableDropTarget<Control, Base, Args...>::CScrollableDropTarget(Control* pCtrl, Args&& ...args)
+	: Base(std::forward<Args>(args)...)
+	, m_pCtrl(pCtrl)
 {
-	m_timer.SetOwner(this);
+	m_timer.Bind(wxEVT_TIMER, [&](wxTimerEvent&) { OnTimer(); });
 }
 
 
-template<class Control, class Base>
-bool CScrollableDropTarget<Control, Base>::OnDrop(wxCoord, wxCoord)
+template<class Control, class Base, typename ...Args>
+bool CScrollableDropTarget<Control, Base, Args...>::OnDrop(wxCoord, wxCoord)
 {
 	m_timer.Stop();
 	return true;
 }
 
-template<class Control, class Base>
-wxDragResult CScrollableDropTarget<Control, Base>::OnDragOver(wxCoord x, wxCoord y, wxDragResult def)
+template<class Control, class Base, typename ...Args>
+wxDragResult CScrollableDropTarget<Control, Base, Args...>::OnDragOver(wxCoord x, wxCoord y, wxDragResult def)
 {
 	def = FixupDragResult(def);
 	if (!m_timer.IsRunning() && IsScroll(wxPoint(x, y))) {
@@ -31,14 +32,14 @@ wxDragResult CScrollableDropTarget<Control, Base>::OnDragOver(wxCoord x, wxCoord
 	return def;
 }
 
-template<class Control, class Base>
-void CScrollableDropTarget<Control, Base>::OnLeave()
+template<class Control, class Base, typename ...Args>
+void CScrollableDropTarget<Control, Base, Args...>::OnLeave()
 {
 	m_timer.Stop();
 }
 
-template<class Control, class Base>
-wxDragResult CScrollableDropTarget<Control, Base>::OnEnter(wxCoord x, wxCoord y, wxDragResult def)
+template<class Control, class Base, typename ...Args>
+wxDragResult CScrollableDropTarget<Control, Base, Args...>::OnEnter(wxCoord x, wxCoord y, wxDragResult def)
 {
 	def = FixupDragResult(def);
 	if (!m_timer.IsRunning() && IsScroll(wxPoint(x, y))) {
@@ -48,14 +49,14 @@ wxDragResult CScrollableDropTarget<Control, Base>::OnEnter(wxCoord x, wxCoord y,
 	return def;
 }
 
-template<class Control, class Base>
-bool CScrollableDropTarget<Control, Base>::IsScroll(wxPoint p) const
+template<class Control, class Base, typename ...Args>
+bool CScrollableDropTarget<Control, Base, Args...>::IsScroll(wxPoint p) const
 {
 	return IsTopScroll(p) || IsBottomScroll(p);
 }
 
-template<class Control, class Base>
-bool CScrollableDropTarget<Control, Base>::IsTopScroll(wxPoint p) const
+template<class Control, class Base, typename ...Args>
+bool CScrollableDropTarget<Control, Base, Args...>::IsTopScroll(wxPoint p) const
 {
 	if (!m_pCtrl->GetItemCount()) {
 		return false;
@@ -93,8 +94,8 @@ bool CScrollableDropTarget<Control, Base>::IsTopScroll(wxPoint p) const
 	return true;
 }
 
-template<class Control, class Base>
-bool CScrollableDropTarget<Control, Base>::IsBottomScroll(wxPoint p) const
+template<class Control, class Base, typename ...Args>
+bool CScrollableDropTarget<Control, Base, Args...>::IsBottomScroll(wxPoint p) const
 {
 	if (!m_pCtrl->GetItemCount()) {
 		return false;
@@ -130,8 +131,8 @@ bool CScrollableDropTarget<Control, Base>::IsBottomScroll(wxPoint p) const
 	return true;
 }
 
-template<class Control, class Base>
-void CScrollableDropTarget<Control, Base>::OnTimer(wxTimerEvent& /*event*/)
+template<class Control, class Base, typename ...Args>
+void CScrollableDropTarget<Control, Base, Args...>::OnTimer()
 {
 	if (!m_pCtrl->GetItemCount()) {
 		return;
@@ -165,8 +166,8 @@ void CScrollableDropTarget<Control, Base>::OnTimer(wxTimerEvent& /*event*/)
 	m_timer.Start(100 - m_count, true);
 }
 
-template<class Control, class Base>
-wxDragResult CScrollableDropTarget<Control, Base>::FixupDragResult(wxDragResult res)
+template<class Control, class Base, typename ...Args>
+wxDragResult CScrollableDropTarget<Control, Base, Args...>::FixupDragResult(wxDragResult res)
 {
 #ifdef __WXMAC__
 	if (res == wxDragNone && wxGetKeyState(WXK_CONTROL)) {
@@ -181,10 +182,6 @@ wxDragResult CScrollableDropTarget<Control, Base>::FixupDragResult(wxDragResult 
 	return res;
 }
 
-BEGIN_EVENT_TABLE_TEMPLATE2(CScrollableDropTarget, wxEvtHandler, Control, Base)
-EVT_TIMER(wxID_ANY, CScrollableDropTarget::OnTimer)
-END_EVENT_TABLE()
-
 template class CScrollableDropTarget<wxTreeCtrlEx, wxDropTarget>;
-template class CScrollableDropTarget<wxTreeCtrlEx, FileDropTargetBase>;
-template class CScrollableDropTarget<wxListCtrlEx, FileDropTargetBase>;
+template class CScrollableDropTarget<wxTreeCtrlEx, FileDropTargetBase, COptionsBase&, login_manager&>;
+template class CScrollableDropTarget<wxListCtrlEx, FileDropTargetBase, COptionsBase&, login_manager&>;

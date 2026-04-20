@@ -20,6 +20,11 @@ wxCSConv& GetConverter(std::wstring const& encoding)
 }
 }
 
+bool CustomEncodingConverter::isValidEncoding(std::wstring const& encoding)
+{
+	return GetConverter(encoding).IsOk();
+}
+
 CustomEncodingConverter const& CustomEncodingConverter::Get()
 {
 	static CustomEncodingConverter ret;
@@ -38,7 +43,7 @@ std::wstring CustomEncodingConverter::toLocal(std::wstring const& encoding, char
 		}
 
 		size_t written = conv.ToWChar(&toLocalBuffer_[0], toLocalBuffer_.size() - 1, buffer, len);
-		if (written != wxCONV_FAILED) { 
+		if (written != wxCONV_FAILED) {
 			ret.assign(&toLocalBuffer_[0], &toLocalBuffer_[written]);
 		}
 	}

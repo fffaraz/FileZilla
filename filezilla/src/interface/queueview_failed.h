@@ -1,11 +1,13 @@
 #ifndef FILEZILLA_INTERFACE_QUEUEVIEW_FAILED_HEADER
 #define FILEZILLA_INTERFACE_QUEUEVIEW_FAILED_HEADER
 
+#include "queue.h"
+
 class CQueueViewFailed : public CQueueViewBase
 {
 public:
-	CQueueViewFailed(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame);
-	CQueueViewFailed(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame, const wxString& title);
+	CQueueViewFailed(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame);
+	CQueueViewFailed(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame, const wxString& title);
 
 protected:
 

@@ -12,6 +12,10 @@
 #include <wx/statbmp.h>
 #include <wx/statbox.h>
 
+#include <libfilezilla/version.hpp>
+
+#include <fzssh/version.hpp>
+
 CAboutDialog::CAboutDialog(COptionsBase& options)
 	: options_(options)
 {
@@ -19,7 +23,7 @@ CAboutDialog::CAboutDialog(COptionsBase& options)
 
 bool CAboutDialog::Create(wxWindow* parent)
 {
-	wxDialogEx::Create(parent, -1, _("About FileZilla"));
+	wxDialogEx::Create(parent, nullID, _("About FileZilla"));
 
 	auto & lay = layout();
 	auto main = lay.createMain(this, 1);
@@ -36,12 +40,12 @@ bool CAboutDialog::Create(wxWindow* parent)
 	if (CBuildInfo::GetBuildType() == L"nightly") {
 		version += L"-nightly";
 	}
-	topRight->Add(new wxStaticText(this, -1, version));
-	topRight->Add(new wxStaticText(this, -1, L"Copyright (C) 2004-2025  Tim Kosse"));
+	topRight->Add(new wxStaticText(this, nullID, version));
+	topRight->Add(new wxStaticText(this, nullID, L"Copyright (C) 2004-2026  Tim Kosse"));
 
 	auto homepage = lay.createFlex(2);
-	homepage->Add(new wxStaticText(this, -1, _("Homepage:")), lay.valign);
-	homepage->Add(new wxHyperlinkCtrl(this, -1, L"https://filezilla-project.org/", L"https://filezilla-project.org/"), lay.valign);
+	homepage->Add(new wxStaticText(this, nullID, _("Homepage:")), lay.valign);
+	homepage->Add(new wxHyperlinkCtrl(this, nullID, L"https://filezilla-project.org/", L"https://filezilla-project.org/"), lay.valign);
 	topRight->Add(homepage);
 
 	{
@@ -49,87 +53,111 @@ bool CAboutDialog::Create(wxWindow* parent)
 
 		std::wstring host = CBuildInfo::GetHostname();
 		if (!host.empty()) {
-			inner->Add(new wxStaticText(box, -1, _("Compiled for:")));
-			inner->Add(new wxStaticText(box, -1, host));
+			inner->Add(new wxStaticText(box, nullID, _("Compiled for:")));
+			inner->Add(new wxStaticText(box, nullID, host));
 		}
 
 		std::wstring build = CBuildInfo::GetBuildSystem();
 		if (!build.empty()) {
-			inner->Add(new wxStaticText(box, -1, _("Compiled on:")));
-			inner->Add(new wxStaticText(box, -1, build));
+			inner->Add(new wxStaticText(box, nullID, _("Compiled on:")));
+			inner->Add(new wxStaticText(box, nullID, build));
 		}
-		inner->Add(new wxStaticText(box, -1, _("Build date:")));
-		inner->Add(new wxStaticText(box, -1, CBuildInfo::GetBuildDateString()));
+		inner->Add(new wxStaticText(box, nullID, _("Build date:")));
+		inner->Add(new wxStaticText(box, nullID, CBuildInfo::GetBuildDateString()));
 
-		inner->Add(new wxStaticText(box, -1, _("Compiled with:")));
+		inner->Add(new wxStaticText(box, nullID, _("Compiled with:")));
 		wxString cc = CBuildInfo::GetCompiler();
 		WrapText(this, cc, 300);
-		inner->Add(new wxStaticText(box, -1, cc));
+		inner->Add(new wxStaticText(box, nullID, cc));
 
 		wxString compilerFlags = CBuildInfo::GetCompilerFlags();
 		if (!compilerFlags.empty()) {
-			inner->Add(new wxStaticText(box, -1, _("Compiler flags:")));
+			inner->Add(new wxStaticText(box, nullID, _("Compiler flags:")));
 			WrapText(this, compilerFlags, 300);
-			inner->Add(new wxStaticText(box, -1, compilerFlags));
+			inner->Add(new wxStaticText(box, nullID, compilerFlags));
 		}
 	}
 
 	{
-		auto [box, inner] = lay.createStatBox(main, _("Linked against"), 2);
-		inner->Add(new wxStaticText(box, -1, _("wxWidgets:")));
-		inner->Add(new wxStaticText(box, -1, GetDependencyVersion(gui_lib_dependency::wxwidgets)));
-		inner->Add(new wxStaticText(box, -1, _("GnuTLS:")));
-		inner->Add(new wxStaticText(box, -1, GetDependencyVersion(lib_dependency::gnutls)));
-		inner->Add(new wxStaticText(box, -1, _("SQLite:")));
-		inner->Add(new wxStaticText(box, -1, GetDependencyVersion(gui_lib_dependency::sqlite)));
+		auto [box, inner] = lay.createStatBox(main, _("Linked against"), 1);
+
+		auto deps = lay.createFlex(2);
+		inner->Add(deps);
+		deps->Add(new wxStaticText(box, nullID, _("libfilezilla:")));
+		deps->Add(new wxStaticText(box, nullID, fz::to_wstring(fz::get_version_string())));
+		deps->Add(new wxStaticText(box, nullID, _("fzssh:")));
+		deps->Add(new wxStaticText(box, nullID, fz::to_wstring(fz::ssh::get_version_string())));
+		deps->Add(new wxStaticText(box, nullID, _("wxWidgets:")));
+		deps->Add(new wxStaticText(box, nullID, GetDependencyVersion(gui_lib_dependency::wxwidgets)));
+		deps->Add(new wxStaticText(box, nullID, _("GnuTLS:")));
+		deps->Add(new wxStaticText(box, nullID, GetDependencyVersion(lib_dependency::gnutls)));
+		deps->Add(new wxStaticText(box, nullID, _("SQLite:")));
+		deps->Add(new wxStaticText(box, nullID, GetDependencyVersion(gui_lib_dependency::sqlite)));
+
+		auto legal = new wxHyperlinkCtrl(box, nullID, _("License and copyright information"), {});
+		inner->Add(legal, lay.valign);
+
+		legal->Bind(wxEVT_HYPERLINK, [this](wxHyperlinkEvent const&) {
+			wxMessageBoxEx(
+				L"FileZilla makes use of the following third-party libraries:\n\n"
+				"libfilezilla - Copyright (C) 2015-2026 Tim Kosse - GPLv2 or later\n\n"
+				"fzssh - Copyright (C) 2025-2026 Tim Kosse and Business Follows srl. - AGPLv3 or later\n\n"
+				"wxWidgets - Copyright (C) wxWidgets - wxWindows Library Licence version 3.1 or later\n\n"
+				"GnuTLS - Copyright (C) 2000-2023 Free Software Foundation - LGPLv2.1 or later\n\n"
+				"Nettle - Copyright (C) 2001-2025 Niels Möller, and others - GPLv2 or later, LGPLv3 or later\n\n"
+				"GMP - Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc. - GPLv2 or later, LGPLv3 or later\n\n"
+				"pugixml - Copyright (C) 2006-2026 Arseny Kapoulkine - MIT\n\n"
+				L"Third-party library copyright and license information");
+		});
+
 	}
 
 	{
 		auto [box, inner] = lay.createStatBox(main, _("System details"), 2);
 		auto os = wxGetOsDescription();
 		if (!os.empty()) {
-			inner->Add(new wxStaticText(box, -1, _("Operating System:")));
-			inner->Add(new wxStaticText(box, -1, os));
+			inner->Add(new wxStaticText(box, nullID, _("Operating System:")));
+			inner->Add(new wxStaticText(box, nullID, os));
 		}
 
 		auto sysver = GetSystemVersion();
 		if (sysver) {
-			inner->Add(new wxStaticText(box, -1, _("OS version:")));
+			inner->Add(new wxStaticText(box, nullID, _("OS version:")));
 			wxString osVersion = wxString::Format(_T("%u.%u"), sysver.major, sysver.minor);
-			inner->Add(new wxStaticText(box, -1, osVersion));
+			inner->Add(new wxStaticText(box, nullID, osVersion));
 		}
 #ifdef __WXMSW__
-		inner->Add(new wxStaticText(box, -1, _("Platform:")));
+		inner->Add(new wxStaticText(box, nullID, _("Platform:")));
 		if (::wxIsPlatform64Bit()) {
-			inner->Add(new wxStaticText(box, -1, _("64-bit system")));
+			inner->Add(new wxStaticText(box, nullID, _("64-bit system")));
 		}
 		else {
-			inner->Add(new wxStaticText(box, -1, _("32-bit system")));
+			inner->Add(new wxStaticText(box, nullID, _("32-bit system")));
 		}
 #endif
 
 		wxString cpuCaps = CBuildInfo::GetCPUCaps(' ');
 		if (!cpuCaps.empty()) {
-			inner->Add(new wxStaticText(box, -1, _("CPU features:")));
+			inner->Add(new wxStaticText(box, nullID, _("CPU features:")));
 			WrapText(this, cpuCaps, 300);
-			inner->Add(new wxStaticText(box, -1, cpuCaps));
+			inner->Add(new wxStaticText(box, nullID, cpuCaps));
 		}
 
-		inner->Add(new wxStaticText(box, -1, _("Settings directory:")));
-		inner->Add(new wxStaticText(box, -1, options_.get_string(OPTION_DEFAULT_SETTINGSDIR)));
+		inner->Add(new wxStaticText(box, nullID, _("Settings directory:")));
+		inner->Add(new wxStaticText(box, nullID, options_.get_string(OPTION_DEFAULT_SETTINGSDIR)));
 	}
 
 	main->Add(new wxStaticLine(this), lay.grow);
 	auto buttons = lay.createFlex(3);
 	main->Add(buttons, lay.grow);
 
-	auto copy = new wxButton(this, -1, _("&Copy to clipboard"));
+	auto copy = new wxButton(this, nullID, _("&Copy to clipboard"));
 	copy->Bind(wxEVT_BUTTON, [this](wxEvent const&){ OnCopy(); });
 	buttons->Add(copy, lay.valign);
 	buttons->AddStretchSpacer();
 	buttons->AddGrowableCol(1);
 
-	auto ok = new wxButton(this, -1, _("OK"));
+	auto ok = new wxButton(this, nullID, _("OK"));
 	ok->Bind(wxEVT_BUTTON, [this](wxEvent const&){ EndModal(wxID_OK); });
 	ok->SetDefault();
 	ok->SetFocus();

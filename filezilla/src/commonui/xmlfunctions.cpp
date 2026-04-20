@@ -80,15 +80,12 @@ void SetServer(pugi::xml_node node, Site const& site, login_manager& lim, COptio
 	if (CServer::ProtocolHasFeature(site.server.GetProtocol(), ProtocolFeature::Charset)) {
 		switch (site.server.GetEncodingType())
 		{
-		case ENCODING_AUTO:
-			AddTextElementUtf8(node, "EncodingType", "Auto");
-			break;
-		case ENCODING_UTF8:
-			AddTextElementUtf8(node, "EncodingType", "UTF-8");
-			break;
 		case ENCODING_CUSTOM:
 			AddTextElementUtf8(node, "EncodingType", "Custom");
 			AddTextElement(node, "CustomEncoding", site.server.GetCustomEncoding());
+			break;
+		default:
+			AddTextElementUtf8(node, "EncodingType", "UTF-8");
 			break;
 		}
 	}

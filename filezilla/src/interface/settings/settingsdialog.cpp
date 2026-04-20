@@ -27,8 +27,9 @@
 #include "../Mainfrm.h"
 #include "../treectrlex.h"
 
-CSettingsDialog::CSettingsDialog(COptions & options, CFileZillaEngineContext & engine_context)
+CSettingsDialog::CSettingsDialog(COptions & options, login_manager & lim, CFileZillaEngineContext & engine_context)
 	: options_(options)
+	, login_manager_(lim)
 	, m_engine_context(engine_context)
 {
 }
@@ -135,7 +136,7 @@ bool CSettingsDialog::LoadPages()
 #endif
 	AddPage(_("File exists action"), new COptionsPageFileExists, 1);
 	AddPage(_("Interface"), new COptionsPageInterface, 0);
-	AddPage(_("Passwords"), new COptionsPagePasswords, 1);
+	AddPage(_("Passwords"), new COptionsPagePasswords(login_manager_), 1);
 	AddPage(_("Themes"), new COptionsPageThemes, 1);
 	AddPage(_("Date/time format"), new COptionsPageDateFormatting, 1);
 	AddPage(_("Filesize format"), new COptionsPageSizeFormatting, 1);

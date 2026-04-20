@@ -15,7 +15,7 @@ class CRemoteTreeView final : public wxTreeCtrlEx, CSystemImageList, CStateEvent
 	friend class CRemoteTreeViewDropTarget;
 
 public:
-	CRemoteTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView* pQueue, COptionsBase & options);
+	CRemoteTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView* pQueue, COptionsBase & options, login_manager & lim);
 	virtual ~CRemoteTreeView();
 
 protected:
@@ -58,6 +58,7 @@ protected:
 
 	wxTreeItemId m_contextMenuItem;
 
+	login_manager & login_manager_;
 	COptionsBase & options_;
 
 	DECLARE_EVENT_TABLE()

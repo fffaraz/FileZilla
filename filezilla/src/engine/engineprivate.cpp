@@ -741,10 +741,6 @@ void CFileZillaEnginePrivate::OnSetAsyncRequestReplyEvent(std::unique_ptr<CAsync
 	if (!controlSocket_) {
 		return;
 	}
-	if (!IsPendingAsyncRequestReply(reply)) {
-		return;
-	}
-
 	controlSocket_->CallSetAsyncRequestReply(reply.get());
 }
 
@@ -782,29 +778,9 @@ std::unique_ptr<CNotification> CFileZillaEnginePrivate::GetNextNotification()
 	return pNotification;
 }
 
-bool CFileZillaEnginePrivate::SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification)
+void CFileZillaEnginePrivate::SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification)
 {
-	fz::scoped_lock lock(mutex_);
-	if (!IsPendingAsyncRequestReply(pNotification)) {
-		return false;
-	}
-
 	send_event<CAsyncRequestReplyEvent>(std::move(pNotification));
-
-	return true;
-}
-
-bool CFileZillaEnginePrivate::IsPendingAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> const& pNotification)
-{
-	if (!pNotification) {
-		return false;
-	}
-
-	if (!IsBusy()) {
-		return false;
-	}
-
-	return pNotification->requestNumber == asyncRequestCounter_;
 }
 
 CTransferStatus CFileZillaEnginePrivate::GetTransferStatus(bool &changed)

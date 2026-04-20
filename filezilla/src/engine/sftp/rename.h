@@ -13,11 +13,11 @@ public:
 	{}
 
 	virtual int Send() override;
-	virtual int ParseResponse() override;
-	virtual int SubcommandResult(int, COpData const&) override;
+	virtual int ParseResponse() override { return FZ_REPLY_INTERNALERROR; }
+
+	virtual continuation do_process_status(fz::ssh::sftp::status_code code, std::wstring_view msg) override;
 
 	CRenameCommand command_;
-	bool useAbsolute_{};
 };
 
 #endif

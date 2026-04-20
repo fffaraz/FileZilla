@@ -1,6 +1,11 @@
 #ifndef FILEZILLA_INTERFACE_WRAPENGINE_HEADER
 #define FILEZILLA_INTERFACE_WRAPENGINE_HEADER
 
+#include <map>
+#include <wx/font.h>
+#include <wx/window.h>
+
+class wxSizer;
 class CWrapEngine
 {
 public:

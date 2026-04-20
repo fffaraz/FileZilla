@@ -584,6 +584,10 @@ bool CServer::ProtocolHasFeature(ServerProtocol const protocol, ProtocolFeature 
 		}
 		break;
 	case ProtocolFeature::ServerType:
+		if (protocol == FTP || protocol == FTPS || protocol == FTPES || protocol == INSECURE_FTP) {
+			return true;
+		}
+		break;
 	case ProtocolFeature::UnixChmod:
 		if (protocol == FTP || protocol == FTPS || protocol == FTPES || protocol == INSECURE_FTP ||
 			protocol == SFTP) {
@@ -930,6 +934,8 @@ std::vector<ParameterTraits> const& ExtraServerParameterTraits(ServerProtocol pr
 	switch (protocol) {
 	case FTP:
 	case FTPS:
+	case FTPES:
+	case INSECURE_FTP:
 		{
 			static std::vector<ParameterTraits> const ret = []() {
 				std::vector<ParameterTraits> ret;

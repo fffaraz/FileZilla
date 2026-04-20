@@ -21,7 +21,9 @@ EVT_BUTTON(XRCID("wxID_CANCEL"), CFileExistsDlg::OnCancel)
 EVT_CHECKBOX(wxID_ANY, CFileExistsDlg::OnCheck)
 END_EVENT_TABLE()
 
-CFileExistsDlg::CFileExistsDlg(CFileExistsNotification *pNotification)
+CFileExistsDlg::CFileExistsDlg(CFileExistsNotification *pNotification, COptionsBase & options, TimeFormatter & time_formatter)
+	: options_(options)
+	, time_formatter_(time_formatter)
 {
 	m_pNotification = pNotification;
 	m_action = CFileExistsNotification::overwrite;
@@ -124,13 +126,12 @@ void CFileExistsDlg::DisplayFile(bool left, std::wstring const& name, int64_t si
 
 	wxString sizeStr = _("Size unknown");
 	if (size >= 0) {
-		auto & options = *COptions::Get();
-		sizeStr = SizeFormatter(options).Format(size, UnitPrefix::byte);
+		sizeStr = SizeFormatter(options_).Format(size, UnitPrefix::byte);
 	}
 
 	wxString timeStr = _("Date/time unknown");
 	if (!time.empty()) {
-		timeStr = CTimeFormat::Format(time);
+		timeStr = time_formatter_.Format(time);
 	}
 
 	xrc_call(*this, left ? "ID_FILE1_NAME" : "ID_FILE2_NAME", &wxStaticText::SetLabel, labelName);

@@ -12,10 +12,12 @@
 #include <libfilezilla/buffer.hpp>
 #include <libfilezilla/socket.hpp>
 
-enum class async_request_state : unsigned {
-	none,
+#include <optional>
+
+enum class async_request_type : unsigned {
 	waiting,
-	parallel
+	parallel,
+	global
 };
 
 class COpData
@@ -55,7 +57,8 @@ public:
 	logmsg::type sendLogLevel_{logmsg::debug_verbose};
 
 	bool topLevelOperation_{}; // If set to true, if this command finishes, any other commands on the stack do not get a SubCommandResult
-	async_request_state async_request_state_{};
+
+	std::optional<std::pair<std::shared_ptr<unsigned int>, async_request_type>> pending_async_request_;
 };
 
 template<typename T>
@@ -162,7 +165,13 @@ class CMkdirOpData : public COpData
 {
 public:
 	CMkdirOpData(wchar_t const* name)
-		: COpData(Command::mkdir, name)
+	    : COpData(Command::mkdir, name)
+	{
+	}
+
+	CMkdirOpData(wchar_t const* name, CServerPath const& path)
+	    : COpData(Command::mkdir, name)
+	    , path_(path)
 	{
 	}
 
@@ -186,7 +195,6 @@ public:
 	CServerPath path_;
 	std::wstring subDir_;
 	CServerPath target_;
-
 };
 
 namespace fz {
@@ -222,7 +230,7 @@ public:
 
 	Command GetCurrentCommandId() const;
 
-	void SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, bool wait = true);
+	void SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type = async_request_type::waiting);
 	void CallSetAsyncRequestReply(CAsyncRequestNotification *pNotification);
 	bool SetFileExistsAction(CFileExistsNotification *pFileExistsNotification);
 
@@ -230,7 +238,7 @@ public:
 
 	// Conversion function which convert between local and server charset.
 	std::wstring ConvToLocal(char const* buffer, size_t len);
-	std::string ConvToServer(std::wstring const&, bool force_utf8 = false);
+	std::string ConvToServer(std::wstring const&);
 
 	void RecordActivity(activity_logger::_direction direction, uint64_t amount);
 	template<typename T, std::enable_if_t<std::is_signed_v<T>, int> = 0>
@@ -286,6 +294,8 @@ protected:
 	virtual bool SetAsyncRequestReply(CAsyncRequestNotification *pNotification) = 0;
 	void SendDirectoryListingNotification(CServerPath const& path, bool failed);
 
+	std::shared_ptr<unsigned int> pending_global_async_request_;
+
 	fz::duration GetInferredTimezoneOffset() const;
 
 	virtual int DoClose(int nErrorCode = FZ_REPLY_DISCONNECTED | FZ_REPLY_ERROR);
@@ -302,7 +312,8 @@ protected:
 
 	int CheckOverwriteFile();
 
-	bool ParsePwdReply(std::wstring reply, const CServerPath& defaultPath = CServerPath());
+	CServerPath ParsePath(std::wstring reply);
+	bool ParsePwdReply(std::wstring reply, const CServerPath& defaultPath = CServerPath(), bool quoted = true);
 
 	virtual void Push(std::unique_ptr<COpData> && pNewOpData);
 
@@ -320,7 +331,8 @@ protected:
 
 	CServerPath currentPath_;
 
-	bool m_useUTF8{};
+	bool m_useUTF8{true};
+	bool shown_encoding_error_{};
 
 	// Timeout data
 	fz::timer_id m_timer{};
@@ -340,7 +352,7 @@ protected:
 };
 
 class activity_logger_layer;
-class CProxySocket;
+class ProxyBase;
 
 namespace fz {
 class rate_limited_layer;
@@ -379,7 +391,7 @@ protected:
 	std::unique_ptr<fz::socket> socket_;
 	std::unique_ptr<activity_logger_layer> activity_logger_layer_;
 	std::unique_ptr<fz::rate_limited_layer> ratelimit_layer_;
-	std::unique_ptr<CProxySocket> proxy_layer_;
+	std::unique_ptr<ProxyBase> proxy_layer_;
 	fz::socket_layer* active_layer_{};
 
 	fz::buffer send_buffer_;

@@ -2,7 +2,7 @@
 #include "sitemanager_controls.h"
 
 #include "dialogex.h"
-#include "fzputtygen_interface.h"
+#include "encoding_converter.h"
 #include "Options.h"
 #if USE_MAC_SANDBOX
 #include "osx_sandbox_userdirs.h"
@@ -16,6 +16,8 @@
 #endif
 
 #include "../include/s3sse.h"
+
+#include <fzssh/privkey.hpp>
 
 #include <libfilezilla/translate.hpp>
 
@@ -111,6 +113,8 @@ struct GeneralSiteControls::impl final
 	wxStaticText* extra_extra_desc_{};
 	wxTextCtrlEx* extra_extra_{};
 };
+
+std::vector<fz::ssh::private_key_info> LoadKeyfile(std::wstring keyFile, bool silent);
 
 GeneralSiteControls::GeneralSiteControls(wxWindow & parent, DialogLayout const& lay, wxFlexGridSizer & sizer, COptionsBase & options, std::function<void(ServerProtocol protocol, LogonType logon_type)> const& changeHandler)
     : SiteControls(parent)
@@ -295,18 +299,14 @@ GeneralSiteControls::GeneralSiteControls(wxWindow & parent, DialogLayout const& 
 		wxFileDialog dlg(&parent_, _("Choose a key file"), wxString(), wxString(), wildcards, wxFD_OPEN|wxFD_FILE_MUST_EXIST);
 
 		if (dlg.ShowModal() == wxID_OK) {
-			std::wstring keyFilePath = dlg.GetPath().ToStdWstring();
+			std::wstring keyFile = dlg.GetPath().ToStdWstring();
 
 			if (protocol == SFTP) {
-				// If the selected file was a PEM file, LoadKeyFile() will automatically convert it to PPK
-				// and tell us the new location.
-				CFZPuttyGenInterface fzpg(&parent_);
-
-				std::wstring keyFileComment, keyFileData;
-				if (fzpg.LoadKeyFile(keyFilePath, false, keyFileComment, keyFileData)) {
-					impl_->keyfile_->ChangeValue(keyFilePath);
+				auto infos = LoadKeyfile(keyFile, false);
+				if (!infos.empty()) {
+					impl_->keyfile_->ChangeValue(keyFile);
 #if USE_MAC_SANDBOX
-					OSXSandboxUserdirs::Get().AddFile(keyFilePath);
+					OSXSandboxUserdirs::Get().AddFile(keyFile);
 #endif
 				}
 				else {
@@ -314,10 +314,10 @@ GeneralSiteControls::GeneralSiteControls(wxWindow & parent, DialogLayout const& 
 				}
 			}
 			if (protocol == GOOGLE_CLOUD_SVC_ACC) {
-				if (ValidateGoogleAccountKeyFile(keyFilePath)) {
-					impl_->keyfile_->ChangeValue(keyFilePath);
+				if (ValidateGoogleAccountKeyFile(keyFile)) {
+					impl_->keyfile_->ChangeValue(keyFile);
 #if USE_MAC_SANDBOX
-					OSXSandboxUserdirs::Get().AddFile(keyFilePath);
+					OSXSandboxUserdirs::Get().AddFile(keyFile);
 #endif
 				}
 				else {
@@ -823,11 +823,8 @@ bool GeneralSiteControls::UpdateSite(Site & site, bool silent)
 		}
 
 		if (protocol == SFTP) {
-			// Check (again) that the key file is in the correct format since it might have been changed in the meantime
-			CFZPuttyGenInterface cfzg(wxGetTopLevelParent(&parent_));
-
-			std::wstring keyFileComment, keyFileData;
-			if (!cfzg.LoadKeyFile(keyFile, silent, keyFileComment, keyFileData)) {
+			auto infos = LoadKeyfile(keyFile, silent);
+			if (infos.empty()) {
 				if (!silent) {
 					impl_->keyfile_->SetFocus();
 				}
@@ -845,6 +842,9 @@ bool GeneralSiteControls::UpdateSite(Site & site, bool silent)
 		}
 
 		site.credentials.keyFile_ = keyFile;
+	}
+	else {
+		site.credentials.keyFile_.clear();
 	}
 
 	site.server.ClearExtraParameters();
@@ -1409,7 +1409,6 @@ void TransferSettingsSiteControls::SetControlVisibility(ServerProtocol protocol,
 
 struct CharsetSiteControls::impl final
 {
-	wxRadioButton* charset_auto_{};
 	wxRadioButton* charset_utf8_{};
 	wxRadioButton* charset_custom_{};
 	wxTextCtrlEx* encoding_{};
@@ -1420,11 +1419,7 @@ CharsetSiteControls::CharsetSiteControls(wxWindow & parent, DialogLayout const& 
 	, impl_(std::make_unique<impl>())
 {
 	sizer.Add(new wxStaticText(&parent, nullID, _("The server uses following charset encoding for filenames:")));
-	impl_->charset_auto_ = new wxRadioButton(&parent, nullID, _("&Autodetect"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-	sizer.Add(impl_->charset_auto_);
-	sizer.Add(new wxStaticText(&parent, nullID, _("Uses UTF-8 if the server supports it, else uses local charset.")), 0, wxLEFT, 18);
-
-	impl_->charset_utf8_ = new wxRadioButton(&parent, nullID, _("Force &UTF-8"));
+	impl_->charset_utf8_ = new wxRadioButton(&parent, nullID, _("&UTF-8"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	sizer.Add(impl_->charset_utf8_);
 	impl_->charset_custom_ = new wxRadioButton(&parent, nullID, _("Use &custom charset"));
 	sizer.Add(impl_->charset_custom_);
@@ -1437,7 +1432,6 @@ CharsetSiteControls::CharsetSiteControls(wxWindow & parent, DialogLayout const& 
 	sizer.AddSpacer(lay.dlgUnits(6));
 	sizer.Add(new wxStaticText(&parent, nullID, _("Using the wrong charset can result in filenames not displaying properly.")));
 
-	impl_->charset_auto_->Bind(wxEVT_RADIOBUTTON, [&](wxEvent const&){ impl_->encoding_->Disable(); });
 	impl_->charset_utf8_->Bind(wxEVT_RADIOBUTTON, [&](wxEvent const&){ impl_->encoding_->Disable(); });
 	impl_->charset_custom_->Bind(wxEVT_RADIOBUTTON, [&](wxEvent const&){ impl_->encoding_->Enable(); });
 }
@@ -1448,22 +1442,18 @@ CharsetSiteControls::~CharsetSiteControls()
 
 void CharsetSiteControls::SetSite(Site const& site, bool predefined)
 {
-	impl_->charset_auto_->Enable(!predefined);
 	impl_->charset_utf8_->Enable(!predefined);
 	impl_->charset_custom_->Enable(!predefined);
 	impl_->encoding_->Enable(!predefined && site.server.GetEncodingType() == ENCODING_CUSTOM);
 
 	if (!site) {
-		impl_->charset_auto_->SetValue(true);
+		impl_->charset_utf8_->SetValue(true);
 		impl_->encoding_->ChangeValue(wxString());
 		impl_->encoding_->Enable(false);
 	}
 	else {
 		switch (site.server.GetEncodingType()) {
 		default:
-		case ENCODING_AUTO:
-			impl_->charset_auto_->SetValue(true);
-			break;
 		case ENCODING_UTF8:
 			impl_->charset_utf8_->SetValue(true);
 			break;
@@ -1481,7 +1471,7 @@ bool CharsetSiteControls::UpdateSite(Site & site, bool silent)
 		if (impl_->charset_utf8_->GetValue()) {
 			site.server.SetEncodingType(ENCODING_UTF8);
 		}
-		else if (impl_->charset_custom_->GetValue()) {
+		if (impl_->charset_custom_->GetValue()) {
 			std::wstring encoding = impl_->encoding_->GetValue().ToStdWstring();
 
 			if (encoding.empty()) {
@@ -1492,14 +1482,22 @@ bool CharsetSiteControls::UpdateSite(Site & site, bool silent)
 				return false;
 			}
 
+			if (!CustomEncodingConverter::isValidEncoding(encoding)) {
+				if (!silent) {
+					impl_->encoding_->SetFocus();
+					wxMessageBoxEx(_("The entered encoding is not valid. Please enter a valid encoding name, such as CP1252, ISO8859-1, SHIFT-JIS, ..."), _("Site Manager - Invalid data"), wxICON_EXCLAMATION, wxGetTopLevelParent(&parent_));
+				}
+				return false;
+			}
+
 			site.server.SetEncodingType(ENCODING_CUSTOM, encoding);
 		}
 		else {
-			site.server.SetEncodingType(ENCODING_AUTO);
+			site.server.SetEncodingType(ENCODING_UTF8);
 		}
 	}
 	else {
-		site.server.SetEncodingType(ENCODING_AUTO);
+		site.server.SetEncodingType(ENCODING_UTF8);
 	}
 
 	return true;

@@ -6,10 +6,7 @@
 
 struct CChmodDialog::impl
 {
-	wxCheckBox* checkBoxes[9]{};
-
-	wxString oldNumeric_;
-	bool lastChangedNumeric_{};
+	wxCheckBox* checkBoxes[12]{};
 
 	wxCheckBox* recursive_{};
 	wxTextCtrlEx* numeric_{};
@@ -19,26 +16,23 @@ struct CChmodDialog::impl
 	wxRadioButton* applyDirs_{};
 };
 
-CChmodDialog::CChmodDialog(ChmodData & data)
-	: data_(data)
-	, impl_(std::make_unique<impl>())
+CChmodDialog::CChmodDialog()
+	: impl_(std::make_unique<impl>())
 {
 }
 
 CChmodDialog::~CChmodDialog() = default;
 
 bool CChmodDialog::Create(wxWindow* parent, int fileCount, int dirCount,
-	wxString const& name, const char permissions[9])
+	std::wstring const& name, posix_chmod const& initial_chmod)
 {
-	memcpy(data_.permissions_, permissions, 9);
-
 	SetExtraStyle(wxWS_EX_BLOCK_EVENTS);
 	SetParent(parent);
 
 	wxString title;
 	if (!dirCount) {
 		if (fileCount == 1) {
-			title = wxString::Format(_("Please select the new attributes for the file \"%s\"."), name);
+			title = wxString::Format(_("Please select the new attributes for the file \"%s\"."), LabelEscape(name));
 		}
 		else {
 			title = _("Please select the new attributes for the selected files.");
@@ -47,7 +41,7 @@ bool CChmodDialog::Create(wxWindow* parent, int fileCount, int dirCount,
 	else {
 		if (!fileCount) {
 			if (dirCount == 1) {
-				title = wxString::Format(_("Please select the new attributes for the directory \"%s\"."), name);
+				title = wxString::Format(_("Please select the new attributes for the directory \"%s\"."), LabelEscape(name));
 			}
 			else {
 				title = _("Please select the new attributes for the selected directories.");
@@ -95,17 +89,27 @@ bool CChmodDialog::Create(wxWindow* parent, int fileCount, int dirCount,
 		impl_->checkBoxes[8] = new wxCheckBox(box, nullID, _("Exe&cute"), wxDefaultPosition, wxDefaultSize, wxCHK_3STATE | wxCHK_ALLOW_3RD_STATE_FOR_USER);
 		inner->Add(impl_->checkBoxes[8]);
 	}
+	{
+		auto [box, inner] = lay.createStatBox(main, _("Public permissions"), 3);
+		impl_->checkBoxes[9] = new wxCheckBox(box, nullID, _("Set-user-ID"), wxDefaultPosition, wxDefaultSize, wxCHK_3STATE | wxCHK_ALLOW_3RD_STATE_FOR_USER);
+		inner->Add(impl_->checkBoxes[9]);
+		impl_->checkBoxes[10] = new wxCheckBox(box, nullID, _("Set group-ID"), wxDefaultPosition, wxDefaultSize, wxCHK_3STATE | wxCHK_ALLOW_3RD_STATE_FOR_USER);
+		inner->Add(impl_->checkBoxes[10]);
+		impl_->checkBoxes[11] = new wxCheckBox(box, nullID, _("Sticky bit"), wxDefaultPosition, wxDefaultSize, wxCHK_3STATE | wxCHK_ALLOW_3RD_STATE_FOR_USER);
+		inner->Add(impl_->checkBoxes[11]);
+	}
 
 	auto row = lay.createFlex(2);
-	main->Add(row);
+	row->AddGrowableCol(1);
+	main->Add(row, lay.grow);
 
-	row->Add(new wxStaticText(this, nullID, _("&Numeric value:")), lay.valign);
-	impl_->numeric_ = new wxTextCtrlEx(this, nullID, wxString(), wxDefaultPosition, lay.defTextCtrlSize);
-	row->Add(impl_->numeric_, lay.valign);
+	row->Add(new wxStaticText(this, nullID, _("&Chmod:")), lay.valign);
+	impl_->numeric_ = new wxTextCtrlEx(this, nullID, wxString());
+	row->Add(impl_->numeric_, lay.valigng);
 	impl_->numeric_->SetFocus();
 	impl_->numeric_->Bind(wxEVT_TEXT, &CChmodDialog::OnNumericChanged, this);
 
-	wxString desc = _("You can use an x at any position to keep the permission the original files have.");
+	wxString desc = _("You can enter a textual mode change (chmod), or the new mode bits in octal.");
 	WrapText(this, desc, lay.dlgUnits(160));
 	main->Add(new wxStaticText(this, nullID, desc), lay.valign);
 
@@ -132,22 +136,8 @@ bool CChmodDialog::Create(wxWindow* parent, int fileCount, int dirCount,
 		impl_->applyDirs_->Disable();
 	}
 
-	for (int i = 0; i < 9; ++i) {
+	for (int i = 0; i < 12; ++i) {
 		impl_->checkBoxes[i]->Bind(wxEVT_COMMAND_CHECKBOX_CLICKED, &CChmodDialog::OnCheckboxClick, this);
-
-		switch (permissions[i])
-		{
-		default:
-		case 0:
-			impl_->checkBoxes[i]->Set3StateValue(wxCHK_UNDETERMINED);
-			break;
-		case 1:
-			impl_->checkBoxes[i]->Set3StateValue(wxCHK_UNCHECKED);
-			break;
-		case 2:
-			impl_->checkBoxes[i]->Set3StateValue(wxCHK_CHECKED);
-			break;
-		}
 	}
 
 	auto buttons = lay.createButtonSizer(this, main, true);
@@ -166,119 +156,96 @@ bool CChmodDialog::Create(wxWindow* parent, int fileCount, int dirCount,
 	GetSizer()->Fit(this);
 	GetSizer()->SetSizeHints(this);
 
-	wxCommandEvent evt;
-	OnCheckboxClick(evt);
+	// Intentionally using SetValue instead of ChangeValue so that the checkboxes are updated as well.
+	impl_->numeric_->SetValue(to_string(initial_chmod));
 
 	return true;
 }
 
 void CChmodDialog::OnOK(wxCommandEvent&)
 {
-	data_.applyType_ = 0;
-	if (impl_->recursive_) {
-		if (impl_->applyFiles_->GetValue()) {
-			data_.applyType_ = 1;
-		}
-		else if (impl_->applyDirs_->GetValue()) {
-			data_.applyType_ = 2;
-		}
+	auto chmod = parse_chmod(fz::to_utf8(impl_->numeric_->GetValue()));
+	if (!chmod) {
+		wxMessageBoxEx(_("The entered chmod is invalid"), _("Invalid permissions"), wxOK | wxICON_ERROR);
+		return;
 	}
 
-	data_.numeric_ = impl_->numeric_->GetValue().ToStdWstring();
 	EndModal(wxID_OK);
 }
 
-void CChmodDialog::OnCheckboxClick(wxCommandEvent&)
+namespace {
+constexpr posix_permissions mapping[] = {
+	posix_permissions::user_read,  posix_permissions::user_write,  posix_permissions::user_execute,
+	posix_permissions::group_read, posix_permissions::group_write, posix_permissions::group_execute,
+	posix_permissions::other_read, posix_permissions::other_write, posix_permissions::other_execute,
+
+	posix_permissions::setuid, posix_permissions::setgid, posix_permissions::sticky,
+};
+}
+
+posix_chmod CChmodDialog::GetChmodFromCheckboxes()
 {
-	impl_->lastChangedNumeric_ = false;
-	for (int i = 0; i < 9; ++i) {
+	posix_chmod ret{};
+
+	for (size_t i = 0; i < 12; ++i) {
 		wxCheckBoxState state = impl_->checkBoxes[i]->Get3StateValue();
 		switch (state)
 		{
 		default:
-		case wxCHK_UNDETERMINED:
-			data_.permissions_[i] = 0;
 			break;
 		case wxCHK_UNCHECKED:
-			data_.permissions_[i] = 1;
+			ret.mask_ |= mapping[i];
 			break;
 		case wxCHK_CHECKED:
-			data_.permissions_[i] = 2;
+			ret.mask_ |= mapping[i];
+			ret.perms_ |= mapping[i];
 			break;
 		}
 	}
 
-	wxString numericValue;
-	for (int i = 0; i < 3; ++i) {
-		if (!data_.permissions_[i * 3] || !data_.permissions_[i * 3 + 1] || !data_.permissions_[i * 3 + 2]) {
-			numericValue += 'x';
-			continue;
+	return ret;
+}
+
+ChmodData CChmodDialog::GetChmodData() const
+{
+	ChmodData ret;
+	if (impl_ && impl_->numeric_) {
+		ret.chmod_ = parse_chmod(fz::to_utf8(impl_->numeric_->GetValue()));
+		if (impl_->recursive_ && impl_->recursive_->GetValue()) {
+			ret.recurse_ = true;
+			if (impl_->applyFiles_ && impl_->applyFiles_->GetValue()) {
+				ret.apply_dirs_ = false;
+			}
+			else if (impl_->applyDirs_ && impl_->applyDirs_->GetValue()) {
+				ret.apply_files_ = false;
+			}
 		}
-
-		numericValue += wxString::Format(_T("%d"), (data_.permissions_[i * 3] - 1) * 4 + (data_.permissions_[i * 3 + 1] - 1) * 2 + (data_.permissions_[i * 3 + 2] - 1) * 1);
 	}
+	return ret;
+}
 
-	
-	wxString oldValue = impl_->numeric_->GetValue();
-
-	impl_->numeric_->ChangeValue(oldValue.Left(oldValue.size() - 3) + numericValue);
-	impl_->oldNumeric_ = numericValue;
+void CChmodDialog::OnCheckboxClick(wxCommandEvent&)
+{
+	auto chmod = GetChmodFromCheckboxes();
+	auto s = fz::to_wstring_from_utf8(to_string(chmod));
+	impl_->numeric_->ChangeValue(s);
 }
 
 void CChmodDialog::OnNumericChanged(wxCommandEvent&)
 {
-	impl_->lastChangedNumeric_ = true;
-
-	wxString numeric = impl_->numeric_->GetValue();
-	if (numeric.size() < 3) {
+	auto chmod = parse_chmod(fz::to_utf8(impl_->numeric_->GetValue()));
+	if (!chmod) {
 		return;
 	}
 
-	numeric = numeric.Right(3);
-	for (int i = 0; i < 3; ++i) {
-		if ((numeric[i] < '0' || numeric[i] > '9') && numeric[i] != 'x') {
-			return;
-		}
-	}
-	for (int i = 0; i < 3; ++i) {
-		if (!impl_->oldNumeric_.empty() && numeric[i] == impl_->oldNumeric_[i]) {
-			continue;
-		}
-		if (numeric[i] == 'x') {
-			data_.permissions_[i * 3] = 0;
-			data_.permissions_[i * 3 + 1] = 0;
-			data_.permissions_[i * 3 + 2] = 0;
+	for (size_t i = 0; i < 12; ++i) {
+		if ((chmod.mask_ & mapping[i]) != posix_permissions::none) {
+			impl_->checkBoxes[i]->Set3StateValue((chmod.perms_ & mapping[i]) != posix_permissions::none ? wxCHK_CHECKED : wxCHK_UNCHECKED);
 		}
 		else {
-			int value = numeric[i] - '0';
-			data_.permissions_[i * 3] = (value & 4) ? 2 : 1;
-			data_.permissions_[i * 3 + 1] = (value & 2) ? 2 : 1;
-			data_.permissions_[i * 3 + 2] = (value & 1) ? 2 : 1;
-		}
-	}
-
-	impl_->oldNumeric_ = numeric;
-
-	for (int i = 0; i < 9; ++i) {
-		switch (data_.permissions_[i])
-		{
-		default:
-		case 0:
 			impl_->checkBoxes[i]->Set3StateValue(wxCHK_UNDETERMINED);
-			break;
-		case 1:
-			impl_->checkBoxes[i]->Set3StateValue(wxCHK_UNCHECKED);
-			break;
-		case 2:
-			impl_->checkBoxes[i]->Set3StateValue(wxCHK_CHECKED);
-			break;
 		}
 	}
-}
-
-bool CChmodDialog::Recursive() const
-{
-	return impl_ && impl_->recursive_ && impl_->recursive_->GetValue();
 }
 
 void CChmodDialog::OnRecurseChanged(wxCommandEvent&)

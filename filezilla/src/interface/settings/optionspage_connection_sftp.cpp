@@ -4,11 +4,12 @@
 #include "optionspage.h"
 #include "optionspage_connection_sftp.h"
 #include "../filezillaapp.h"
-#include "../fzputtygen_interface.h"
 #include "../inputdialog.h"
 #if USE_MAC_SANDBOX
 #include "../osx_sandbox_userdirs.h"
 #endif
+
+#include <fzssh/privkey.hpp>
 
 #include <wx/filedlg.h>
 #include <wx/listctrl.h>
@@ -16,8 +17,6 @@
 
 struct COptionsPageConnectionSFTP::impl
 {
-	std::unique_ptr<CFZPuttyGenInterface> fzpg_;
-
 	wxListCtrl* keys_{};
 	wxButton* add_{};
 	wxButton* remove_{};
@@ -28,7 +27,6 @@ struct COptionsPageConnectionSFTP::impl
 COptionsPageConnectionSFTP::COptionsPageConnectionSFTP()
 	: impl_(std::make_unique<impl>())
 {
-	impl_->fzpg_ = std::make_unique<CFZPuttyGenInterface>(this);
 }
 
 COptionsPageConnectionSFTP::~COptionsPageConnectionSFTP()
@@ -71,12 +69,14 @@ bool COptionsPageConnectionSFTP::CreateControls(wxWindow* parent)
 		inner->Add(new wxStaticText(box, nullID, _("Alternatively you can use your system's SSH agent. To do so, make sure the SSH_AUTH_SOCK environment variable is set.")));
 #endif
 	}
+#if 0
 	{
 		auto [box, inner] = lay.createStatBox(main, _("Other SFTP options"), 1);
 
 		impl_->compression_ = new wxCheckBox(box, nullID, _("&Enable compression"));
 		inner->Add(impl_->compression_);
 	}
+#endif
 	return true;
 }
 
@@ -84,7 +84,8 @@ bool COptionsPageConnectionSFTP::LoadPage()
 {
 	impl_->keys_->InsertColumn(0, _("Filename"), wxLIST_FORMAT_LEFT, 150);
 	impl_->keys_->InsertColumn(1, _("Comment"), wxLIST_FORMAT_LEFT, 100);
-	impl_->keys_->InsertColumn(2, _("Data"), wxLIST_FORMAT_LEFT, 350);
+	impl_->keys_->InsertColumn(2, _("Type"), wxLIST_FORMAT_LEFT, 100);
+	impl_->keys_->InsertColumn(3, _("Fingerprint"), wxLIST_FORMAT_LEFT, 350);
 
 	// Generic wxListCtrl has gross minsize
 	wxSize size = impl_->keys_->GetMinSize();
@@ -101,7 +102,9 @@ bool COptionsPageConnectionSFTP::LoadPage()
 
 	SetCtrlState();
 
-	impl_->compression_->SetValue(m_pOptions->get_int(OPTION_SFTP_COMPRESSION) != 0);
+	if (impl_->compression_) {
+		impl_->compression_->SetValue(m_pOptions->get_int(OPTION_SFTP_COMPRESSION) != 0);
+	}
 
 	return !failure;
 }
@@ -109,18 +112,18 @@ bool COptionsPageConnectionSFTP::LoadPage()
 bool COptionsPageConnectionSFTP::SavePage()
 {
 	// Don't save keys on process error
-	if (!impl_->fzpg_->ProcessFailed()) {
-		std::wstring keyFiles;
-		for (int i = 0; i < impl_->keys_->GetItemCount(); ++i) {
-			if (!keyFiles.empty()) {
-				keyFiles += L"\n";
-			}
-			keyFiles += impl_->keys_->GetItemText(i).ToStdWstring();
+	std::wstring keyFiles;
+	for (int i = 0; i < impl_->keys_->GetItemCount(); ++i) {
+		if (!keyFiles.empty()) {
+			keyFiles += L"\n";
 		}
-		m_pOptions->set(OPTION_SFTP_KEYFILES, keyFiles);
+		keyFiles += impl_->keys_->GetItemText(i).ToStdWstring();
 	}
+	m_pOptions->set(OPTION_SFTP_KEYFILES, keyFiles);
 
-	m_pOptions->set(OPTION_SFTP_COMPRESSION, impl_->compression_->GetValue() ? 1 : 0);
+	if (impl_->compression_) {
+		m_pOptions->set(OPTION_SFTP_COMPRESSION, impl_->compression_->GetValue() ? 1 : 0);
+	}
 
 	return true;
 }
@@ -151,18 +154,29 @@ void COptionsPageConnectionSFTP::OnRemove(wxCommandEvent&)
 	impl_->keys_->DeleteItem(index);
 }
 
-bool COptionsPageConnectionSFTP::AddKey(std::wstring keyFile, bool silent)
+std::vector<fz::ssh::private_key_info> LoadKeyfile(std::wstring keyFile, bool silent)
 {
-	std::wstring comment, data;
-	if (!impl_->fzpg_->LoadKeyFile(keyFile, silent, comment, data)) {
-		if (silent) {
-			int index = impl_->keys_->InsertItem(impl_->keys_->GetItemCount(), keyFile);
-			impl_->keys_->SetItem(index, 1, comment);
-			impl_->keys_->SetItem(index, 2, data);
+	fz::buffer b;
+	if (!fz::read_file(fz::to_native(keyFile), b, 128*1024)) {
+		if (!silent) {
+			wxMessageBoxEx(_("Could not read file"), _("Cannot load key file"), wxICON_INFORMATION);
+			return {};
 		}
-		return false;
 	}
 
+	auto infos = fz::ssh::load_private_key_infos(b.to_view(), fz::get_null_logger(), {});
+
+	if (infos.empty()) {
+		if (!silent) {
+			wxMessageBoxEx(_("The file does not contain a valid or recognized private key"), _("Cannot load key file"), wxICON_INFORMATION);
+			return {};
+		}
+	}
+	return infos;
+}
+
+bool COptionsPageConnectionSFTP::AddKey(std::wstring keyFile, bool silent)
+{
 	if (KeyFileExists(keyFile)) {
 		if (!silent) {
 			wxMessageBoxEx(_("Selected file is already loaded"), _("Cannot load key file"), wxICON_INFORMATION);
@@ -170,9 +184,29 @@ bool COptionsPageConnectionSFTP::AddKey(std::wstring keyFile, bool silent)
 		return false;
 	}
 
-	int index = impl_->keys_->InsertItem(impl_->keys_->GetItemCount(), keyFile);
-	impl_->keys_->SetItem(index, 1, comment);
-	impl_->keys_->SetItem(index, 2, data);
+	auto infos = LoadKeyfile(keyFile, silent);
+	if (infos.empty()) {
+		return false;
+	}
+
+	bool added_encrypted{};
+	for (auto const& info : infos) {
+		if (info.pubkey_) {
+			int index = impl_->keys_->InsertItem(impl_->keys_->GetItemCount(), keyFile);
+			std::string fingerprint = info.pubkey_->fingerprint();
+
+			impl_->keys_->SetItem(index, 1, fz::to_wstring_from_utf8(info.pubkey_->comment_));
+			impl_->keys_->SetItem(index, 2, fz::to_wstring_from_utf8(info.pubkey_->name()));
+			impl_->keys_->SetItem(index, 3, fz::to_wstring_from_utf8(fingerprint));
+		}
+		else if (!added_encrypted) {
+			added_encrypted = true;
+			int index = impl_->keys_->InsertItem(impl_->keys_->GetItemCount(), keyFile);
+
+			impl_->keys_->SetItem(index, 2, _("Encrypted"));
+			impl_->keys_->SetItem(index, 3, _("Not available"));
+		}
+	}
 
 	return true;
 }

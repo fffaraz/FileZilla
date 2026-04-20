@@ -2,13 +2,14 @@
 #define FILEZILLA_INTERFACE_BOOKMARKS_DIALOG_HEADER
 
 #include "dialogex.h"
-#include "serverdata.h"
 
 class COptionsBase;
+class Site;
+class login_manager;
 class CNewBookmarkDialog final : public wxDialogEx
 {
 public:
-	CNewBookmarkDialog(wxWindow* parent, COptionsBase & options, std::wstring& site_path, Site const* site);
+	CNewBookmarkDialog(wxWindow* parent, COptionsBase & options, login_manager & lim, std::wstring& site_path, Site const* site);
 	virtual ~CNewBookmarkDialog();
 
 	int Run(wxString const& local_path, CServerPath const& remote_path);
@@ -16,6 +17,7 @@ public:
 protected:
 	wxWindow* m_parent;
 	COptionsBase & options_;
+	login_manager & login_manager_;
 	std::wstring &m_site_path;
 	Site const* site_;
 
@@ -30,7 +32,7 @@ class wxTreeCtrlEx;
 class CBookmarksDialog final : public wxDialogEx
 {
 public:
-	CBookmarksDialog(wxWindow* parent, COptionsBase & options, std::wstring& site_path, Site const* site);
+	CBookmarksDialog(wxWindow* parent, COptionsBase & options, login_manager & lim, std::wstring& site_path, Site const* site);
 
 	int Run();
 
@@ -51,6 +53,7 @@ protected:
 
 	wxWindow* m_parent{};
 	COptionsBase & options_;
+	login_manager & login_manager_;
 	std::wstring &m_site_path;
 	Site const* site_{};
 

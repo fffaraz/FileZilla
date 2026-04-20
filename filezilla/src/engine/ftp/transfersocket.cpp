@@ -21,10 +21,10 @@ using namespace std::literals;
 #endif
 
 CTransferSocket::CTransferSocket(CFileZillaEnginePrivate & engine, CFtpControlSocket & controlSocket, TransferMode transferMode)
-: fz::event_handler(controlSocket.event_loop_)
-, engine_(engine)
-, controlSocket_(controlSocket)
-, m_transferMode(transferMode)
+	: fz::event_handler(controlSocket, fz::child_event_handler)
+	, engine_(engine)
+	, controlSocket_(controlSocket)
+	, m_transferMode(transferMode)
 {
 }
 
@@ -287,18 +287,20 @@ bool CTransferSocket::OnReceive()
 
 	if (m_transferEndReason == TransferEndReason::none) {
 		if (m_transferMode == TransferMode::list) {
-			char *pBuffer = new char[4096];
+			constexpr size_t to_read = 1024 * 16;
+			fz::buffer & buf = m_pDirectoryListingParser->GetInputBuffer();
+
 			int error;
-			int numread = active_layer_->read(pBuffer, 4096, error);
+			int numread = active_layer_->read(buf.get(1024 * 16), to_read, error);
 			if (numread < 0) {
-				delete [] pBuffer;
 				if (error != EAGAIN) {
 					controlSocket_.log(logmsg::error, L"Could not read from transfer socket: %s", fz::socket_error_description(error));
 					TransferEnd(TransferEndReason::transfer_failure);
 				}
 			}
 			else if (numread > 0) {
-				if (!m_pDirectoryListingParser->AddData(pBuffer, numread)) {
+				buf.add(numread);
+				if (!m_pDirectoryListingParser->ProcessAddedData()) {
 					TransferEnd(TransferEndReason::transfer_failure);
 					return false;
 				}
@@ -312,7 +314,6 @@ bool CTransferSocket::OnReceive()
 				return true;
 			}
 			else {
-				delete [] pBuffer;
 				TransferEnd(TransferEndReason::successful);
 			}
 			return false;
@@ -547,7 +548,7 @@ bool CTransferSocket::InitLayers(bool active)
 			return false;
 		}
 
-		proxy_layer_ = std::make_unique<CProxySocket>(nullptr, *active_layer_, &controlSocket_, controlSocket_.proxy_layer_->GetProxyType(), proxy_host, proxy_port, controlSocket_.proxy_layer_->GetUser(), controlSocket_.proxy_layer_->GetPass());
+		proxy_layer_ = CreateProxy(nullptr, *active_layer_, &controlSocket_, controlSocket_.proxy_layer_->GetProxyType(), proxy_host, proxy_port, controlSocket_.proxy_layer_->GetUser(), controlSocket_.proxy_layer_->GetPass());
 		active_layer_ = proxy_layer_.get();
 	}
 
@@ -798,11 +799,7 @@ void CTransferSocket::TriggerPostponedEvents()
 void CTransferSocket::SetSocketBufferSizes(fz::socket_base& socket)
 {
 	const int size_read = engine_.GetOptions().get_int(OPTION_SOCKET_BUFFERSIZE_RECV);
-#if FZ_WINDOWS
 	const int size_write = -1;
-#else
-	const int size_write = engine_.GetOptions().get_int(OPTION_SOCKET_BUFFERSIZE_SEND);
-#endif
 	socket.set_buffer_sizes(size_read, size_write);
 }
 

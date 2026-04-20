@@ -34,7 +34,7 @@
 #endif
 
 CControlSocket::CControlSocket(CFileZillaEnginePrivate & engine, bool use_shm)
-	: event_handler(engine.event_loop_)
+	: event_handler(engine, fz::child_event_handler)
 	, engine_(engine)
 	, opLockManager_(engine.opLockManager_)
 	, logger_(engine.GetLogger())
@@ -310,53 +310,66 @@ CServer const& CControlSocket::GetCurrentServer() const
 	return currentServer_;
 }
 
-bool CControlSocket::ParsePwdReply(std::wstring reply, CServerPath const& defaultPath)
+CServerPath CControlSocket::ParsePath(std::wstring reply)
 {
-	size_t pos1 = reply.find('"');
-	size_t pos2 = reply.rfind('"');
-	// Due to searching the same character, pos1 is npos iff pos2 is npos
-
-	if (pos1 == std::wstring::npos || pos1 >= pos2) {
-		pos1 = reply.find('\'');
-		pos2 = reply.rfind('\'');
-
-		if (pos1 != std::wstring::npos && pos1 < pos2) {
-			log(logmsg::debug_info, L"Broken server sending single-quoted path instead of double-quoted path.");
-		}
+	if (reply.empty()) {
+		log(logmsg::error, _("Server returned empty path."));
+		return {};
 	}
-	if (pos1 == std::wstring::npos || pos1 >= pos2) {
-		log(logmsg::debug_info, L"Broken server, no quoted path found in pwd reply, trying first token as path");
-		pos1 = reply.find(' ');
-		if (pos1 != std::wstring::npos) {
-			reply = reply.substr(pos1 + 1);
-			pos2 = reply.find(' ');
-			if (pos2 != std::wstring::npos)
-				reply = reply.substr(0, pos2);
+
+	CServerPath ret = currentPath_;
+	ret.SetType(currentServer_.GetType());
+
+	if (!ret.SetPath(reply)) {
+		log(logmsg::error, _("Failed to parse returned path."));
+		return {};
+	}
+
+	return ret;
+}
+
+bool CControlSocket::ParsePwdReply(std::wstring reply, CServerPath const& defaultPath, bool quoted)
+{
+	if (quoted) {
+		size_t pos1 = reply.find('"');
+		size_t pos2 = reply.rfind('"');
+		// Due to searching the same character, pos1 is npos iff pos2 is npos
+
+		if (pos1 == std::wstring::npos || pos1 >= pos2) {
+			pos1 = reply.find('\'');
+			pos2 = reply.rfind('\'');
+
+			if (pos1 != std::wstring::npos && pos1 < pos2) {
+				log(logmsg::debug_info, L"Broken server sending single-quoted path instead of double-quoted path.");
+			}
+		}
+		if (pos1 == std::wstring::npos || pos1 >= pos2) {
+			log(logmsg::debug_info, L"Broken server, no quoted path found in pwd reply, trying first token as path");
+			pos1 = reply.find(' ');
+			if (pos1 != std::wstring::npos) {
+				reply = reply.substr(pos1 + 1);
+				pos2 = reply.find(' ');
+				if (pos2 != std::wstring::npos)
+					reply = reply.substr(0, pos2);
+			}
+			else {
+				reply.clear();
+			}
 		}
 		else {
-			reply.clear();
+			reply = reply.substr(pos1 + 1, pos2 - pos1 - 1);
+			fz::replace_substrings(reply, L"\"\"", L"\"");
 		}
 	}
-	else {
-		reply = reply.substr(pos1 + 1, pos2 - pos1 - 1);
-		fz::replace_substrings(reply, L"\"\"", L"\"");
-	}
 
-	currentPath_.SetType(currentServer_.GetType());
-	if (reply.empty() || !currentPath_.SetPath(reply)) {
-		if (reply.empty()) {
-			log(logmsg::error, _("Server returned empty path."));
-		}
-		else {
-			log(logmsg::error, _("Failed to parse returned path."));
+	currentPath_ = ParsePath(reply);
+	if (currentPath_.empty()) {
+		if (defaultPath.empty()) {
+			return false;
 		}
 
-		if (!defaultPath.empty()) {
-			log(logmsg::debug_warning, L"Assuming path is '%s'.", defaultPath.GetPath());
-			currentPath_ = defaultPath;
-			return true;
-		}
-		return false;
+		log(logmsg::debug_warning, L"Assuming path is '%s'.", defaultPath.GetPath());
+		currentPath_ = defaultPath;
 	}
 
 	return true;
@@ -443,7 +456,7 @@ int CControlSocket::CheckOverwriteFile()
 
 SleepOpData::SleepOpData(CControlSocket & controlSocket, fz::duration const& delay)
 	: COpData(Command::sleep, L"SleepOpData")
-	, fz::event_handler(controlSocket.event_loop_)
+	, fz::event_handler(controlSocket, fz::child_event_handler)
 	, controlSocket_(controlSocket)
 {
 	add_timer(delay, true);
@@ -482,51 +495,39 @@ std::wstring CControlSocket::ConvToLocal(char const* buffer, size_t len)
 			return ret;
 		}
 
-		if (currentServer_.GetEncodingType() != ENCODING_UTF8) {
-			log(logmsg::status, _("Invalid character sequence received, disabling UTF-8. Select UTF-8 option in site manager to force UTF-8."));
-			m_useUTF8 = false;
+		if (!shown_encoding_error_) {
+			log(logmsg::error, _("Invalid character sequence received. Some or all files may not appear in directory listings. If the server you are connecting to does not support UTF-8, select a different character encoding in the Site Manager."));
+			shown_encoding_error_ = true;
 		}
 	}
-
-	if (currentServer_.GetEncodingType() == ENCODING_CUSTOM) {
+	else {
 		ret = engine_.GetEncodingConverter().toLocal(currentServer_.GetCustomEncoding(), buffer, len);
 		if (!ret.empty()) {
 			return ret;
 		}
-	}
 
-#ifdef FZ_WINDOWS
-	// Only for Windows as other platforms should be UTF-8 anyhow.
-	ret = fz::to_wstring(std::string(buffer, len));
-	if (!ret.empty()) {
-		return ret;
+		if (!shown_encoding_error_) {
+			log(logmsg::error, _("Invalid character sequence received. The server does not appear to use the custom character encoding (%s) you have configured in the Site Manager."), currentServer_.GetCustomEncoding());
+			shown_encoding_error_ = true;
+		}
 	}
-#endif
-
-	// Treat it as ISO8859-1
-	ret.assign(reinterpret_cast<unsigned char const*>(buffer), reinterpret_cast<unsigned char const*>(buffer + len));
 
 	return ret;
 }
 
-std::string CControlSocket::ConvToServer(std::wstring const& str, bool force_utf8)
+std::string CControlSocket::ConvToServer(std::wstring const& str)
 {
-	std::string ret;
-	if (m_useUTF8 || force_utf8) {
-		ret = fz::to_utf8(str);
-		if (!ret.empty() || force_utf8) {
-			return ret;
-		}
+	if (m_useUTF8) {
+		return fz::to_utf8(str);
 	}
 
-	if (currentServer_.GetEncodingType() == ENCODING_CUSTOM) {
-		ret = engine_.GetEncodingConverter().toServer(currentServer_.GetCustomEncoding(), str.c_str(), str.size());
-		if (!ret.empty()) {
-			return ret;
+	std::string ret = engine_.GetEncodingConverter().toServer(currentServer_.GetCustomEncoding(), str.c_str(), str.size());
+	if (!ret.empty()) {
+		if (!shown_encoding_error_) {
+			log(logmsg::error, _("Cannot convert to the server's character set. You can only use characters that can be encoded using the custom character encoding (%s) you have configured in the Site Manager."), currentServer_.GetCustomEncoding());
+			shown_encoding_error_ = true;
 		}
 	}
-
-	ret = fz::to_string(str);
 	return ret;
 }
 
@@ -538,7 +539,7 @@ void CControlSocket::OnTimer(fz::timer_id)
 	if (timeout > 0) {
 		fz::duration elapsed = fz::monotonic_clock::now() - m_lastActivity;
 
-		if ((operations_.empty() || operations_.back()->async_request_state_ == async_request_state::none) && !opLockManager_.Waiting(this)) {
+		if (!pending_global_async_request_ && (operations_.empty() || !operations_.back()->pending_async_request_) && !opLockManager_.Waiting(this)) {
 			if (elapsed > fz::duration::from_seconds(timeout)) {
 				log(logmsg::error, fztranslate("Connection timed out after %d second of inactivity", "Connection timed out after %d seconds of inactivity", timeout), timeout);
 				DoClose(FZ_REPLY_TIMEOUT);
@@ -591,7 +592,7 @@ int CControlSocket::SendNextCommand()
 
 	while (!operations_.empty()) {
 		auto & data = *operations_.back();
-		if (data.async_request_state_ == async_request_state::waiting) {
+		if (data.pending_async_request_ && data.pending_async_request_->second == async_request_type::waiting) {
 			log(logmsg::debug_info, L"Waiting for async request, ignoring SendNextCommand...");
 			return FZ_REPLY_WOULDBLOCK;
 		}
@@ -692,15 +693,21 @@ fz::duration CControlSocket::GetInferredTimezoneOffset() const
 	return ret;
 }
 
-void CControlSocket::SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, bool wait)
+void CControlSocket::SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type)
 {
-	if (!notification || operations_.empty()) {
+	if (!notification || (operations_.empty() && type != async_request_type::global)) {
 		return;
 	}
-	notification->requestNumber = engine_.GetNextAsyncRequestNumber();
 
-	if (!operations_.empty()) {
-		operations_.back()->async_request_state_ = wait ? async_request_state::waiting : async_request_state::parallel;
+	auto requestNumber = std::make_shared<unsigned int>(engine_.GetNextAsyncRequestNumber());
+
+	notification->requestNumber_ = requestNumber;
+
+	if (type == async_request_type::global) {
+		pending_global_async_request_ = std::move(requestNumber);
+	}
+	else {
+		operations_.back()->pending_async_request_ = std::make_pair(std::move(requestNumber), (type == async_request_type::waiting) ? async_request_type::waiting : async_request_type::parallel);
 	}
 	engine_.AddNotification(std::move(notification));
 }
@@ -844,8 +851,7 @@ int CRealControlSocket::OnSend()
 		}
 
 		if (written) {
-			RecordActivity(activity_logger::send, written);
-
+			SetAlive();
 			send_buffer_.consume(static_cast<size_t>(written));
 		}
 	}
@@ -875,11 +881,10 @@ void CRealControlSocket::CreateSocket(std::wstring const& host)
 
 	const int proxy_type = engine_.GetOptions().get_int(OPTION_PROXY_TYPE);
 	if (proxy_type > static_cast<int>(ProxyType::NONE) && proxy_type < static_cast<int>(ProxyType::count) && !currentServer_.GetBypassProxy()) {
-		log(logmsg::status, _("Connecting to %s through %s proxy"), currentServer_.Format(ServerFormat::with_optional_port), CProxySocket::Name(static_cast<ProxyType>(proxy_type)));
+		log(logmsg::status, _("Connecting to %s through %s proxy"), currentServer_.Format(ServerFormat::with_optional_port), ProxyBase::Name(static_cast<ProxyType>(proxy_type)));
 
 		fz::native_string proxy_host = fz::to_native(engine_.GetOptions().get_string(OPTION_PROXY_HOST));
-
-		proxy_layer_ = std::make_unique<CProxySocket>(nullptr, *active_layer_, this, static_cast<ProxyType>(proxy_type),
+		proxy_layer_ = CreateProxy(nullptr, *active_layer_, this, static_cast<ProxyType>(proxy_type),
 			proxy_host, engine_.GetOptions().get_int(OPTION_PROXY_PORT),
 			engine_.GetOptions().get_string(OPTION_PROXY_USER),
 			engine_.GetOptions().get_string(OPTION_PROXY_PASS));
@@ -1162,12 +1167,27 @@ void CControlSocket::SendDirectoryListingNotification(CServerPath const& path, b
 
 void CControlSocket::CallSetAsyncRequestReply(CAsyncRequestNotification *pNotification)
 {
-	if (operations_.empty() || operations_.back()->async_request_state_ == async_request_state::none) {
-		log(logmsg::debug_info, L"Not waiting for request reply, ignoring request reply %d", pNotification->GetRequestID());
+	if (!pNotification) {
+		return;
+	}
+	auto sReqNr = pNotification->requestNumber_.lock();
+	if (!sReqNr) {
+		log(logmsg::debug_info, L"Ignoring request replywith request id %d that isn't pending.", pNotification->GetRequestID());
 		return;
 	}
 
-	operations_.back()->async_request_state_ = async_request_state::none;
+	if (pending_global_async_request_ && *pending_global_async_request_ == *sReqNr) {
+		log(logmsg::debug_info, L"Got reply to pending global async request %u with request id %d", *sReqNr, pNotification->GetRequestID());
+		pending_global_async_request_.reset();
+	}
+	else if (!operations_.empty() && operations_.back()->pending_async_request_) {
+		log(logmsg::debug_info, L"Got reply to pending operation async request %u with request id %d", *sReqNr, pNotification->GetRequestID());
+		operations_.back()->pending_async_request_.reset();
+	}
+	else {
+		log(logmsg::debug_info, L"Not waiting for request reply, ignoring request reply %u with request id %d", *sReqNr, pNotification->GetRequestID());
+		return;
+	}
 
 	SetAlive();
 	SetAsyncRequestReply(pNotification);

@@ -1,7 +1,7 @@
                                FileZilla Client
                                ----------------
 
-                      Copyright (C) 2004-2025  Tim Kosse
+                      Copyright (C) 2004-2026  Tim Kosse
                         https://filezilla-project.org/
 
 Overview
@@ -11,7 +11,7 @@ FileZilla Client is a free, open source FTP, FTPS and SFTP client.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
-the Free Software Foundation; either version 2 of the License, or
+the Free Software Foundation; either version 3 of the License, or
 (at your option) any later version.
 
 Features
@@ -59,3 +59,16 @@ Contact
 Project website: https://filezilla-project.org
 Project leader:  mailto:tim.kosse@filezilla-project.org (Support requests per
                  mail will be ignored)
+
+Notices
+-------
+
+FileZilla makes use of the following third-party libraries:
+
+libfilezilla - Copyright (C) 2015-2026 Tim Kosse - GPLv2 or later
+fzssh - Copyright (C) 2025-2026 Tim Kosse and Business Follows srl. - AGPLv3 or later
+wxWidgets - Copyright (C) wxWidgets - wxWindows Library Licence version 3.1 or later
+GnuTLS - Copyright (C) 2000-2023 Free Software Foundation - LGPLv2.1 or later
+Nettle - Copyright (C) 2001-2025 Niels Möller, and others - GPLv2 or later, LGPLv3 or later
+GMP - Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc. - GPLv2 or later, LGPLv3 or later
+

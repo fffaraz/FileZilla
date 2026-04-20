@@ -318,10 +318,11 @@ EVT_MENU(XRCID("ID_SPEEDLIMITCONTEXT_CONFIGURE"), CStatusBar::OnSpeedLimitsConfi
 EVT_TIMER(wxID_ANY, CStatusBar::OnTimer)
 END_EVENT_TABLE()
 
-CStatusBar::CStatusBar(wxTopLevelWindow* pParent, activity_logger& al, COptionsBase& options)
+CStatusBar::CStatusBar(wxTopLevelWindow* pParent, activity_logger& al, COptionsBase& options, TimeFormatter & time_formatter)
 	: CWidgetsStatusBar(pParent)
 	, COptionChangeEventHandler(this)
 	, options_(options)
+	, time_formatter_(time_formatter)
 	, activity_logger_(al)
 {
 	// Speedlimits
@@ -476,7 +477,6 @@ void CStatusBar::DisplayEncrypted()
 
 	bool encrypted = false;
 	if (site) {
-		CCertificateNotification* info;
 		auto const protocol = site.server.GetProtocol();
 		if (protocol == FTPS || protocol == FTPES || protocol == SFTP || protocol == S3 ||
 				protocol == WEBDAV || protocol == AZURE_BLOB || protocol == AZURE_FILE ||
@@ -485,7 +485,7 @@ void CStatusBar::DisplayEncrypted()
 				protocol == RACKSPACE) {
 			encrypted = true;
 		}
-		else if (protocol == FTP && pState->GetSecurityInfo(info)) {
+		else if (protocol == FTP && pState->GetTlsSessionInfo()) {
 			encrypted = true;
 		}
 	}
@@ -526,16 +526,16 @@ void CStatusBar::OnHandleLeftClick(wxWindow* pWnd)
 {
 	if (pWnd == m_pEncryptionIndicator) {
 		CState* pState = CContextManager::Get()->GetCurrentContext();
-		CCertificateNotification *pCertificateNotification = 0;
-		if (pState->GetSecurityInfo(pCertificateNotification)) {
-			CVerifyCertDialog::DisplayCertificate(*pCertificateNotification, options_);
+		auto const& tlsInfo = pState->GetTlsSessionInfo();
+		if (tlsInfo) {
+			CVerifyCertDialog::DisplayCertificate(*tlsInfo, options_, time_formatter_);
 			return;
 		}
 #if ENABLE_SFTP
-		CSftpEncryptionNotification *pSftpEncryptionNotification = 0;
-		if (pState->GetSecurityInfo(pSftpEncryptionNotification)) {
+		auto const& sshInfo = pState->GetSshSessionInfo();
+		if (sshInfo) {
 			CSftpEncryptioInfoDialog dlg;
-			dlg.ShowDialog(pSftpEncryptionNotification);
+			dlg.ShowDialog(sshInfo->first, sshInfo->second);
 			return;
 		}
 #endif

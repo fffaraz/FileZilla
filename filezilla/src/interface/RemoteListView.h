@@ -17,7 +17,7 @@ class CRemoteListView final : public CFileListCtrl<CGenericFileData>, CStateEven
 {
 	friend class CRemoteListViewDropTarget;
 public:
-	CRemoteListView(CView* pParent, CState& state, CQueueView* pQueue, COptionsBase & options, CEditHandler* edit_handler);
+	CRemoteListView(CView* pParent, CState& state, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter, login_manager& lim, CEditHandler* edit_handler);
 	virtual ~CRemoteListView();
 
 	virtual bool CanStartComparison();
@@ -103,6 +103,8 @@ protected:
 	CServerPath MenuMkdir();
 
 	std::unique_ptr<CWindowTinter> m_windowTinter;
+
+	login_manager& login_manager_;
 
 	CView *m_parentView{};
 	CEditHandler* edit_handler_{};

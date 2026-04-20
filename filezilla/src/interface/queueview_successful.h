@@ -6,7 +6,7 @@
 class CQueueViewSuccessful final : public CQueueViewFailed
 {
 public:
-	CQueueViewSuccessful(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame);
+	CQueueViewSuccessful(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame);
 
 	bool AutoClear() const { return m_autoClear; }
 

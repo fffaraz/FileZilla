@@ -120,7 +120,7 @@ bool COptionsPageInterface::LoadPage()
 	impl_->filepane_layout_->SetSelection(m_pOptions->get_int(OPTION_FILEPANE_LAYOUT));
 	impl_->messagelog_pos_->SetSelection(m_pOptions->get_int(OPTION_MESSAGELOG_POSITION));
 	impl_->swap_->SetValue(m_pOptions->get_bool(OPTION_FILEPANE_SWAP));
-	
+
 #ifndef __WXMAC__
 	impl_->minimize_tray_->SetValue(m_pOptions->get_bool(OPTION_MINIMIZE_TRAY));
 #endif
@@ -129,7 +129,7 @@ bool COptionsPageInterface::LoadPage()
 	}
 
 	impl_->momentary_speed_->SetValue(m_pOptions->get_bool(OPTION_SPEED_DISPLAY));
-	
+
 	int const startupAction = m_pOptions->get_int(OPTION_STARTUP_ACTION);
 	switch (startupAction) {
 	default:
@@ -156,7 +156,7 @@ bool COptionsPageInterface::LoadPage()
 	m_pOwner->RememberOldValue(OPTION_FILEPANE_LAYOUT);
 	m_pOwner->RememberOldValue(OPTION_FILEPANE_SWAP);
 
-	impl_->ropListRefresh_->SetValue(m_pOptions->get_bool(OPTION_REMOTE_ROP_LISTING_REFFRESH));
+	impl_->ropListRefresh_->SetValue(m_pOptions->get_bool(OPTION_REMOTE_ROP_LISTING_REFRESH));
 
 	return true;
 }
@@ -194,7 +194,7 @@ bool COptionsPageInterface::SavePage()
 		action += 1;
 	}
 	m_pOptions->set(OPTION_ALREADYCONNECTED_CHOICE, action);
-	m_pOptions->set(OPTION_REMOTE_ROP_LISTING_REFFRESH, impl_->ropListRefresh_->GetValue());
+	m_pOptions->set(OPTION_REMOTE_ROP_LISTING_REFRESH, impl_->ropListRefresh_->GetValue());
 
 	return true;
 }

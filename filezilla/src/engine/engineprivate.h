@@ -68,8 +68,7 @@ public:
 	bool IsBusy() const;
 	bool IsConnected() const;
 
-	bool IsPendingAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> const& pNotification);
-	bool SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification);
+	void SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification);
 	unsigned int GetNextAsyncRequestNumber();
 
 	CTransferStatus GetTransferStatus(bool &changed);

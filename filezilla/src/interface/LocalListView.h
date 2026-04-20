@@ -13,6 +13,7 @@ class CVolumeDescriptionEnumeratorThread;
 #endif
 class CView;
 class CWindowTinter;
+class TimeFormatter;
 
 class CLocalFileData final : public CGenericFileData
 {
@@ -39,7 +40,7 @@ class CLocalListView final : public CFileListCtrl<CLocalFileData>, CStateEventHa
 	friend class CLocalListViewSortType;
 
 public:
-	CLocalListView(CView* parent, CState& state, CQueueView *pQueue, COptionsBase & options, CEditHandler* edit_handler);
+	CLocalListView(CView* parent, CState& state, CQueueView *pQueue, COptionsBase & options, TimeFormatter & time_formatter, login_manager& lim, CEditHandler* edit_handler);
 	virtual ~CLocalListView();
 
 protected:

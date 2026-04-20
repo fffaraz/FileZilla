@@ -10,8 +10,8 @@ EVT_CONTEXT_MENU(CQueueViewSuccessful::OnContextMenu)
 EVT_MENU(XRCID("ID_AUTOCLEAR"), CQueueViewSuccessful::OnMenuAutoClear)
 END_EVENT_TABLE()
 
-CQueueViewSuccessful::CQueueViewSuccessful(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame)
-	: CQueueViewFailed(parent, options, index, pMainFrame, _("Successful transfers"))
+CQueueViewSuccessful::CQueueViewSuccessful(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame)
+	: CQueueViewFailed(parent, options, time_formatter, lim, index, pMainFrame, _("Successful transfers"))
 {
 	std::vector<ColumnId> extraCols({colTime});
 	CreateColumns(extraCols);

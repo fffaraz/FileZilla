@@ -1,7 +1,7 @@
 dnl Checks whether system's pugixml library exists and is usable.
 
 AC_DEFUN([FZ_CHECK_PUGIXML], [
-  AC_ARG_WITH(pugixml, AC_HELP_STRING([--with-pugixml=type], [Selects which version of pugixml to use. Type has to be either system or builtin]),
+  AC_ARG_WITH(pugixml, AS_HELP_STRING([--with-pugixml=type], [Selects which version of pugixml to use. Type has to be either system or builtin]),
     [
       if test "x$with_pugixml" != "xbuiltin"; then
         if test "x$with_pugixml" != "xsystem"; then
@@ -37,7 +37,7 @@ AC_DEFUN([FZ_CHECK_PUGIXML], [
   if test "x$with_pugixml" != "xbuiltin"; then
     dnl Check for shared library
     dnl Oddity: in AC_CHECK_HEADER I can leave the true case empty, but not in AC_HAVE_LIBRARY
-    AC_HAVE_LIBRARY(pugixml,
+    AC_CHECK_LIB(pugixml, main,
       [true],
       [
         if test "x$with_pugixml" = "xsystem"; then

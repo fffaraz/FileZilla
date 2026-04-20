@@ -15,7 +15,7 @@ CImportDialog::CImportDialog(wxWindow* parent, CQueueView* pQueueView)
 {
 }
 
-void CImportDialog::Run(XmlOptions & options)
+void CImportDialog::Run(XmlOptions & options, login_manager & lim)
 {
 	wxFileDialog dlg(m_parent, _("Select file to import settings from"), wxString(),
 					_T("FileZilla.xml"), _T("XML files (*.xml)|*.xml"),
@@ -99,7 +99,7 @@ void CImportDialog::Run(XmlOptions & options)
 			}
 
 			if (cbsites && cbsites->IsChecked()) {
-				CSiteManager::ImportSites(fz3Root.child("Servers"));
+				CSiteManager::ImportSites(fz3Root.child("Servers"), options, lim);
 			}
 
 			if (cbsettings && cbsettings->IsChecked()) {

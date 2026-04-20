@@ -4,13 +4,14 @@
 #include "state.h"
 #include "../commonui/remote_recursive_operation.h"
 
+class COptionsBase;
 class CQueueView;
 class CActionAfterBlocker;
 
 class CRemoteRecursiveOperation final : public remote_recursive_operation, public CStateEventHandler
 {
 public:
-	CRemoteRecursiveOperation(CState& state);
+	CRemoteRecursiveOperation(COptionsBase & options, CState& state);
 	virtual ~CRemoteRecursiveOperation();
 
 	void StartRecursiveOperation(OperationMode mode, ActiveFilters const& filters, bool immediate = true);
@@ -34,11 +35,12 @@ protected:
 
 	void OnStateChange(t_statechange_notifications notification, std::wstring const&, const void* data) override;
 
-	bool m_immediate{true};
-	bool added_to_queue_{};
+	COptionsBase & options_;
 	CState& m_state;
 	CQueueView* m_pQueue{};
 	std::shared_ptr<CActionAfterBlocker> m_actionAfterBlocker;
+	bool m_immediate{true};
+	bool added_to_queue_{};
 
 	friend class CCommandQueue;
 };

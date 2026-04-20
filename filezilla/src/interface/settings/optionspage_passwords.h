@@ -3,10 +3,11 @@
 
 #include "optionspage.h"
 
+class login_manager;
 class COptionsPagePasswords final : public COptionsPage
 {
 public:
-	COptionsPagePasswords();
+	COptionsPagePasswords(login_manager & lim);
 	virtual ~COptionsPagePasswords();
 
 	virtual bool LoadPage() override;

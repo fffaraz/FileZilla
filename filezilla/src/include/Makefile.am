@@ -15,6 +15,7 @@ noinst_HEADERS = \
 	misc.h \
 	notification.h \
 	optionsbase.h \
+	posix_chmod.h \
 	s3sse.h \
 	server.h \
 	serverpath.h \

@@ -22,18 +22,19 @@ private:
 };
 
 class COptionsBase;
+class TimeFormatter;
 
 class CVerifyCertDialog final : protected wxDialogEx
 {
 public:
-	static void ShowVerificationDialog(cert_store & certStore, CCertificateNotification& notification, COptionsBase & options);
+	static void ShowVerificationDialog(cert_store & certStore, CCertificateNotification& notification, COptionsBase & options, TimeFormatter & time_formatter);
 
-	static void DisplayCertificate(CCertificateNotification const& notification, COptionsBase & options);
+	static void DisplayCertificate(fz::tls_session_info const& info, COptionsBase & options, TimeFormatter & time_formatter);
 
 private:
-	bool CreateVerificationDialog(CCertificateNotification const& notification, COptionsBase & options, bool displayOnly);
+	bool CreateVerificationDialog(fz::tls_session_info const& info, COptionsBase & options, bool displayOnly);
 
-	CVerifyCertDialog();
+	CVerifyCertDialog(TimeFormatter & time_formatter);
 	~CVerifyCertDialog();
 
 	void AddAlgorithm(wxWindow* parent, wxGridBagSizer* sizer, std::string const& name, bool insecure);

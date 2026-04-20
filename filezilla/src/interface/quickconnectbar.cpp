@@ -185,7 +185,7 @@ void CQuickconnectBar::OnQuickconnect(wxCommandEvent& event)
 
 	if (options_.get_int(OPTION_DEFAULT_KIOSKMODE) && site.credentials.logonType_ == LogonType::normal) {
 		site.SetLogonType(LogonType::ask);
-		CLoginManager::Get().RememberPassword(site);
+		mainFrame_.GetLoginManager().RememberPassword(site);
 	}
 	Bookmark bm;
 	bm.m_remoteDir = path;
@@ -193,7 +193,7 @@ void CQuickconnectBar::OnQuickconnect(wxCommandEvent& event)
 		return;
 	}
 
-	CRecentServerList::SetMostRecentServer(site, options_);
+	CRecentServerList::SetMostRecentServer(site, mainFrame_.GetLoginManager(), options_);
 }
 
 void CQuickconnectBar::OnQuickconnectDropdown(wxCommandEvent& event)

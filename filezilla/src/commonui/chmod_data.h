@@ -1,31 +1,23 @@
 #ifndef FILEZILLA_COMMONUI_CHMOD_DATA_HEADER
 #define FILEZILLA_COMMONUI_CHMOD_DATA_HEADER
 
+#include "../include/posix_chmod.h"
+
 #include "visibility.h"
 #include <string>
+
+#include <cstdint>
 
 class FZCUI_PUBLIC_SYMBOL ChmodData
 {
 public:
-	int GetApplyType() const { return applyType_; }
+	posix_chmod chmod_;
+	bool recurse_{};
+	bool apply_files_{true};
+	bool apply_dirs_{true};
 
-	// Converts permission string into a series of chars
-	// The permissions parameter has to be able to hold at least
-	// 9 characters.
-	// Example:
-	//   drwxr--r-- gets converted into 222211211
-	//   0644 gets converted into 221211211
-	//   foo (0273) gets converted into 121222122
-	static bool ConvertPermissions(std::wstring const& rwx, char* permissions);
-
-	std::wstring GetPermissions(const char* previousPermissions, bool dir);
-
-	int applyType_{};
-	std::wstring numeric_;
-	char permissions_[9]{};
-
-private:
-	static bool FZCUI_PRIVATE_SYMBOL DoConvertPermissions(std::wstring const& rwx, char* permissions);
+	posix_permissions Apply(std::string_view old, bool dir) const;
+	posix_permissions Apply(posix_permissions const&) const;
 };
 
 #endif

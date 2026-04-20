@@ -3,13 +3,15 @@
 
 #include "dialogex.h"
 
+class COptionsBase;
+class TimeFormatter;
 class CFileExistsDlg final : public wxDialogEx
 {
 	DECLARE_EVENT_TABLE()
 
 public:
 	/// Constructors
-	CFileExistsDlg(CFileExistsNotification *pNotification);
+	CFileExistsDlg(CFileExistsNotification *pNotification, COptionsBase & options, TimeFormatter & time_formatter);
 
 	/// Creation
 	bool Create(wxWindow* parent);
@@ -28,6 +30,9 @@ protected:
 
 	void LoadIcon(int id, std::wstring const& file);
 	std::wstring GetPathEllipsis(std::wstring const& path, wxWindow *window);
+
+	COptionsBase & options_;
+	TimeFormatter & time_formatter_;
 
 	CFileExistsNotification *m_pNotification;
 	CFileExistsNotification::OverwriteAction m_action;

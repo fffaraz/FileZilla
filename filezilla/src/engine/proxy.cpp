@@ -5,10 +5,16 @@
 
 #include <libfilezilla/iputils.hpp>
 
+#include <fzssh/client.hpp>
+
 #include <algorithm>
 
 #include <assert.h>
 #include <string.h>
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 enum handshake_state
 {
@@ -21,8 +27,8 @@ enum handshake_state
 	socks4_handshake
 };
 
-CProxySocket::CProxySocket(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner, ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass)
-	: fz::event_handler(pOwner->event_loop_)
+ProxyBase::ProxyBase(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner, ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass)
+	: fz::event_handler(*pOwner, fz::child_event_handler)
 	, fz::socket_layer(pEvtHandler, next_layer, false)
 	, m_pOwner(pOwner)
 	, type_(t)
@@ -34,13 +40,11 @@ CProxySocket::CProxySocket(fz::event_handler* pEvtHandler, fz::socket_interface 
 	next_layer_.set_event_handler(this);
 }
 
-CProxySocket::~CProxySocket()
+ProxyBase::~ProxyBase()
 {
-	remove_handler();
-	next_layer_.set_event_handler(nullptr);
 }
 
-std::wstring CProxySocket::Name(ProxyType t)
+std::wstring ProxyBase::Name(ProxyType t)
 {
 	switch (t) {
 	case ProxyType::HTTP:
@@ -49,12 +53,46 @@ std::wstring CProxySocket::Name(ProxyType t)
 		return L"SOCKS4";
 	case ProxyType::SOCKS5:
 		return L"SOCKS5";
+	case ProxyType::SSH:
+		return L"SSH";
 	default:
 		return _("unknown");
 	}
 }
 
-int CProxySocket::connect(fz::native_string const& host, unsigned int port, fz::address_type family)
+std::wstring ProxyBase::GetUser() const
+{
+	return fz::to_wstring_from_utf8(user_);
+}
+
+std::wstring ProxyBase::GetPass() const
+{
+	return fz::to_wstring_from_utf8(pass_);
+}
+
+fz::native_string ProxyBase::peer_host() const
+{
+	return host_;
+}
+
+int ProxyBase::peer_port(int& error) const
+{
+	if (!port_) {
+		error = ENOTCONN;
+		return -1;
+	}
+	return static_cast<int>(port_);
+}
+
+
+SimpleProxy::~SimpleProxy()
+{
+	remove_handler();
+	next_layer_.set_event_handler(nullptr);
+}
+
+
+int SimpleProxy::connect(fz::native_string const& host, unsigned int port, fz::address_type family)
 {
 	if (state_ != fz::socket_state::none) {
 		if (state_ == fz::socket_state::failed) {
@@ -189,14 +227,14 @@ int CProxySocket::connect(fz::native_string const& host, unsigned int port, fz::
 	return 0;
 }
 
-void CProxySocket::operator()(fz::event_base const& ev)
+void SimpleProxy::operator()(fz::event_base const& ev)
 {
 	fz::dispatch<fz::socket_event, fz::hostaddress_event>(ev, this,
-		&CProxySocket::OnSocketEvent,
-		&CProxySocket::forward_hostaddress_event);
+		&SimpleProxy::OnSocketEvent,
+		&SimpleProxy::forward_hostaddress_event);
 }
 
-void CProxySocket::OnSocketEvent(socket_event_source* s, fz::socket_event_flag t, int error)
+void SimpleProxy::OnSocketEvent(socket_event_source* s, fz::socket_event_flag t, int error)
 {
 	if (state_ != fz::socket_state::connecting) {
 		return;
@@ -229,7 +267,7 @@ void CProxySocket::OnSocketEvent(socket_event_source* s, fz::socket_event_flag t
 	}
 }
 
-void CProxySocket::OnReceive()
+void SimpleProxy::OnReceive()
 {
 	m_can_read = true;
 
@@ -362,7 +400,7 @@ void CProxySocket::OnReceive()
 				}
 				return;
 			}
-			
+
 			// All data got read, parse it
 			switch (m_handshakeState) {
 			default:
@@ -610,7 +648,7 @@ void CProxySocket::OnReceive()
 	}
 }
 
-void CProxySocket::OnSend()
+void SimpleProxy::OnSend()
 {
 	m_can_write = true;
 	if (state_ != fz::socket_state::connecting || !sendBuffer_) {
@@ -644,7 +682,7 @@ void CProxySocket::OnSend()
 	}
 }
 
-int CProxySocket::read(void * buffer, unsigned int size, int& error)
+int SimpleProxy::read(void * buffer, unsigned int size, int& error)
 {
 	if (receiveBuffer_) {
 		if (size > receiveBuffer_.size()) {
@@ -657,36 +695,12 @@ int CProxySocket::read(void * buffer, unsigned int size, int& error)
 	return next_layer_.read(buffer, size, error);
 }
 
-int CProxySocket::write(void const* buffer, unsigned int size, int& error)
+int SimpleProxy::write(void const* buffer, unsigned int size, int& error)
 {
 	return next_layer_.write(buffer, size, error);
 }
 
-std::wstring CProxySocket::GetUser() const
-{
-	return fz::to_wstring_from_utf8(user_);
-}
-
-std::wstring CProxySocket::GetPass() const
-{
-	return fz::to_wstring_from_utf8(pass_);
-}
-
-fz::native_string CProxySocket::peer_host() const
-{
-	return host_;
-}
-
-int CProxySocket::peer_port(int& error) const
-{
-	if (!port_) {
-		error = ENOTCONN;
-		return -1;
-	}
-	return static_cast<int>(port_);
-}
-
-int CProxySocket::shutdown()
+int SimpleProxy::shutdown()
 {
 	if (state_ == fz::socket_state::shut_down) {
 		return 0;
@@ -705,4 +719,141 @@ int CProxySocket::shutdown()
 		state_ = fz::socket_state::failed;
 	}
 	return res;
+}
+
+SSHProxy::~SSHProxy()
+{
+	remove_handler();
+	channel_.reset();
+	ssh_.reset();
+}
+
+int SSHProxy::connect(fz::native_string const& host, unsigned int port, fz::address_type family)
+{
+	if (next_layer_.get_state() == fz::socket_state::none) {
+		int ret = next_layer_.connect(proxy_host_, proxy_port_);
+		if (ret) {
+			state_ = fz::socket_state::failed;
+			return ret;
+		}
+	}
+
+	state_ = fz::socket_state::connecting;
+
+	host_ = host;
+	port_ = port;
+	family_ = family;
+
+	fz::ssh::client_parameters params;
+	params.single_channel_ = true;
+	params.softwareversion_ = "FileZilla"sv;
+	params.softwareversion_ += ' ';
+	params.softwareversion_ += PACKAGE_VERSION;
+	for (auto & c : params.softwareversion_) {
+		if (c == ' ' || c == '-') {
+			c = '_';
+		}
+	}
+
+	ssh_ = std::make_unique<fz::ssh::client>(params, user_, next_layer_, *this, m_pOwner->logger());
+
+	channel_ = ssh_->open_channel(fz::ssh::channel_type::direct_tcpip, fz::sprintf("%s,%u"sv, host, port));
+	channel_->set_event_handler(event_handler_);
+	return 0;
+}
+
+int SSHProxy::read(void *buffer, unsigned int size, int& error)
+{
+	if (!channel_) {
+		error = EINVAL;
+		return -1;
+	}
+
+	return channel_->read(buffer, size, error);
+}
+
+int SSHProxy::write(void const* buffer, unsigned int size, int& error)
+{
+	if (!channel_) {
+		error = EINVAL;
+		return -1;
+	}
+
+	return channel_->write(buffer, size, error);
+}
+
+int SSHProxy::shutdown()
+{
+	return -1;
+}
+
+void SSHProxy::operator()(fz::event_base const& ev)
+{
+	fz::dispatch<fz::socket_event,
+		fz::ssh::hostkey_verification_event,
+		fz::ssh::auth_requested_event,
+		fz::ssh::auth_done_event,
+		fz::ssh::auth_public_key_okay_event,
+		fz::ssh::auth_signature_failure_event
+	>(
+		ev, this,
+		&SSHProxy::OnSocketEvent,
+		&SSHProxy::on_hostkey_verification,
+		&SSHProxy::on_auth_requested,
+		&SSHProxy::on_auth_done,
+		&SSHProxy::on_auth_pubkey_ok,
+		&SSHProxy::on_auth_signature_failed
+	);
+}
+
+void SSHProxy::OnSocketEvent(socket_event_source* s, fz::socket_event_flag t, int error)
+{
+	forward_socket_event(s, t, error);
+}
+
+void SSHProxy::on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> & key, fz::ssh::algorithm_info & algs)
+{
+	if (ssh_) {
+		ssh_->hostkey_decision(true); // FIXME
+	}
+}
+
+void SSHProxy::on_auth_requested(fz::ssh::session* ssh, std::string const& methods, bool is_continuation)
+{
+	if (ssh != ssh_.get()) {
+		return;
+	}
+	ssh_->auth_with_password(pass_);
+}
+
+void SSHProxy::on_auth_done(fz::ssh::session*)
+{
+	state_ = fz::socket_state::connected;
+}
+
+void SSHProxy::on_auth_pubkey_ok(fz::ssh::session*)
+{
+}
+
+void SSHProxy::on_auth_signature_failed(fz::ssh::session*)
+{
+}
+
+std::unique_ptr<ProxyBase> CreateProxy(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner,
+	ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass)
+{
+	if (t == ProxyType::SSH) {
+		return std::make_unique<SSHProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass);
+	}
+	else {
+		return std::make_unique<SimpleProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass);
+	}
+}
+
+void SSHProxy::set_event_handler(event_handler* handler, fz::socket_event_flag retrigger_block)
+{
+	event_handler_ = handler;
+	if (channel_) {
+		channel_->set_event_handler(handler, retrigger_block);
+	}
 }

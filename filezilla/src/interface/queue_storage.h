@@ -9,13 +9,14 @@ class CFileItem;
 class COptionsBase;
 class CServerItem;
 class Site;
+class login_manager;
 
 class CQueueStorage final
 {
 	class Impl;
 
 public:
-	CQueueStorage(COptionsBase & options);
+	CQueueStorage(COptionsBase & options, login_manager & lim);
 	~CQueueStorage();
 
 	CQueueStorage(CQueueStorage const&) = delete;

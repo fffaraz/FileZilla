@@ -41,8 +41,8 @@ public:
 class CLocalTreeViewDropTarget final : public CFileDropTarget<wxTreeCtrlEx>
 {
 public:
-	CLocalTreeViewDropTarget(CLocalTreeView* pLocalTreeView)
-		: CFileDropTarget(pLocalTreeView)
+	CLocalTreeViewDropTarget(CLocalTreeView* pLocalTreeView, login_manager& lim)
+		: CFileDropTarget(pLocalTreeView, pLocalTreeView->options_, lim)
 		, m_pLocalTreeView(pLocalTreeView)
 	{
 	}
@@ -237,7 +237,7 @@ EVT_CHAR(CLocalTreeView::OnChar)
 EVT_MENU(XRCID("ID_OPEN"), CLocalTreeView::OnMenuOpen)
 END_EVENT_TABLE()
 
-CLocalTreeView::CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView *pQueueView, COptionsBase & options)
+CLocalTreeView::CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView *pQueueView, COptionsBase & options, login_manager & lim)
 	: wxTreeCtrlEx(parent, id, wxDefaultPosition, wxDefaultSize, DEFAULT_TREE_STYLE | wxTAB_TRAVERSAL | wxTR_EDIT_LABELS | wxNO_BORDER)
 	, CSystemImageList(CThemeProvider::GetIconSize(iconSizeSmall).x)
 	, CStateEventHandler(state)
@@ -280,7 +280,7 @@ CLocalTreeView::CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, C
 	SetDir(_T("/"));
 #endif
 
-	SetDropTarget(new CLocalTreeViewDropTarget(this));
+	SetDropTarget(new CLocalTreeViewDropTarget(this, lim));
 
 	m_windowTinter = std::make_unique<CWindowTinter>(*this);
 }

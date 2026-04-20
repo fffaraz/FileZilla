@@ -1470,10 +1470,8 @@ void CDirectoryListingParserTest::testIndividual()
 
 	CDirectoryListingParser parser(0, server);
 
-	size_t const len = entry.data.size();
-	char* data = new char[len];
-	memcpy(data, entry.data.c_str(), len);
-	parser.AddData(data, len);
+	parser.GetInputBuffer().append(entry.data);
+	CPPUNIT_ASSERT(parser.ProcessAddedData());
 
 	CDirectoryListing listing = parser.Parse(CServerPath());
 
@@ -1494,10 +1492,8 @@ void CDirectoryListingParserTest::testAll()
 	for (auto const& entry : m_entries) {
 		server.SetType(entry.serverType);
 		parser.SetServer(server);
-		size_t const len = entry.data.size();
-		char* data = new char[len];
-		memcpy(data, entry.data.c_str(), len);
-		parser.AddData(data, len);
+		parser.GetInputBuffer().append(entry.data);
+		CPPUNIT_ASSERT(parser.ProcessAddedData());
 	}
 	CDirectoryListing listing = parser.Parse(CServerPath());
 
@@ -1537,9 +1533,8 @@ void CDirectoryListingParserTest::testSpecial()
 
 			CDirectoryListingParser parser(0, server);
 
-			char* data = new char[line.size()];
-			memcpy(data, line.c_str(), line.size());
-			parser.AddData(data, line.size());
+			parser.GetInputBuffer().append(line);
+			parser.ProcessAddedData();
 			parser.Parse(CServerPath());
 		}
 	}

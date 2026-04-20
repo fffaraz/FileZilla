@@ -3,17 +3,17 @@
 
 #include "dialogex.h"
 
+class COptions;
 class CQueueView;
 class CExportDialog final : protected wxDialogEx
 {
 public:
-	CExportDialog(wxWindow* parent, CQueueView* pQueueView);
+	CExportDialog(wxWindow* parent);
 
-	void Run();
+	void Run(COptions& options, CQueueView const* pQueueView);
 
 protected:
 	wxWindow* const m_parent;
-	const CQueueView* const m_pQueueView;
 };
 
 #endif

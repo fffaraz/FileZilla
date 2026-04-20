@@ -12,6 +12,8 @@
 #include <assert.h>
 #include <string.h>
 
+using namespace std::literals;
+
 std::map<std::wstring, int> CDirectoryListingParser::m_MonthNamesMap;
 
 //#define LISTDEBUG_MVS
@@ -26,18 +28,20 @@ static char const data[][150]={
 namespace {
 struct ObjectCache
 {
-	fz::shared_value<std::wstring> const& get(std::wstring const& v)
+	fz::shared_value<std::wstring> const& get(std::wstring_view const& v)
 	{
-		auto it = std::lower_bound(cache.begin(), cache.end(), v);
+		fz::scoped_lock l(m_);
+		auto it = std::lower_bound(cache.begin(), cache.end(), v, [&](auto const& a, auto const& b) { return *a < b; });
 
-		if (it == cache.end() || !(*it == v)) {
-			it = cache.emplace(it, v);
+		if (it == cache.end() || !(**it == v)) {
+			it = cache.emplace(it, std::wstring(v));
 		}
 		return *it;
 	}
 
 	fz::shared_value<std::wstring> const& get(std::wstring && v)
 	{
+		fz::scoped_lock l(m_);
 		auto it = std::lower_bound(cache.begin(), cache.end(), v);
 
 		if (it == cache.end() || !(*it == v)) {
@@ -46,6 +50,8 @@ struct ObjectCache
 		return *it;
 	}
 
+private:
+	fz::mutex m_{false};
 	// Vector coupled with binary search and sorted insertion is fastest
 	// alternative as we expect a relatively low amount of inserts.
 	// Note that we cannot use set, as it it cannot search based on a different type.
@@ -56,396 +62,287 @@ struct ObjectCache
 ObjectCache objcache;
 }
 
-class CToken final
+bool CToken::IsNumeric(t_numberBase base)
 {
-protected:
-	enum flags : unsigned char {
-		numeric_left = 0x01,
-		non_numeric_left = 0x02,
-		numeric_right = 0x04,
-		non_numeric_right = 0x08,
-		numeric  = 0x10,
-		non_numeric = 0x20
-	};
-
-	enum TokenInformation
+	switch (base)
 	{
-		Unknown,
-		Yes,
-		No
-	};
-
-public:
-	CToken() = default;
-
-	enum t_numberBase
-	{
-		decimal,
-		hex
-	};
-
-	CToken(std::wstring_view data)
-		: data_(data)
-	{}
-
-	CToken(wchar_t const* data, size_t len)
-		: data_(data, len)
-	{}
-
-	wchar_t const* data() const
-	{
-		return data_.data();
-	}
-
-	size_t size() const {
-		return data_.size();
-	}
-
-	explicit operator bool() const { return !data_.empty(); }
-
-	wchar_t operator[](size_t i) const { return data_[i]; }
-
-	std::wstring GetString() const
-	{
-		if (data_.empty()) {
-			return std::wstring();
-		}
-		else {
-			return std::wstring(data_.data(), data_.size());
-		}
-	}
-
-	std::wstring_view get_view() const
-	{
-		return data_;
-	}
-
-	bool IsNumeric(t_numberBase base = decimal)
-	{
-		switch (base)
-		{
-		case decimal:
-		default:
-			if (!(flags_ & (numeric | non_numeric))) {
-				flags_ |= numeric;
-				for (size_t i = 0; i < data_.size(); ++i) {
-					if (data_[i] < '0' || data_[i] > '9') {
-						flags_ ^= numeric | non_numeric;
-						break;
-					}
-				}
-			}
-			return flags_ & numeric;
-		case hex:
+	case decimal:
+	default:
+		if (!(flags_ & (numeric | non_numeric))) {
+			flags_ |= numeric;
 			for (size_t i = 0; i < data_.size(); ++i) {
-				auto const c = data_[i];
-				if ((c < '0' || c > '9') && (c < 'A' || c > 'F') && (c < 'a' || c > 'f')) {
-					return false;
+				if (data_[i] < '0' || data_[i] > '9') {
+					flags_ ^= numeric | non_numeric;
+					break;
 				}
 			}
-			return true;
 		}
-	}
-
-	bool IsNumeric(size_t start, size_t len)
-	{
-		for (size_t i = start; i < std::min(start + len, data_.size()); ++i) {
-			if (data_[i] < '0' || data_[i] > '9') {
+		return flags_ & numeric;
+	case hex:
+		for (size_t i = 0; i < data_.size(); ++i) {
+			auto const c = data_[i];
+			if ((c < '0' || c > '9') && (c < 'A' || c > 'F') && (c < 'a' || c > 'f')) {
 				return false;
 			}
 		}
 		return true;
 	}
+}
 
-	bool IsLeftNumeric()
-	{
-		if (!(flags_ & (numeric_left | non_numeric_left))) {
-			if (data_.size() < 2 || data_[0] < '0' || data_[0] > '9') {
-				flags_ |= non_numeric_left;
-			}
-			else {
-				flags_ |= numeric_left;
-			}
+bool CToken::IsNumeric(size_t start, size_t len)
+{
+	for (size_t i = start; i < std::min(start + len, data_.size()); ++i) {
+		if (data_[i] < '0' || data_[i] > '9') {
+			return false;
 		}
-		return flags_ & numeric_left;
 	}
+	return true;
+}
 
-	bool IsRightNumeric()
-	{
-		if (!(flags_ & (numeric_right | non_numeric_right))) {
-			if (data_.size() < 2 || data_.back() < '0' || data_.back() > '9') {
-				flags_ |= non_numeric_right;
-			}
-			else {
-				flags_ |= numeric_right;
-			}
+bool CToken::IsLeftNumeric()
+{
+	if (!(flags_ & (numeric_left | non_numeric_left))) {
+		if (data_.size() < 2 || data_[0] < '0' || data_[0] > '9') {
+			flags_ |= non_numeric_left;
 		}
-		return flags_ & numeric_right;
+		else {
+			flags_ |= numeric_left;
+		}
 	}
+	return flags_ & numeric_left;
+}
 
-	int Find(wchar_t const* chr, size_t start = 0) const
-	{
-		if (!chr) {
-			return -1;
+bool CToken::IsRightNumeric()
+{
+	if (!(flags_ & (numeric_right | non_numeric_right))) {
+		if (data_.size() < 2 || data_.back() < '0' || data_.back() > '9') {
+			flags_ |= non_numeric_right;
 		}
+		else {
+			flags_ |= numeric_right;
+		}
+	}
+	return flags_ & numeric_right;
+}
 
-		for (size_t i = start; i < data_.size(); ++i) {
-			for (size_t c = 0; chr[c]; ++c) {
-				if (data_[i] == chr[c]) {
-					return i;
-				}
-			}
-		}
+int CToken::Find(wchar_t const* chr, size_t start) const
+{
+	if (!chr) {
 		return -1;
 	}
 
-	int Find(wchar_t chr, size_t start = 0) const
-	{
-		for (size_t i = start; i < data_.size(); ++i) {
-			if (data_[i] == chr) {
+	for (size_t i = start; i < data_.size(); ++i) {
+		for (size_t c = 0; chr[c]; ++c) {
+			if (data_[i] == chr[c]) {
 				return i;
 			}
 		}
+	}
+	return -1;
+}
 
+int CToken::Find(wchar_t chr, size_t start) const
+{
+	for (size_t i = start; i < data_.size(); ++i) {
+		if (data_[i] == chr) {
+			return i;
+		}
+	}
+
+	return -1;
+}
+
+int64_t CToken::GetNumber(size_t start, int len)
+{
+	if (len == -1) {
+		len = data_.size() - start;
+	}
+	if (len < 1) {
 		return -1;
 	}
 
-	int64_t GetNumber(size_t start, int len)
-	{
-		if (len == -1) {
-			len = data_.size() - start;
-		}
-		if (len < 1) {
-			return -1;
-		}
-
-		if (start + static_cast<size_t>(len) > data_.size()) {
-			return -1;
-		}
-
-		if (data_[start] < '0' || data_[start] > '9') {
-			return -1;
-		}
-
-		int64_t number = 0;
-		for (size_t i = start; i < (start + len); ++i) {
-			if (data_[i] < '0' || data_[i] > '9') {
-				break;
-			}
-			number *= 10;
-			number += data_[i] - '0';
-		}
-		return number;
+	if (start + static_cast<size_t>(len) > data_.size()) {
+		return -1;
 	}
 
-	int64_t GetNumber(t_numberBase base = decimal)
-	{
-		switch (base) {
-		default:
-		case decimal:
-			if (m_number == std::numeric_limits<int64_t>::min()) {
-				constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 9) / 10;
-				if (IsNumeric() || IsLeftNumeric()) {
-					m_number = 0;
-					for (size_t i = 0; i < data_.size(); ++i) {
-						if (data_[i] < '0' || data_[i] > '9') {
-							break;
-						}
-						if (m_number > max) {
-							m_number = -1;
-							break;
-						}
-						m_number *= 10;
-						m_number += data_[i] - '0';
-					}
-				}
-				else if (IsRightNumeric()) {
-					m_number = 0;
-					size_t start = data_.size() - 1;
-					while (data_[start - 1] >= '0' && data_[start - 1] <= '9') {
-						--start;
-					}
-					for (size_t i = start; i < data_.size(); ++i) {
-						if (m_number > max) {
-							m_number = -1;
-							break;
-						}
-						m_number *= 10;
-						m_number += data_[i] - '0';
-					}
-				}
-			}
-			return m_number;
-		case hex:
-			{
-				constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 15) / 16;
-				int64_t number = 0;
-				for (size_t i = 0; i < data_.size(); ++i) {
-					if (number > max) {
-						return -1;
-					}
-					wchar_t const& c = data_[i];
-					if (c >= '0' && c <= '9') {
-						number *= 16;
-						number += c - '0';
-					}
-					else if (c >= 'a' && c <= 'f') {
-						number *= 16;
-						number += c - '0' + 10;
-					}
-					else if (c >= 'A' && c <= 'F') {
-						number *= 16;
-						number += c - 'A' + 10;
-					}
-					else {
-						return -1;
-					}
-				}
-				return number;
-			}
-		}
+	if (data_[start] < '0' || data_[start] > '9') {
+		return -1;
 	}
 
-protected:
-	int64_t m_number{std::numeric_limits<int64_t>::min()};
+	int64_t number = 0;
+	for (size_t i = start; i < (start + len); ++i) {
+		if (data_[i] < '0' || data_[i] > '9') {
+			break;
+		}
+		number *= 10;
+		number += data_[i] - '0';
+	}
+	return number;
+}
 
-	std::wstring_view data_;
-	unsigned char flags_{};
-};
-
-class CLine final
+int64_t CToken::GetNumber(t_numberBase base)
 {
-public:
-	CLine(std::wstring && line, size_t trailing_whitespace = std::string::npos)
-		: trailing_whitespace_(trailing_whitespace)
-		, line_(line)
-	{
-		m_Tokens.reserve(10);
-		m_LineEndTokens.reserve(10);
-		while (m_parsePos < line_.size() && (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t')) {
-			++m_parsePos;
-		}
-	}
-
-	~CLine()
-	{
-	}
-
-	CToken GetToken(unsigned int n)
-	{
-		if (m_Tokens.size() > n) {
-			return m_Tokens[n];
-		}
-
-		size_t start = m_parsePos;
-		while (m_parsePos < line_.size()) {
-			if (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t') {
-				m_Tokens.emplace_back(line_.c_str() + start, m_parsePos - start);
-
-				while (m_parsePos < line_.size() && (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t')) {
-					++m_parsePos;
+	switch (base) {
+	default:
+	case decimal:
+		if (m_number == std::numeric_limits<int64_t>::min()) {
+			constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 9) / 10;
+			if (IsNumeric() || IsLeftNumeric()) {
+				m_number = 0;
+				for (size_t i = 0; i < data_.size(); ++i) {
+					if (data_[i] < '0' || data_[i] > '9') {
+						break;
+					}
+					if (m_number > max) {
+						m_number = -1;
+						break;
+					}
+					m_number *= 10;
+					m_number += data_[i] - '0';
 				}
-
-				if (m_Tokens.size() > n) {
-					return m_Tokens[n];
-				}
-
-				start = m_parsePos;
 			}
-			++m_parsePos;
+			else if (IsRightNumeric()) {
+				m_number = 0;
+				size_t start = data_.size() - 1;
+				while (data_[start - 1] >= '0' && data_[start - 1] <= '9') {
+					--start;
+				}
+				for (size_t i = start; i < data_.size(); ++i) {
+					if (m_number > max) {
+						m_number = -1;
+						break;
+					}
+					m_number *= 10;
+					m_number += data_[i] - '0';
+				}
+			}
 		}
-		if (m_parsePos != start) {
+		return m_number;
+	case hex:
+		{
+			constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 15) / 16;
+			int64_t number = 0;
+			for (size_t i = 0; i < data_.size(); ++i) {
+				if (number > max) {
+					return -1;
+				}
+				wchar_t const& c = data_[i];
+				if (c >= '0' && c <= '9') {
+					number *= 16;
+					number += c - '0';
+				}
+				else if (c >= 'a' && c <= 'f') {
+					number *= 16;
+					number += c - '0' + 10;
+				}
+				else if (c >= 'A' && c <= 'F') {
+					number *= 16;
+					number += c - 'A' + 10;
+				}
+				else {
+					return -1;
+				}
+			}
+			return number;
+		}
+	}
+}
+
+CLine::CLine(std::wstring && line, size_t trailing_whitespace)
+	: line_(line)
+	, trailing_whitespace_(trailing_whitespace)
+{
+	m_Tokens.reserve(10);
+	while (m_parsePos < line_.size() && (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t')) {
+		++m_parsePos;
+	}
+}
+
+CToken CLine::GetToken(unsigned int n)
+{
+	if (m_Tokens.size() > n) {
+		return m_Tokens[n];
+	}
+
+	size_t start = m_parsePos;
+	while (m_parsePos < line_.size()) {
+		if (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t') {
 			m_Tokens.emplace_back(line_.c_str() + start, m_parsePos - start);
-		}
 
-		if (m_Tokens.size() > n) {
-			return m_Tokens[n];
-		}
+			while (m_parsePos < line_.size() && (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t')) {
+				++m_parsePos;
+			}
 
-		return CToken();
+			if (m_Tokens.size() > n) {
+				return m_Tokens[n];
+			}
+
+			start = m_parsePos;
+		}
+		++m_parsePos;
+	}
+	if (m_parsePos != start) {
+		m_Tokens.emplace_back(line_.c_str() + start, m_parsePos - start);
 	}
 
-	CToken GetEndToken(unsigned int n, bool include_whitespace = false)
-	{
-		if (include_whitespace) {
-			int prev = n;
-			if (prev) {
-				--prev;
-			}
-
-			CToken ref = GetToken(prev);
-			if (!ref) {
-				return ref;
-			}
-			wchar_t const* p = ref.data() + ref.size() + 1;
-
-			if (static_cast<size_t>(p - line_.c_str()) >= line_.size()) {
-				return CToken();
-			}
-
-			auto newLen = line_.size() - (p - line_.c_str());
-			return CToken(p, newLen);
-		}
-
-		if (m_LineEndTokens.size() > n) {
-			return m_LineEndTokens[n];
-		}
-
-		if (m_Tokens.size() <= n) {
-			if (!GetToken(n)) {
-				return CToken();
-			}
-		}
-
-		if (trailing_whitespace_ == std::string::npos) {
-			trailing_whitespace_ = 0;
-			size_t i = line_.size() - 1;
-			while (i < line_.size() && (line_[i] == ' ' || line_[i] == '\t')) {
-				--i;
-				++trailing_whitespace_;
-			}
-		}
-
-		for (unsigned int i = static_cast<unsigned int>(m_LineEndTokens.size()); i <= n; ++i) {
-			CToken const& refToken = m_Tokens[i];
-			const wchar_t* p = refToken.data();
-			if ((p - line_.c_str()) + trailing_whitespace_ >= line_.size()) {
-				return CToken();
-			}
-			auto newLen = line_.size() - (p - line_.c_str()) - trailing_whitespace_;
-			m_LineEndTokens.emplace_back(p, newLen);
-		}
-		return m_LineEndTokens[n];
+	if (m_Tokens.size() > n) {
+		return m_Tokens[n];
 	}
 
-	bool GetToken(unsigned int n, CToken & token, bool to_end = false, bool include_whitespace = false)
-	{
-		if (to_end) {
-			token = GetEndToken(n, include_whitespace);
+	return CToken();
+}
+
+CToken CLine::GetEndToken(unsigned int n, bool include_whitespace)
+{
+	if (include_whitespace) {
+		int prev = n;
+		if (prev) {
+			--prev;
 		}
-		else {
-			token = GetToken(n);
+
+		CToken ref = GetToken(prev);
+		if (!ref) {
+			return ref;
 		}
-		return token.operator bool();
+		wchar_t const* p = ref.data() + ref.size() + 1;
+
+		if (static_cast<size_t>(p - line_.c_str()) >= line_.size()) {
+			return CToken();
+		}
+
+		auto newLen = line_.size() - (p - line_.c_str());
+		return CToken(p, newLen);
 	}
 
-	CLine *Concat(CLine const* pLine) const
-	{
-		std::wstring n;
-		n.reserve(line_.size() + pLine->line_.size() + 1);
-		n = line_;
-		n += ' ';
-		n += pLine->line_;
-		return new CLine(std::move(n), pLine->trailing_whitespace_);
+	if (trailing_whitespace_ == std::string::npos) {
+		trailing_whitespace_ = 0;
+		size_t i = line_.size() - 1;
+		while (i < line_.size() && (line_[i] == ' ' || line_[i] == '\t')) {
+			--i;
+			++trailing_whitespace_;
+		}
 	}
 
-protected:
-	std::vector<CToken> m_Tokens;
-	std::vector<CToken> m_LineEndTokens;
-	size_t m_parsePos{};
-	size_t trailing_whitespace_;
-	std::wstring const line_;
-};
+
+	CToken t = GetToken(n);
+	if (!t) {
+		return {};
+	}
+
+	size_t len = line_.size() - trailing_whitespace_ - (t.data() - line_.c_str());
+	return CToken(t.data(), len);
+}
+
+CLine CLine::Concat(CLine const& line) const
+{
+	std::wstring n;
+	n.reserve(line_.size() + line.line_.size() + 1);
+	n = line_;
+	n += ' ';
+	n += line.line_;
+	return CLine(std::move(n), line.trailing_whitespace_);
+}
+
 
 CDirectoryListingParser::CDirectoryListingParser(CControlSocket* pControlSocket, const CServer& server, listingEncoding::type encoding)
 	: m_pControlSocket(pControlSocket)
@@ -689,46 +586,35 @@ CDirectoryListingParser::CDirectoryListingParser(CControlSocket* pControlSocket,
 
 CDirectoryListingParser::~CDirectoryListingParser()
 {
-	for (auto iter = m_DataList.begin(); iter != m_DataList.end(); ++iter) {
-		delete [] iter->p;
-	}
-
-	delete m_prevLine;
 }
 
 bool CDirectoryListingParser::ParseData(bool partial)
 {
-	DeduceEncoding();
+	ConvertEncoding();
 
 	bool error = false;
-	CLine *pLine = GetLine(partial, error);
-	while (pLine) {
-		bool res = ParseLine(*pLine, m_server.GetType(), false);
+	std::optional<CLine> line = GetLine(partial, error);
+	while (line) {
+		bool res = ParseLine(*line, m_server.GetType(), false);
 		if (!res) {
-			if (m_prevLine) {
-				CLine* pConcatenatedLine = m_prevLine->Concat(pLine);
-				res = ParseLine(*pConcatenatedLine, m_server.GetType(), true);
-				delete pConcatenatedLine;
-				delete m_prevLine;
-
+			if (prevLine_) {
+				CLine concatedLine = prevLine_->Concat(*line);
+				res = ParseLine(concatedLine, m_server.GetType(), true);
 				if (res) {
-					delete pLine;
-					m_prevLine = nullptr;
+					prevLine_.reset();
 				}
 				else {
-					m_prevLine = pLine;
+					prevLine_ = std::move(line);
 				}
 			}
 			else {
-				m_prevLine = pLine;
+				prevLine_ = std::move(line);
 			}
 		}
 		else {
-			delete m_prevLine;
-			m_prevLine = nullptr;
-			delete pLine;
+			prevLine_.reset();
 		}
-		pLine = GetLine(partial, error);
+		line = GetLine(partial, error);
 	};
 
 	return !error;
@@ -870,7 +756,7 @@ bool CDirectoryListingParser::ParseLine(CLine &line, ServerType const serverType
 			m_maybeMultilineVms = token.Find(';') != -1;
 			if (m_fileListOnly) {
 				if (m_fileList.size() < limit_) {
-					m_fileList.emplace_back(token.GetString());
+					m_fileList.emplace_back(token.get_view());
 				}
 				else {
 					if (!truncated_) {
@@ -900,6 +786,12 @@ done:
 		if (!override->time.empty()) {
 			entry.time = override->time;
 		}
+		if (!(override->flags & CDirentry::flag_unsure)) {
+			entry.flags = override->flags;
+		}
+		if (!entry.is_dir() && override->size != -1) {
+			entry.size = override->size;
+		}
 	}
 
 	m_maybeMultilineVms = false;
@@ -914,8 +806,9 @@ done:
 	if (serverType == VMS && entry.is_dir()) {
 		// Trim version information from directories
 		auto pos = entry.name.rfind(';');
-		if (pos != std::wstring::npos && pos > 0)
+		if (pos != std::wstring::npos && pos > 0) {
 			entry.name = entry.name.substr(0, pos);
+		}
 	}
 
 	{
@@ -966,7 +859,7 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 		return false;
 	}
 
-	std::wstring permissions = permissionToken.GetString();
+	auto permissions = std::wstring(permissionToken.get_view());
 
 	entry.flags = 0;
 
@@ -985,7 +878,8 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 		if (!cont_perm) {
 			return false;
 		}
-		permissions += L" " + cont_perm.GetString();
+		permissions += ' ';
+		permissions += cont_perm.get_view();
 		netware = true;
 	}
 
@@ -1017,7 +911,7 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 			if (i) {
 				ownerGroup += L" ";
 			}
-			ownerGroup += ownerGroupToken.GetString();
+			ownerGroup += ownerGroupToken.get_view();
 		}
 
 
@@ -1038,7 +932,7 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 				ownerGroup += L" ";
 			}
 
-			std::wstring const group = sizeToken.GetString();
+			auto group = sizeToken.get_view();
 			int i;
 			for (i = group.size() - 1;
 				 i >= 0 && group[i] >= '0' && group[i] <= '9';
@@ -1061,7 +955,7 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 			continue;
 		}
 
-		entry.name = nameToken.GetString();
+		entry.name = nameToken.get_view();
 
 		// Filter out special chars at the end of the filenames
 		chr = nameToken[nameToken.size() - 1];
@@ -1198,7 +1092,7 @@ bool CDirectoryListingParser::ParseUnixDateTime(CLine & line, int &index, CDiren
 		// Check for non-numeric day
 		if (!dayToken.IsNumeric() && !dayToken.IsLeftNumeric()) {
 			int offset = 0;
-			if (dateMonth.GetString().back() == '.') {
+			if (dateMonth.get_view().back() == '.') {
 				++offset;
 			}
 			if (!dateMonth.IsNumeric(0, dateMonth.size() - offset)) {
@@ -1225,7 +1119,7 @@ bool CDirectoryListingParser::ParseUnixDateTime(CLine & line, int &index, CDiren
 	}
 
 	if (month < 1) {
-		std::wstring strMonth = dateMonth.GetString();
+		auto strMonth = dateMonth.get_view();
 		if (dateMonth.IsLeftNumeric() && (unsigned int)strMonth[strMonth.size() - 1] > 127) {
 			// Most likely an Asian server sending some unknown language specific
 			// suffix at the end of the monthname. Filter it out.
@@ -1239,7 +1133,7 @@ bool CDirectoryListingParser::ParseUnixDateTime(CLine & line, int &index, CDiren
 		}
 		// Check month name
 		while (!strMonth.empty() && (strMonth.back() == ',' || strMonth.back() == '.')) {
-			strMonth.pop_back();
+			strMonth.remove_suffix(1);
 		}
 		if (!GetMonthFromName(strMonth, month)) {
 			return false;
@@ -1259,7 +1153,7 @@ bool CDirectoryListingParser::ParseUnixDateTime(CLine & line, int &index, CDiren
 			return false;
 		}
 
-		std::wstring str = timeOrYearToken.GetString();
+		auto str = timeOrYearToken.get_view();
 		hour = fz::to_integral<int>(str.substr(0, pos), -1);
 		minute = fz::to_integral<int>(str.substr(pos + 1), -1);
 
@@ -1322,8 +1216,7 @@ bool CDirectoryListingParser::ParseUnixDateTime(CLine & line, int &index, CDiren
 					return false;
 				}
 
-				std::wstring str = timeToken.GetString();
-
+				auto str = timeToken.get_view();
 				hour = fz::to_integral<int>(str.substr(0, pos), -1);
 				minute = fz::to_integral<int>(str.substr(pos + 1), -1);
 
@@ -1377,7 +1270,7 @@ bool CDirectoryListingParser::ParseShortDate(CToken &token, CDirentry &entry, bo
 		// Seems to be monthname-dd-yy
 
 		// Check month name
-		std::wstring const dateMonth = token.GetString().substr(0, pos);
+		auto dateMonth = token.get_view().substr(0, pos);
 		if (!GetMonthFromName(dateMonth, month)) {
 			return false;
 		}
@@ -1465,7 +1358,7 @@ bool CDirectoryListingParser::ParseShortDate(CToken &token, CDirentry &entry, bo
 	if (gotYear || gotDay) {
 		// Month field in yyyy-mm-dd or dd-mm-yyyy
 		// Check month name
-		std::wstring dateMonth = token.GetString().substr(pos + 1, pos2 - pos - 1);
+		auto dateMonth = token.get_view().substr(pos + 1, pos2 - pos - 1);
 		if (!GetMonthFromName(dateMonth, month)) {
 			return false;
 		}
@@ -1520,10 +1413,9 @@ bool CDirectoryListingParser::ParseShortDate(CToken &token, CDirentry &entry, bo
 bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
-
 	// Get first token, has to be a valid date
-	if (!line.GetToken(index, token)) {
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
 	}
 
@@ -1534,7 +1426,7 @@ bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 	}
 
 	// Extract time
-	if (!line.GetToken(++index, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
 
@@ -1544,10 +1436,10 @@ bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 
 	// If next token is <DIR>, entry is a directory
 	// else, it should be the filesize.
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index)))
 		return false;
 
-	if (token.GetString() == L"<DIR>") {
+	if (token.get_view() == L"<DIR>"sv) {
 		entry.flags |= CDirentry::flag_dir;
 		entry.size = -1;
 	}
@@ -1574,13 +1466,13 @@ bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 	}
 
 	// Extract filename
-	if (!line.GetToken(++index, token, true)) {
+	if (!(token = line.GetEndToken(++index))) {
 		return false;
 	}
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	entry.target.clear();
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 	entry.time += m_timezoneOffset;
 
@@ -1589,49 +1481,60 @@ bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 
 bool CDirectoryListingParser::ParseTime(CToken &token, CDirentry &entry)
 {
-	if (!entry.has_date())
+	if (!entry.has_date()) {
 		return false;
+	}
 
 	int pos = token.Find(':');
-	if (pos < 1 || static_cast<unsigned int>(pos) >= (token.size() - 1))
+	if (pos < 1 || static_cast<unsigned int>(pos) >= (token.size() - 1)) {
 		return false;
+	}
 
 	int64_t hour = token.GetNumber(0, pos);
-	if (hour < 0 || hour > 24)
+	if (hour < 0 || hour > 24) {
 		return false;
+	}
 
 	// See if we got seconds
 	int pos2 = token.Find(':', pos + 1);
 	int len;
-	if (pos2 == -1)
+	if (pos2 == -1) {
 		len = -1;
-	else
+	}
+	else {
 		len = pos2 - pos - 1;
+	}
 
-	if (!len)
+	if (!len) {
 		return false;
+	}
 
 	int64_t minute = token.GetNumber(pos + 1, len);
-	if (minute < 0 || minute > 59)
+	if (minute < 0 || minute > 59) {
 		return false;
+	}
 
 	int64_t seconds = -1;
 	if (pos2 != -1) {
 		// Parse seconds
 		seconds = token.GetNumber(pos2 + 1, -1);
-		if (seconds < 0 || seconds > 60)
+		if (seconds < 0 || seconds > 60) {
 			return false;
+		}
 	}
 
 	// Convert to 24h format
 	if (!token.IsRightNumeric()) {
 		if (token[token.size() - 2] == 'P') {
-			if (hour < 12)
+			if (hour < 12) {
 				hour += 12;
+			}
 		}
-		else
-			if (hour == 12)
+		else {
+			if (hour == 12) {
 				hour = 0;
+			}
+		}
 	}
 
 	return entry.time.imbue_time(hour, minute, seconds);
@@ -1639,23 +1542,26 @@ bool CDirectoryListingParser::ParseTime(CToken &token, CDirentry &entry)
 
 bool CDirectoryListingParser::ParseAsEplf(CLine &line, CDirentry &entry)
 {
-	CToken token;
-	if (!line.GetToken(0, token, true))
+	CToken token = line.GetEndToken(0);
+	if (!token) {
 		return false;
+	}
 
-	if (token[0] != '+')
+	if (token[0] != '+') {
 		return false;
+	}
 
 	int pos = token.Find('\t');
-	if (pos == -1 || static_cast<size_t>(pos) == (token.size() - 1))
+	if (pos == -1 || static_cast<size_t>(pos) == (token.size() - 1)) {
 		return false;
+	}
 
-	entry.name = token.GetString().substr(pos + 1);
+	entry.name = token.get_view().substr(pos + 1);
 
 	entry.flags = 0;
 	entry.size = -1;
 
-	std::wstring permissions;
+	std::wstring_view permissions;
 
 	int fact = 1;
 	while (fact < pos) {
@@ -1689,14 +1595,14 @@ bool CDirectoryListingParser::ParseAsEplf(CLine &line, CDirentry &entry)
 			entry.time = fz::datetime(static_cast<time_t>(number), fz::datetime::seconds);
 		}
 		else if (type == 'u' && len > 2 && token[fact + 1] == 'p') {
-			permissions = token.GetString().substr(fact + 2, len - 2);
+			permissions = token.get_view().substr(fact + 2, len - 2);
 		}
 
 		fact += len + 1;
 	}
 
 	entry.permissions = objcache.get(permissions);
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	return true;
 }
 
@@ -1722,33 +1628,40 @@ std::wstring Unescape(const std::wstring& str, wchar_t escape)
 
 bool CDirectoryListingParser::ParseAsVms(CLine &line, CDirentry &entry)
 {
-	CToken token;
 	int index = 0;
+	CToken token = line.GetToken(index);
 
-	if (!line.GetToken(index, token))
+	if (!token) {
 		return false;
+	}
 
 	int pos = token.Find(';');
-	if (pos == -1)
+	if (pos == -1) {
 		return false;
+	}
 
 	entry.flags = 0;
 
-	if (pos > 4 && token.GetString().substr(pos - 4, 4) == L".DIR") {
+	if (pos > 4 && token.get_view().substr(pos - 4, 4) == L".DIR"sv) {
 		entry.flags |= CDirentry::flag_dir;
-		if (token.GetString().substr(pos) == L";1")
-			entry.name = token.GetString().substr(0, pos - 4);
-		else
-			entry.name = token.GetString().substr(0, pos - 4) + token.GetString().substr(pos);
+		if (token.get_view().substr(pos) == L";1"sv) {
+			entry.name = token.get_view().substr(0, pos - 4);
+		}
+		else {
+			entry.name = token.get_view().substr(0, pos - 4);
+			entry.name += token.get_view().substr(pos);
+		}
 	}
-	else
-		entry.name = token.GetString();
+	else {
+		entry.name = token.get_view();
+	}
 
 	// Some VMS servers escape special characters like additional dots with ^
 	entry.name = Unescape(entry.name, '^');
 
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
 	std::wstring ownerGroup;
 	std::wstring permissions;
@@ -1757,106 +1670,131 @@ bool CDirectoryListingParser::ParseAsVms(CLine &line, CDirentry &entry)
 	if (!token.IsNumeric() && !token.IsLeftNumeric()) {
 		// Must be username
 		const int len = token.size();
-		if (len < 3 || token[0] != '[' || token[len - 1] != ']')
+		if (len < 3 || token[0] != '[' || token[len - 1] != ']') {
 			return false;
-		ownerGroup = token.GetString().substr(1, len - 2);
+		}
+		ownerGroup = token.get_view().substr(1, len - 2);
 
-		if (!line.GetToken(++index, token))
+		if (!(token = line.GetToken(++index))) {
 			return false;
-		if (!token.IsNumeric() && !token.IsLeftNumeric())
+		}
+		if (!token.IsNumeric() && !token.IsLeftNumeric()) {
 			return false;
+		}
 	}
 
 	// Current token is either size or date
 	bool gotSize = false;
 	pos = token.Find('/');
 
-	if (!pos)
+	if (!pos) {
 		return false;
+	}
 
 	if (token.IsNumeric() || (pos != -1 && token.Find('/', pos + 1) == -1)) {
 		// Definitely size
 		CToken sizeToken;
-		if (pos == -1)
+		if (pos == -1) {
 			sizeToken = token;
-		else
+		}
+		else {
 			sizeToken = CToken(token.data(), pos);
-		if (!ParseComplexFileSize(sizeToken, entry.size, 512))
+		}
+
+		if (!ParseComplexFileSize(sizeToken, entry.size, 512)) {
 			return false;
+		}
 		gotSize = true;
 
-		if (!line.GetToken(++index, token))
+		if (!(token = line.GetToken(++index))) {
 			return false;
+		}
 	}
 	else if (pos == -1 && token.IsLeftNumeric()) {
 		// Perhaps size
 		if (ParseComplexFileSize(token, entry.size, 512)) {
 			gotSize = true;
 
-			if (!line.GetToken(++index, token))
+			if (!(token = line.GetToken(++index))) {
 				return false;
+			}
 		}
 	}
 
 	// Get date
-	if (!ParseShortDate(token, entry))
+	if (!ParseShortDate(token, entry)) {
 		return false;
+	}
 
 	// Get time
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return true;
+	}
 
 	if (!ParseTime(token, entry)) {
 		int len = token.size();
-		if (token[0] == '[' && token[len - 1] != ']')
+		if (token[0] == '[' && token[len - 1] != ']') {
 			return false;
-		if (token[0] == '(' && token[len - 1] != ')')
+		}
+		if (token[0] == '(' && token[len - 1] != ')') {
 			return false;
-		if (token[0] != '[' && token[len - 1] == ']')
+		}
+		if (token[0] != '[' && token[len - 1] == ']') {
 			return false;
-		if (token[0] != '(' && token[len - 1] == ')')
+		}
+		if (token[0] != '(' && token[len - 1] == ')') {
 			return false;
+		}
 		--index;
 	}
 
 	if (!gotSize) {
 		// Get size
-		if (!line.GetToken(++index, token))
+		if (!(token = line.GetToken(++index))) {
 			return false;
+		}
 
-		if (!token.IsNumeric() && !token.IsLeftNumeric())
+		if (!token.IsNumeric() && !token.IsLeftNumeric()) {
 			return false;
+		}
 
 		pos = token.Find('/');
-		if (!pos)
+		if (!pos) {
 			return false;
+		}
 
 		CToken sizeToken;
-		if (pos == -1)
+		if (pos == -1) {
 			sizeToken = token;
-		else
+		}
+		else {
 			sizeToken = CToken(token.data(), pos);
-		if (!ParseComplexFileSize(sizeToken, entry.size, 512))
+		}
+		if (!ParseComplexFileSize(sizeToken, entry.size, 512)) {
 			return false;
+		}
 	}
 
 	// Owner / group and permissions
-	while (line.GetToken(++index, token)) {
+	while ((token = line.GetToken(++index))) {
 		const int len = token.size();
 		if (len > 2 && token[0] == '(' && token[len - 1] == ')') {
-			if (!permissions.empty())
-				permissions += L" ";
-			permissions += token.GetString().substr(1, len - 2);
+			if (!permissions.empty()) {
+				permissions += ' ';
+			}
+			permissions += token.get_view().substr(1, len - 2);
 		}
 		else if (len > 2 && token[0] == '[' && token[len - 1] == ']') {
-			if (!ownerGroup.empty())
-				ownerGroup += L" ";
-			ownerGroup += token.GetString().substr(1, len - 2);
+			if (!ownerGroup.empty()) {
+				ownerGroup += ' ';
+			}
+			ownerGroup += token.get_view().substr(1, len - 2);
 		}
 		else {
-			if (!ownerGroup.empty())
-				ownerGroup += L" ";
-			ownerGroup += token.GetString();
+			if (!ownerGroup.empty()) {
+				ownerGroup += ' ';
+			}
+			ownerGroup += token.get_view();
 		}
 	}
 	entry.permissions = objcache.get(permissions);
@@ -1872,48 +1810,56 @@ bool CDirectoryListingParser::ParseAsIbm(CLine &line, CDirentry &entry)
 	int index = 0;
 
 	// Get owner
-	CToken ownerGroupToken;
-	if (!line.GetToken(index, ownerGroupToken))
+	CToken ownerGroupToken = line.GetToken(index);
+	if (!ownerGroupToken) {
 		return false;
+	}
 
 	// Get size
-	CToken token;
-	if (!line.GetToken(++index, token))
+	CToken token = line.GetToken(++index);
+	if (!token) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size = token.GetNumber();
 
 	// Get date
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
 	entry.flags = 0;
 
-	if (!ParseShortDate(token, entry))
+	if (!ParseShortDate(token, entry)) {
 		return false;
+	}
 
 	// Get time
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!ParseTime(token, entry))
+	if (!ParseTime(token, entry)) {
 		return false;
+	}
 
 	// Get filename
-	if (!line.GetToken(index + 2, token, 1))
+	if (!(token = line.GetEndToken(index + 2))) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 	if (token[token.size() - 1] == '/') {
 		entry.name.pop_back();
 		entry.flags |= CDirentry::flag_dir;
 	}
 
-	entry.ownerGroup = objcache.get(ownerGroupToken.GetString());
-	entry.permissions = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(ownerGroupToken.get_view());
+	entry.permissions = objcache.get(std::wstring_view());
 
 	entry.time += m_timezoneOffset;
 
@@ -1923,9 +1869,8 @@ bool CDirectoryListingParser::ParseAsIbm(CLine &line, CDirentry &entry)
 bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken firstToken;
-
-	if (!line.GetToken(index, firstToken)) {
+	CToken firstToken = line.GetToken(index);
+	if (!firstToken) {
 		return false;
 	}
 
@@ -1935,8 +1880,8 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 
 	// Possible formats: Numerical unix, VShell or OS/2
 
-	CToken token;
-	if (!line.GetToken(++index, token)) {
+	CToken token = line.GetToken(++index);
+	if (!token) {
 		return false;
 	}
 
@@ -1949,16 +1894,17 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			entry.flags |= CDirentry::flag_dir;
 		}
 
-		std::wstring ownerGroup = token.GetString();
+		auto ownerGroup = std::wstring(token.get_view());
 
-		if (!line.GetToken(++index, token)) {
+		if (!(token = line.GetToken(++index))) {
 			return false;
 		}
 
-		ownerGroup += L" " + token.GetString();
+		ownerGroup += ' ';
+		ownerGroup += token.get_view();
 
 		// Get size
-		if (!line.GetToken(++index, token)) {
+		if (!(token = line.GetToken(++index))) {
 			return false;
 		}
 
@@ -1969,7 +1915,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 		entry.size = token.GetNumber();
 
 		// Get date/time
-		if (!line.GetToken(++index, token)) {
+		if (!(token = line.GetToken(++index))) {
 			return false;
 		}
 
@@ -1980,14 +1926,14 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 		entry.time = fz::datetime(static_cast<time_t>(number), fz::datetime::seconds);
 
 		// Get filename
-		if (!line.GetToken(++index, token, true)) {
+		if (!(token = line.GetEndToken(++index))) {
 			return false;
 		}
 
-		entry.name = token.GetString();
+		entry.name = token.get_view();
 		entry.target.clear();
 
-		entry.permissions = objcache.get(firstToken.GetString());
+		entry.permissions = objcache.get(firstToken.get_view());
 		entry.ownerGroup = objcache.get(ownerGroup);
 	}
 	else {
@@ -2000,13 +1946,13 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 		entry.size = firstToken.GetNumber();
 
 		// Get date
-		std::wstring dateMonth = token.GetString();
+		std::wstring_view dateMonth = token.get_view();
 		int month = 0;
 		if (!GetMonthFromName(dateMonth, month)) {
 			// OS/2 or nortel.VxWorks
 			int skippedCount = 0;
 			do {
-				if (token.GetString() == L"DIR") {
+				if (token.get_view() == L"DIR"sv) {
 					entry.flags |= CDirentry::flag_dir;
 				}
 				else if (token.Find(L"-/.") != -1) {
@@ -2015,7 +1961,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 
 				++skippedCount;
 
-				if (!line.GetToken(++index, token)) {
+				if (!(token = line.GetToken(++index))) {
 					return false;
 				}
 			} while (true);
@@ -2025,7 +1971,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 
 			// Get time
-			if (!line.GetToken(++index, token)) {
+			if (!(token = line.GetToken(++index))) {
 				return false;
 			}
 
@@ -2034,11 +1980,11 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 
 			// Get filename
-			if (!line.GetToken(++index, token, true)) {
+			if (!(token = line.GetEndToken(++index))) {
 				return false;
 			}
 
-			entry.name = token.GetString();
+			entry.name = token.get_view();
 			if (entry.name.size() >= 5) {
 				std::wstring type = fz::str_tolower_ascii(entry.name.substr(entry.name.size() - 5));
 				if (!skippedCount && type == L"<dir>") {
@@ -2052,7 +1998,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 		}
 		else {
 			// Get day
-			if (!line.GetToken(++index, token)) {
+			if (!(token = line.GetToken(++index))) {
 				return false;
 			}
 
@@ -2066,7 +2012,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 
 			// Get Year
-			if (!line.GetToken(++index, token)) {
+			if (!(token = line.GetToken(++index))) {
 				return false;
 			}
 
@@ -2087,7 +2033,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 
 			// Get time
-			if (!line.GetToken(++index, token)) {
+			if (!(token = line.GetToken(++index))) {
 				return false;
 			}
 
@@ -2096,11 +2042,11 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 
 			// Get filename
-			if (!line.GetToken(++index, token, 1)) {
+			if (!(token = line.GetEndToken(++index))) {
 				return false;
 			}
 
-			entry.name = token.GetString();
+			entry.name = token.get_view();
 			auto const chr = token[token.size() - 1];
 			if (chr == '/' || chr == '\\') {
 				entry.flags |= CDirentry::flag_dir;
@@ -2108,7 +2054,7 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 			}
 		}
 		entry.target.clear();
-		entry.ownerGroup = objcache.get(std::wstring());
+		entry.ownerGroup = objcache.get(std::wstring_view());
 		entry.permissions = entry.ownerGroup;
 		entry.time += m_timezoneOffset;
 	}
@@ -2116,213 +2062,172 @@ bool CDirectoryListingParser::ParseOther(CLine &line, CDirentry &entry)
 	return true;
 }
 
-bool CDirectoryListingParser::AddData(char *pData, int len)
+bool CDirectoryListingParser::ProcessAddedData()
 {
-	ConvertEncoding(pData, len);
+	if (inbuf_.size() < parse_offset_) {
+		return false;
+	}
 
-	m_DataList.emplace_back(pData, len);
-	m_totalData += len;
+	size_t added = inbuf_.size() - parse_offset_;
 
-	if (m_totalData < 512) {
+	m_totalData += added;
+	if (!added || m_totalData < 512u) {
 		return true;
 	}
 
 	return ParseData(true);
 }
 
-bool CDirectoryListingParser::AddLine(std::wstring && line, std::wstring && name, fz::datetime const& time)
+bool CDirectoryListingParser::AddLine(std::wstring && line, std::wstring && name, fz::datetime const& time, std::optional<uint64_t> const& size, std::optional<int> flags)
 {
+	if (line.empty() && name.empty()) {
+		return true;
+	}
+
 	if (m_pControlSocket) {
-		m_pControlSocket->log_raw(logmsg::listing, line);
+		m_pControlSocket->log_raw(logmsg::listing, line.empty() ? name : line);
 	}
 
 	CDirentry override;
 	override.name = std::move(name);
 	override.time = time;
+	override.size = size ? *size : -1;
+	if (flags) {
+		override.flags = *flags;
+	}
+	else {
+		override.flags = CDirentry::flag_unsure;
+	}
 	CLine l(std::move(line));
 	ParseLine(l, m_server.GetType(), true, &override);
 
 	return true;
 }
 
-CLine *CDirectoryListingParser::GetLine(bool breakAtEnd, bool &error)
+void CDirectoryListingParser::TrimLeadingWhitespace()
 {
-	while (!m_DataList.empty()) {
-		// Trim empty lines and spaces
-		auto iter = m_DataList.begin();
-		int len = iter->len;
-		while (iter->p[m_currentOffset] == '\r' || iter->p[m_currentOffset] == '\n'
-			|| iter->p[m_currentOffset] == ' ' || iter->p[m_currentOffset] == '\t'
-			|| !iter->p[m_currentOffset])
-		{
-			++m_currentOffset;
-			if (m_currentOffset >= len) {
-				delete [] iter->p;
-				++iter;
-				m_currentOffset = 0;
-				if (iter == m_DataList.end()) {
-					m_DataList.clear();
-					return nullptr;
-				}
-				len = iter->len;
-			}
+	if (parse_offset_) {
+		return;
+	}
+
+	for (size_t i = 0; i < inbuf_.size(); ++i) {
+		auto c = inbuf_[i];
+		if (c != '\r' && c != '\n' && c != ' ' && c != '\t' && c) {
+			inbuf_.consume(i);
+			return;
 		}
-		m_DataList.erase(m_DataList.begin(), iter);
-		iter = m_DataList.begin();
+	}
+}
 
-		// Remember start offset and find next linebreak
-		int startpos = m_currentOffset;
-		int reslen = 0;
+std::optional<CLine> CDirectoryListingParser::GetLine(bool breakAtEnd, bool &error)
+{
+	TrimLeadingWhitespace();
 
-		int currentOffset = m_currentOffset;
-		while (iter->p[currentOffset] != '\n' && iter->p[currentOffset] != '\r' && iter->p[currentOffset]) {
-			++reslen;
-
-			++currentOffset;
-			if (currentOffset >= len) {
-				++iter;
-				if (iter == m_DataList.end()) {
-					if (reslen > 10000) {
-						if (m_pControlSocket) {
-							m_pControlSocket->log(logmsg::error, _("Received a line exceeding 10000 characters, aborting."));
-						}
-						error = true;
-						return nullptr;
-					}
-					if (breakAtEnd) {
-						return nullptr;
-					}
-					break;
-				}
-				len = iter->len;
-				currentOffset = 0;
-			}
-		}
-
-		if (reslen > 10000) {
-			if (m_pControlSocket) {
-				m_pControlSocket->log(logmsg::error, _("Received a line exceeding 10000 characters, aborting."));
-			}
-			error = true;
-			return nullptr;
-		}
-		m_currentOffset = currentOffset;
-
-		// Reslen is now the length of the line, including any terminating whitespace
-		int const buflen = reslen;
-		char *res = new char[buflen + 1];
-		res[buflen] = 0;
-
-		int respos = 0;
-
-		// Copy line data
-		auto i = m_DataList.begin();
-		while (i != iter && reslen) {
-			int copylen = i->len - startpos;
-			if (copylen > reslen) {
-				copylen = reslen;
-			}
-			memcpy(&res[respos], &i->p[startpos], copylen);
-			reslen -= copylen;
-			respos += i->len - startpos;
-			startpos = 0;
-
-			delete [] i->p;
-			++i;
-		};
-
-		// Copy last chunk
-		if (iter != m_DataList.end() && reslen) {
-			int copylen = m_currentOffset-startpos;
-			if (copylen > reslen) {
-				copylen = reslen;
-			}
-			memcpy(&res[respos], &iter->p[startpos], copylen);
-			if (reslen >= iter->len) {
-				delete [] iter->p;
-				m_DataList.erase(m_DataList.begin(), ++iter);
-			}
-			else {
-				m_DataList.erase(m_DataList.begin(), iter);
-			}
-		}
-		else {
-			m_DataList.erase(m_DataList.begin(), iter);
-		}
-
-		std::wstring buffer;
-		if (m_pControlSocket) {
-			buffer = m_pControlSocket->ConvToLocal(res, buflen);
-			m_pControlSocket->log_raw(logmsg::listing, buffer);
-		}
-		else {
-			buffer = fz::to_wstring_from_utf8(res);
-			if (buffer.empty()) {
-				buffer = fz::to_wstring(res);
-				if (buffer.empty()) {
-					buffer = std::wstring(res, res + strlen(res));
-				}
-			}
-		}
-		delete [] res;
-
-		// Strip BOM
-		if (buffer[0] == 0xfeff) {
-			buffer = buffer.substr(1);
-		}
-
-		if (!buffer.empty()) {
-			return new CLine(std::move(buffer));
+	for (; parse_offset_ < inbuf_.size(); ++parse_offset_) {
+		auto c  = inbuf_[parse_offset_];
+		if (!c || c == '\n' || c == '\r') {
+			break;
 		}
 	}
 
-	return nullptr;
+	if (parse_offset_ > 10000) {
+		if (m_pControlSocket) {
+			m_pControlSocket->log(logmsg::error, _("Received a line exceeding 10000 characters, aborting."));
+		}
+		error = true;
+		return std::nullopt;
+	}
+
+	if (parse_offset_ >= inbuf_.size()) {
+		if (breakAtEnd || inbuf_.empty()) {
+			return std::nullopt;
+		}
+	}
+
+	std::string_view raw_line = inbuf_.to_view().substr(0, parse_offset_);
+
+	std::wstring buffer;
+	if (m_pControlSocket) {
+		buffer = m_pControlSocket->ConvToLocal(raw_line.data(), raw_line.size());
+		m_pControlSocket->log_raw(logmsg::listing, buffer);
+	}
+	else {
+		buffer = fz::to_wstring_from_utf8(raw_line);
+		if (buffer.empty()) {
+			buffer = fz::to_wstring(raw_line);
+			if (buffer.empty()) {
+				buffer = std::wstring(raw_line.data(), raw_line.data() + raw_line.size());
+			}
+		}
+	}
+	inbuf_.consume(parse_offset_);
+	parse_offset_ = 0;
+
+	// Strip BOM
+	if (buffer[0] == 0xfeff) {
+		buffer = buffer.substr(1);
+	}
+
+	if (!buffer.empty()) {
+		return CLine(std::move(buffer));
+	}
+
+	return std::nullopt;
 }
 
 bool CDirectoryListingParser::ParseAsWfFtp(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
 
 	// Get filename
-	if (!line.GetToken(index++, token))
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	// Get filesize
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size = token.GetNumber();
 
 	entry.flags = 0;
 
 	// Parse date
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!ParseShortDate(token, entry))
+	if (!ParseShortDate(token, entry)) {
 		return false;
+	}
 
 	// Unused token
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (token.GetString().back() != '.')
+	if (token.get_view().back() != '.') {
 		return false;
+	}
 
 	// Parse time
-	if (!line.GetToken(index++, token, true))
+	if (!(token = line.GetEndToken(++index))) {
 		return false;
+	}
 
-	if (!ParseTime(token, entry))
+	if (!ParseTime(token, entry)) {
 		return false;
+	}
 
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 	entry.time += m_timezoneOffset;
 
@@ -2335,92 +2240,110 @@ bool CDirectoryListingParser::ParseAsIBM_MVS(CLine &line, CDirentry &entry)
 	CToken token;
 
 	// volume
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
 	// unit
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
 	// Referred date
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
 	entry.flags = 0;
-	if (token.GetString() != L"**NONE**" && !ParseShortDate(token, entry)) {
+	if (token.get_view() != L"**NONE**"sv && !ParseShortDate(token, entry)) {
 		// Perhaps of the following type:
 		// TSO004 3390 VSAM FOO.BAR
-		if (token.GetString() != L"VSAM")
+		if (token.get_view() != L"VSAM"sv) {
 			return false;
+		}
 
-		if (!line.GetToken(index++, token))
+		if (!(token = line.GetToken(index++))) {
 			return false;
+		}
 
-		entry.name = token.GetString();
-		if (entry.name.find(' ') != std::wstring::npos)
+		entry.name = token.get_view();
+		if (entry.name.find(' ') != std::wstring::npos) {
 			return false;
+		}
 
 		entry.size = -1;
-		entry.ownerGroup = objcache.get(std::wstring());
+		entry.ownerGroup = objcache.get(std::wstring_view());
 		entry.permissions = entry.ownerGroup;
 
 		return true;
 	}
 
 	// ext
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	int prevLen = token.size();
 
 	// used
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
-	if (token.IsNumeric() || token.GetString() == L"????" || token.GetString() == L"++++" ) {
+	}
+	if (token.IsNumeric() || token.get_view() == L"????"sv || token.get_view() == L"++++"sv) {
 		// recfm
-		if (!line.GetToken(index++, token))
+		if (!(token = line.GetToken(index++))) {
 			return false;
-		if (token.IsNumeric())
+		}
+		if (token.IsNumeric()) {
 			return false;
+		}
 	}
 	else {
-		if (prevLen < 6)
+		if (prevLen < 6) {
 			return false;
+		}
 	}
 
 	// lrecl
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	// blksize
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	// dsorg
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
-	if (token.GetString() == L"PO" || token.GetString() == L"PO-E")
-	{
+	if (token.get_view() == L"PO"sv || token.get_view() == L"PO-E"sv) {
 		entry.flags |= CDirentry::flag_dir;
 		entry.size = -1;
 	}
-	else
+	else {
 		entry.size = 100;
+	}
 
 	// name of dataset or sequential file
-	if (!line.GetToken(index++, token, true))
+	if (!(token = line.GetEndToken(index++))) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 
 	return true;
@@ -2429,61 +2352,76 @@ bool CDirectoryListingParser::ParseAsIBM_MVS(CLine &line, CDirentry &entry)
 bool CDirectoryListingParser::ParseAsIBM_MVS_PDS(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
+	CToken token = line.GetToken(index);
+	if (!token) {
+		return false;
+	}
 
 	// pds member name
-	if (!line.GetToken(index++, token))
-		return false;
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	// vv.mm
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
 	entry.flags = 0;
 
 	// creation date
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!ParseShortDate(token, entry))
+	}
+	if (!ParseShortDate(token, entry)) {
 		return false;
+	}
 
 	// modification date
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!ParseShortDate(token, entry))
+	}
+	if (!ParseShortDate(token, entry)) {
 		return false;
+	}
 
 	// modification time
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!ParseTime(token, entry))
+	}
+	if (!ParseTime(token, entry)) {
 		return false;
+	}
 
 	// size
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 	entry.size = token.GetNumber();
 
 	// init
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	// mod
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	// id
-	if (!line.GetToken(index++, token, true))
+	if (!(token = line.GetEndToken(++index))) {
 		return false;
+	}
 
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 	entry.time += m_timezoneOffset;
 
@@ -2496,25 +2434,29 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_Migrated(CLine &line, CDirentry &en
 	// "Migrated				SOME.NAME"
 
 	int index = 0;
-	CToken token;
-	if (!line.GetToken(index, token))
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
+	}
 
-	std::wstring s = fz::str_tolower_ascii(token.GetString());
-	if (s != L"migrated")
+	std::wstring s = fz::str_tolower_ascii(token.get_view());
+	if (s != L"migrated"sv) {
 		return false;
+	}
 
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
-	if (line.GetToken(++index, token))
+	if (line.GetToken(++index)) {
 		return false;
+	}
 
 	entry.flags = 0;
 	entry.size = -1;
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 
 	return true;
@@ -2523,19 +2465,19 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_Migrated(CLine &line, CDirentry &en
 bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
-	if (!line.GetToken(index, token)) {
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
 	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	entry.flags = 0;
-	entry.ownerGroup = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
 	entry.permissions = entry.ownerGroup;
 	entry.size = -1;
 
-	if (!line.GetToken(++index, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return true;
 	}
 
@@ -2545,7 +2487,7 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 	}
 
 	// Unused hexadecimal token
-	if (!line.GetToken(++index, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
 	if (!token.IsNumeric(CToken::hex)) {
@@ -2553,7 +2495,7 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 	}
 
 	// Unused numeric token
-	if (!line.GetToken(++index, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
 	if (!token.IsNumeric()) {
@@ -2561,7 +2503,7 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 	}
 
 	int start = ++index;
-	while (line.GetToken(index, token)) {
+	while (line.GetToken(index)) {
 		++index;
 	}
 	if ((index - start < 2)) {
@@ -2569,22 +2511,22 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 	}
 	--index;
 
-	if (!line.GetToken(index, token)) {
+	if (!(token = line.GetToken(index))) {
 		return false;
 	}
-	if (!token.IsNumeric() && (token.GetString() != L"ANY")) {
+	if (!token.IsNumeric() && (token.get_view() != L"ANY"sv)) {
 		return false;
 	}
 
-	if (!line.GetToken(index - 1, token)) {
+	if (!(token = line.GetToken(index - 1))) {
 		return false;
 	}
-	if (!token.IsNumeric() && (token.GetString() != L"ANY")) {
+	if (!token.IsNumeric() && (token.get_view() != L"ANY"sv)) {
 		return false;
 	}
 
 	for (int i = start; i < index - 1; ++i) {
-		if (!line.GetToken(i, token)) {
+		if (!(token = line.GetToken(i))) {
 			return false;
 		}
 		int len = token.size();
@@ -2604,32 +2546,32 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_Tape(CLine &line, CDirentry &entry)
 	CToken token;
 
 	// volume
-	if (!line.GetToken(index++, token)) {
+	if (!(token = line.GetToken(index))) {
 		return false;
 	}
 
 	// unit
-	if (!line.GetToken(index++, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
 
-	std::wstring s = fz::str_tolower_ascii(token.GetString());
-	if (s != L"tape") {
+	std::wstring s = fz::str_tolower_ascii(token.get_view());
+	if (s != L"tape"sv) {
 		return false;
 	}
 
 	// dsname
-	if (!line.GetToken(index++, token)) {
+	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 	entry.flags = 0;
-	entry.ownerGroup = objcache.get(std::wstring());
-	entry.permissions = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(std::wstring_view());
+	entry.permissions = objcache.get(std::wstring_view());
 	entry.size = -1;
 
-	if (line.GetToken(index++, token)) {
+	if (line.GetToken(++index)) {
 		return false;
 	}
 
@@ -2771,7 +2713,7 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 
 		std::wstring factname = fz::str_tolower_ascii(facts.substr(start, pos - start));
 		std::wstring_view value = facts.substr(pos + 1, delim - pos - 1);
-		if (factname == L"type") {
+		if (factname == L"type"sv) {
 			auto colonPos = value.find(':');
 			std::wstring valuePrefix;
 			if (colonPos == std::wstring::npos) {
@@ -2784,19 +2726,19 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 			if (valuePrefix == L"dir" && colonPos == std::wstring::npos) {
 				entry.flags |= CDirentry::flag_dir;
 			}
-			else if (valuePrefix == L"os.unix=slink" || valuePrefix == L"os.unix=symlink") {
+			else if (valuePrefix == L"os.unix=slink"sv || valuePrefix == L"os.unix=symlink"sv) {
 				entry.flags |= CDirentry::flag_dir | CDirentry::flag_link;
 				if (colonPos != std::wstring::npos) {
 					std::wstring_view target = value.substr(colonPos);
 					entry.target = fz::sparse_optional<std::wstring>(std::wstring(target.begin(), target.end()));
 				}
 			}
-			else if ((valuePrefix == L"cdir" || valuePrefix == L"pdir") && colonPos == std::wstring::npos) {
+			else if ((valuePrefix == L"cdir"sv || valuePrefix == L"pdir"sv) && colonPos == std::wstring::npos) {
 				// Current and parent directory, don't parse it
 				return 2;
 			}
 		}
-		else if (factname == L"size") {
+		else if (factname == L"size"sv) {
 			entry.size = 0;
 
 			for (unsigned int i = 0; i < value.size(); ++i) {
@@ -2807,15 +2749,15 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 				entry.size += value[i] - '0';
 			}
 		}
-		else if (factname == L"modify" ||
-			(!entry.has_date() && factname == L"create"))
+		else if (factname == L"modify"sv ||
+			(!entry.has_date() && factname == L"create"sv))
 		{
 			entry.time = fz::datetime(value, fz::datetime::utc);
 			if (entry.time.empty()) {
 				return 0;
 			}
 		}
-		else if (factname == L"perm") {
+		else if (factname == L"perm"sv) {
 			if (!value.empty()) {
 				if (!permissions.empty()) {
 					std::wstring tmp;
@@ -2830,7 +2772,7 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 				}
 			}
 		}
-		else if (factname == L"unix.mode") {
+		else if (factname == L"unix.mode"sv) {
 			if (!permissions.empty()) {
 				permissions += L" (";
 				permissions += value;
@@ -2840,25 +2782,25 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 				permissions = value;
 			}
 		}
-		else if (factname == L"unix.owner") {
+		else if (factname == L"unix.owner"sv) {
 			owner = value;
 		}
-		else if (factname == L"unix.ownername") {
+		else if (factname == L"unix.ownername"sv) {
 			ownername = value;
 		}
-		else if (factname == L"unix.group") {
+		else if (factname == L"unix.group"sv) {
 			group = value;
 		}
-		else if (factname == L"unix.groupname") {
+		else if (factname == L"unix.groupname"sv) {
 			groupname = value;
 		}
-		else if (factname == L"unix.user") {
+		else if (factname == L"unix.user"sv) {
 			user = value;
 		}
-		else if (factname == L"unix.uid") {
+		else if (factname == L"unix.uid"sv) {
 			uid = value;
 		}
-		else if (factname == L"unix.gid") {
+		else if (factname == L"unix.gid"sv) {
 			gid = value;
 		}
 
@@ -2898,7 +2840,7 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 		return 0;
 	}
 
-	entry.name = nameToken.GetString();
+	entry.name = nameToken.get_view();
 	entry.ownerGroup = objcache.get(std::move(ownerGroup));
 	entry.permissions = objcache.get(std::move(permissions));
 
@@ -2910,80 +2852,88 @@ bool CDirectoryListingParser::ParseAsOS9(CLine &line, CDirentry &entry)
 	int index = 0;
 
 	// Get owner
-	CToken ownerGroupToken;
-	if (!line.GetToken(index++, ownerGroupToken))
+	CToken ownerGroupToken = line.GetToken(index++);
+	if (!ownerGroupToken) {
 		return false;
+	}
 
 	// Make sure it's number.number
 	int pos = ownerGroupToken.Find('.');
-	if (pos == -1 || !pos || pos == ((int)ownerGroupToken.size() - 1))
+	if (pos == -1 || !pos || pos == ((int)ownerGroupToken.size() - 1)) {
 		return false;
+	}
 
-	if (!ownerGroupToken.IsNumeric(0, pos))
+	if (!ownerGroupToken.IsNumeric(0, pos)) {
 		return false;
+	}
 
-	if (!ownerGroupToken.IsNumeric(pos + 1, ownerGroupToken.size() - pos - 1))
+	if (!ownerGroupToken.IsNumeric(pos + 1, ownerGroupToken.size() - pos - 1)) {
 		return false;
+	}
 
 	entry.flags = 0;
 
 	// Get date
 	CToken token;
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
-	if (!ParseShortDate(token, entry, true))
+	if (!ParseShortDate(token, entry, true)) {
 		return false;
+	}
 
 	// Unused token
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
 	// Get perms
-	CToken permToken;
-	if (!line.GetToken(index++, permToken))
+	CToken permToken = line.GetToken(index++);
+	if (!permToken) {
 		return false;
+	}
 
-	if (permToken[0] == 'd')
+	if (permToken[0] == 'd') {
 		entry.flags |= CDirentry::flag_dir;
+	}
 
 	// Unused token
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
 	// Get Size
-	if (!line.GetToken(index++, token))
+	if (!(token = line.GetToken(index++))) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size = token.GetNumber();
 
 	// Filename
-	if (!line.GetToken(index++, token, true))
+	if (!(token = line.GetEndToken(index++))) {
 		return false;
+	}
 
-	entry.name = token.GetString();
-	entry.ownerGroup = objcache.get(ownerGroupToken.GetString());
-	entry.permissions = objcache.get(permToken.GetString());
+	entry.name = token.get_view();
+	entry.ownerGroup = objcache.get(ownerGroupToken.get_view());
+	entry.permissions = objcache.get(permToken.get_view());
 
 	return true;
 }
 
 void CDirectoryListingParser::Reset()
 {
-	for (auto & item : m_DataList) {
-		delete [] item.p;
-	}
-	m_DataList.clear();
-
-	delete m_prevLine;
-	m_prevLine = nullptr;
+	inbuf_.clear();
+	parse_offset_ = 0;
+	prevLine_.reset();
 
 	entries_.clear();
 	m_fileList.clear();
-	m_currentOffset = 0;
 	m_fileListOnly = true;
 	m_maybeMultilineVms = false;
 	truncated_ = false;
@@ -2992,78 +2942,93 @@ void CDirectoryListingParser::Reset()
 bool CDirectoryListingParser::ParseAsZVM(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
-
 	// Get name
-	if (!line.GetToken(index, token))
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	// Get filename extension
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	entry.name += L"." + token.GetString();
+	}
+	entry.name += '.';
+	entry.name += token.get_view();
 
 	// File format. Unused
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index)))
 		return false;
-	std::wstring format = token.GetString();
-	if (format != L"V" && format != L"F")
+	std::wstring_view format = token.get_view();
+	if (format != L"V"sv && format != L"F"sv) {
 		return false;
+	}
 
 	// Record length
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size = token.GetNumber();
 
 	// Number of records
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size *= token.GetNumber();
 
 	// Unused (Block size?)
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!token.IsNumeric())
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.flags = 0;
 
 	// Date
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!ParseShortDate(token, entry, true))
+	if (!ParseShortDate(token, entry, true)) {
 		return false;
+	}
 
 	// Time
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
+	}
 
-	if (!ParseTime(token, entry))
+	if (!ParseTime(token, entry)) {
 		return false;
+	}
 
 	// Owner
-	CToken ownerGroupToken;
-	if (!line.GetToken(++index, ownerGroupToken))
+	CToken ownerGroupToken = line.GetToken(++index);
+	if (!ownerGroupToken) {
 		return false;
+	}
 
 	// No further token!
-	if (line.GetToken(++index, token))
+	if (line.GetToken(++index)) {
 		return false;
+	}
 
-	entry.ownerGroup = objcache.get(ownerGroupToken.GetString());
-	entry.permissions = objcache.get(std::wstring());
+	entry.ownerGroup = objcache.get(ownerGroupToken.get_view());
+	entry.permissions = objcache.get(std::wstring_view());
 	entry.target.clear();
 	entry.time += m_timezoneOffset;
 
@@ -3073,70 +3038,84 @@ bool CDirectoryListingParser::ParseAsZVM(CLine &line, CDirentry &entry)
 bool CDirectoryListingParser::ParseAsHPNonstop(CLine &line, CDirentry &entry)
 {
 	int index = 0;
-	CToken token;
 
 	// Get name
-	if (!line.GetToken(index, token))
+	CToken token = line.GetToken(index);
+	if (!token) {
 		return false;
+	}
 
-	entry.name = token.GetString();
+	entry.name = token.get_view();
 
 	// File code, numeric, unsuded
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	// Size
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!token.IsNumeric())
+	}
+	if (!token.IsNumeric()) {
 		return false;
+	}
 
 	entry.size = token.GetNumber();
 
 	entry.flags = 0;
 
 	// Date
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!ParseShortDate(token, entry, false))
+	}
+	if (!ParseShortDate(token, entry, false)) {
 		return false;
+	}
 
 	// Time
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	if (!ParseTime(token, entry))
+	}
+	if (!ParseTime(token, entry)) {
 		return false;
+	}
 
 	// Owner
-	if (!line.GetToken(++index, token))
+	if (!(token = line.GetToken(++index))) {
 		return false;
-	std::wstring ownerGroup = token.GetString();
+	}
+	auto ownerGroup = std::wstring(token.get_view());
 
 	if (token[token.size() - 1] == ',') {
 		// Owner, part 2
-		if (!line.GetToken(++index, token))
+		if (!(token = line.GetToken(++index))) {
 			return false;
-		ownerGroup += L" " + token.GetString();
+		}
+		ownerGroup += ' ';
+		ownerGroup += token.get_view();
 	}
 
 	// Permissions
-	CToken permToken;
-	if (!line.GetToken(++index, permToken))
+	CToken permToken = line.GetToken(++index);
+	if (!permToken) {
 		return false;
+	}
 
 	// Nothing
-	if (line.GetToken(++index, token))
+	if (line.GetToken(++index)) {
 		return false;
+	}
 
-	entry.permissions = objcache.get(permToken.GetString());
+	entry.permissions = objcache.get(permToken.get_view());
 	entry.ownerGroup = objcache.get(ownerGroup);
 
 	return true;
 }
 
-bool CDirectoryListingParser::GetMonthFromName(const std::wstring& name, int &month)
+bool CDirectoryListingParser::GetMonthFromName(std::wstring_view const& name, int &month)
 {
 	std::wstring lower = fz::str_tolower_ascii(name);
 	auto iter = m_MonthNamesMap.find(lower);
@@ -3148,7 +3127,7 @@ bool CDirectoryListingParser::GetMonthFromName(const std::wstring& name, int &mo
 	return true;
 }
 
-char const ebcdic_table[256] = {
+unsigned char const ebcdic_table[256] = {
 	' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  // 0
 	' ',  ' ',  ' ',  ' ',  ' ',  '\n', ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  '\n', // 1
 	' ',  ' ',  ' ',  ' ',  ' ',  '\n', ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  ' ',  // 2
@@ -3167,14 +3146,17 @@ char const ebcdic_table[256] = {
 	'0',  '1',  '2',  '3',  '4',  '5',  '6',  '7',  '8',  '9',  ' ',  ' ',  ' ',  ' ',  ' ',  ' '   // f
 };
 
-void CDirectoryListingParser::ConvertEncoding(char *pData, int len)
+void CDirectoryListingParser::ConvertEncoding()
 {
+	if (m_listingEncoding == listingEncoding::unknown) {
+		DeduceEncoding();
+	}
 	if (m_listingEncoding != listingEncoding::ebcdic) {
 		return;
 	}
 
-	for (int i = 0; i < len; ++i) {
-		pData[i] = ebcdic_table[static_cast<unsigned char>(pData[i])];
+	for (size_t i = parse_offset_; i < inbuf_.size(); ++i) {
+		inbuf_[i] = ebcdic_table[inbuf_[i]];
 	}
 }
 
@@ -3188,10 +3170,8 @@ void CDirectoryListingParser::DeduceEncoding()
 
 	memset(&count, 0, sizeof(int)*256);
 
-	for (auto const& data : m_DataList) {
-		for (int i = 0; i < data.len; ++i) {
-			++count[static_cast<unsigned char>(data.p[i])];
-		}
+	for (auto const& c : inbuf_.to_view()) {
+		++count[static_cast<unsigned char>(c)];
 	}
 
 	int count_normal = 0;
@@ -3234,9 +3214,6 @@ void CDirectoryListingParser::DeduceEncoding()
 			m_pControlSocket->log(logmsg::status, _("Received a directory listing which appears to be encoded in EBCDIC."));
 		}
 		m_listingEncoding = listingEncoding::ebcdic;
-		for (auto & data : m_DataList) {
-			ConvertEncoding(data.p, data.len);
-		}
 	}
 	else {
 		m_listingEncoding = listingEncoding::normal;

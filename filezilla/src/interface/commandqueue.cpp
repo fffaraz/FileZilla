@@ -144,7 +144,7 @@ void CCommandQueue::ProcessReply(int nReplyCode, Command commandId)
 	}
 	if (nReplyCode & FZ_REPLY_DISCONNECTED) {
 		if (nReplyCode & FZ_REPLY_PASSWORDFAILED) {
-			CLoginManager::Get().CachedPasswordFailed(m_state.GetSite().server);
+			m_pMainFrame->GetLoginManager().CachedPasswordFailed(m_state.GetSite().server);
 		}
 	}
 

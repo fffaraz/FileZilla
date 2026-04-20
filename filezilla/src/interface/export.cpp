@@ -8,12 +8,12 @@
 
 #include <wx/filedlg.h>
 
-CExportDialog::CExportDialog(wxWindow* parent, CQueueView* pQueueView)
-	: m_parent(parent), m_pQueueView(pQueueView)
+CExportDialog::CExportDialog(wxWindow* parent)
+	: m_parent(parent)
 {
 }
 
-void CExportDialog::Run()
+void CExportDialog::Run(COptions& options, CQueueView const* pQueueView)
 {
 	if (!Create(m_parent, nullID, _("Export settings"))) {
 		return;
@@ -27,8 +27,11 @@ void CExportDialog::Run()
 	main->Add(cbsitemanager);
 	auto cbsettings = new wxCheckBox(this, nullID, _("Export &Settings"));
 	main->Add(cbsettings);
-	auto cbqueue = new wxCheckBox(this, nullID, _("Export &Queue"));
-	main->Add(cbqueue);
+	wxCheckBox *cbqueue{};
+	if (pQueueView) {
+		cbqueue = new wxCheckBox(this, nullID, _("Export &Queue"));
+		main->Add(cbqueue);
+	}
 	auto cbfilters = new wxCheckBox(this, nullID, _("Export &Filters"));
 	main->Add(cbfilters);
 
@@ -42,7 +45,7 @@ void CExportDialog::Run()
 
 	bool sitemanager = cbsitemanager->GetValue();
 	bool settings = cbsettings->GetValue();
-	bool queue = cbqueue->GetValue();
+	bool queue = cbqueue && cbqueue->GetValue();
 	bool filters = cbfilters->GetValue();
 
 	if (!sitemanager && !settings && !queue && !filters) {
@@ -92,7 +95,7 @@ void CExportDialog::Run()
 		}
 	}
 	if (settings) {
-		COptions::Get()->Save();
+		options.Save();
 		CInterProcessMutex mutex(MUTEX_OPTIONS);
 		CXmlFile file(wxGetApp().GetSettingsFile(_T("filezilla")));
 		auto document = file.Load();
@@ -104,8 +107,8 @@ void CExportDialog::Run()
 		}
 	}
 
-	if (queue) {
-		m_pQueueView->WriteToFile(exportRoot);
+	if (queue && pQueueView) {
+		pQueueView->WriteToFile(exportRoot);
 	}
 
 	if (filters) {

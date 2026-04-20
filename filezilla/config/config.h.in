@@ -35,21 +35,8 @@
 /* define if the compiler supports basic C++17 syntax */
 #undef HAVE_CXX17
 
-/* Define to 1 if you have the declaration of 'CLOCK_MONOTONIC', and to 0 if
-   you don't. */
-#undef HAVE_DECL_CLOCK_MONOTONIC
-
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
-
-/* Define to 1 if you have the 'ftime' function. */
-#undef HAVE_FTIME
-
-/* Define to 1 if you have the 'getaddrinfo' function. */
-#undef HAVE_GETADDRINFO
-
-/* Define to 1 if you have the 'gettimeofday' function. */
-#undef HAVE_GETTIMEOFDAY
 
 /* Define to 1 if you have the 'gmtime_r' function. */
 #undef HAVE_GMTIME_R
@@ -59,12 +46,6 @@
 
 /* Headers delare ICopyHookW */
 #undef HAVE_ICOPYHOOKW
-
-/* Define to 1 if you have the 'in6addr_any' function. */
-#undef HAVE_IN6ADDR_ANY
-
-/* Define to 1 if you have the 'in6addr_loopback' function. */
-#undef HAVE_IN6ADDR_LOOPBACK
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -81,20 +62,11 @@
 /* Define to 1 if you have the 'posix_fadvise' function. */
 #undef HAVE_POSIX_FADVISE
 
-/* Define to 1 if you have the 'ptsname' function. */
-#undef HAVE_PTSNAME
-
 /* Define to 1 if putenv function is available. */
 #undef HAVE_PUTENV
 
 /* Define to 1 if setenv function is available. */
 #undef HAVE_SETENV
-
-/* Define to 1 if you have the 'setresuid' function. */
-#undef HAVE_SETRESUID
-
-/* Define if SO_PEERCRED works in the Linux fashion. */
-#undef HAVE_SO_PEERCRED
 
 /* Define to 1 if you have the <stdint.h> header file. */
 #undef HAVE_STDINT_H
@@ -111,12 +83,6 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
-/* Define to 1 if you have the 'strsignal' function. */
-#undef HAVE_STRSIGNAL
-
-/* Define to 1 if you have the <sys/select.h> header file. */
-#undef HAVE_SYS_SELECT_H
-
 /* Define to 1 if you have the <sys/stat.h> header file. */
 #undef HAVE_SYS_STAT_H
 
@@ -128,12 +94,6 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
-
-/* Define to 1 if you have the 'updwtmpx' function. */
-#undef HAVE_UPDWTMPX
-
-/* Define to 1 if you have the <utmpx.h> header file. */
-#undef HAVE_UTMPX_H
 
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR

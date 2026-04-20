@@ -22,10 +22,11 @@
 #include "dragdropmanager.h"
 #include "drop_target_ex.h"
 
+#include "../commonui/auto_ascii_files.h"
 #include "../commonui/cert_store.h"
 #include "../commonui/ipcmutex.h"
-#include "../commonui/auto_ascii_files.h"
 #include "../commonui/misc.h"
+#include "../commonui/protect.h"
 
 #include <libfilezilla/glue/wxinvoker.hpp>
 
@@ -51,7 +52,7 @@ class CQueueViewDropTarget final : public CFileDropTarget<wxListCtrlEx>
 {
 public:
 	CQueueViewDropTarget(CQueueView* pQueueView)
-		: CFileDropTarget<wxListCtrlEx>(pQueueView)
+		: CFileDropTarget<wxListCtrlEx>(pQueueView, pQueueView->options_, pQueueView->login_manager_)
 		, m_pQueueView(pQueueView)
 	{
 	}
@@ -212,13 +213,13 @@ EVT_LIST_COL_CLICK(wxID_ANY, CQueueView::OnColumnClicked)
 
 END_EVENT_TABLE()
 
-CQueueView::CQueueView(CQueue* parent, int index, CMainFrame* pMainFrame, CAsyncRequestQueue *pAsyncRequestQueue, cert_store & certStore)
-	: CQueueViewBase(parent, pMainFrame->GetOptions(), index, _("Queued files"))
+CQueueView::CQueueView(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame, CAsyncRequestQueue *pAsyncRequestQueue, cert_store & certStore)
+	: CQueueViewBase(parent, options, time_formatter, lim, index, _("Queued files"))
 	, COptionChangeEventHandler(this)
 	, m_pMainFrame(pMainFrame)
 	, m_pAsyncRequestQueue(pAsyncRequestQueue)
 	, cert_store_(certStore)
-	, m_queue_storage(pMainFrame->GetOptions())
+	, m_queue_storage(options, lim)
 {
 	wxGetApp().AddStartupProfileRecord("CQueueView::CQueueView"sv);
 
@@ -725,7 +726,7 @@ bool CQueueView::TryStartNextTransfer()
 
 	if (pEngineData->state != t_EngineData::waitprimary) {
 		if (!pEngineData->pEngine->IsConnected()) {
-			if (CLoginManager::Get().GetPassword(pEngineData->lastSite, true)) {
+			if (login_manager_.GetPassword(pEngineData->lastSite, true)) {
 				pEngineData->state = t_EngineData::connect;
 			}
 			else {
@@ -843,7 +844,7 @@ void CQueueView::ProcessReply(t_EngineData* pEngineData, COperationNotification 
 		}
 		else {
 			if (replyCode & FZ_REPLY_PASSWORDFAILED) {
-				CLoginManager::Get().CachedPasswordFailed(pEngineData->lastSite.server);
+				login_manager_.CachedPasswordFailed(pEngineData->lastSite.server);
 			}
 
 			if ((replyCode & FZ_REPLY_CANCELED) == FZ_REPLY_CANCELED) {
@@ -949,7 +950,7 @@ void CQueueView::ProcessReply(t_EngineData* pEngineData, COperationNotification 
 	}
 
 	if (pEngineData->state == t_EngineData::connect) {
-		if (!CLoginManager::Get().GetPassword(pEngineData->lastSite, true)) {
+		if (!login_manager_.GetPassword(pEngineData->lastSite, true)) {
 			pEngineData->state = t_EngineData::askpassword;
 		}
 	}
@@ -1200,7 +1201,7 @@ void CQueueView::SendNextCommand(t_EngineData& engineData)
 				return;
 			}
 
-			if (!CLoginManager::Get().GetPassword(engineData.lastSite, true)) {
+			if (!login_manager_.GetPassword(engineData.lastSite, true)) {
 				engineData.state = t_EngineData::askpassword;
 			}
 			else {
@@ -1434,7 +1435,7 @@ bool CQueueView::Quit(bool force)
 		m_quit = 2;
 	}
 
-	SaveColumnSettings(OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
+	SaveColumnSettings(options_, OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
 
 	m_resize_timer.Stop();
 
@@ -2404,7 +2405,7 @@ void CQueueView::OnAskPassword()
 			continue;
 		}
 
-		if (m_activeMode && CLoginManager::Get().GetPassword(pEngineData->lastSite, false)) {
+		if (m_activeMode && login_manager_.GetPassword(pEngineData->lastSite, false)) {
 			pEngineData->state = t_EngineData::connect;
 			SendNextCommand(*pEngineData);
 		}
@@ -2973,10 +2974,6 @@ void CQueueView::RenameFileInTransfer(CFileZillaEngine *pEngine, std::wstring co
 
 std::wstring CQueueView::ReplaceInvalidCharacters(COptionsBase & options, std::wstring const& filename, bool includeQuotesAndBreaks)
 {
-	if (!options.get_int(OPTION_INVALID_CHAR_REPLACE_ENABLE)) {
-		return filename;
-	}
-
 	wchar_t const replace = options.get_string(OPTION_INVALID_CHAR_REPLACE)[0];
 
 	std::wstring ret = filename;
@@ -3093,14 +3090,14 @@ void CQueueView::OnStateChange(CState*, t_statechange_notifications notification
 				}
 			}
 
-			protect((*it)->GetCredentials());
+			protect((*it)->GetCredentials(), login_manager_, options_);
 			++it;
 		}
 	}
 	else if (notification == STATECHANGE_QUITNOW) {
 		if (m_quit != 2) {
 			SaveQueue(false);
-			SaveColumnSettings(OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
+			SaveColumnSettings(options_, OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
 		}
 	}
 }

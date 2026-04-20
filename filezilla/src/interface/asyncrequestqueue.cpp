@@ -9,6 +9,7 @@
 #include "queue.h"
 #include "verifycertdialog.h"
 #include "verifyhostkeydialog.h"
+#include "../commonui/hostkey_store.h"
 
 #include <libfilezilla/translate.hpp>
 
@@ -20,10 +21,14 @@ EVT_COMMAND(wxID_ANY, fzEVT_PROCESSASYNCREQUESTQUEUE, CAsyncRequestQueue::OnProc
 EVT_TIMER(wxID_ANY, CAsyncRequestQueue::OnTimer)
 END_EVENT_TABLE()
 
-CAsyncRequestQueue::CAsyncRequestQueue(wxTopLevelWindow *parent, COptionsBase & options, cert_store & certStore)
+CAsyncRequestQueue::CAsyncRequestQueue(wxTopLevelWindow *parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager& lim, cert_store & certStore, KeyfilePasswordManager & keyfilePasswordManager, HostkeyStore & hostkeyStore)
 	: parent_(parent)
 	, options_(options)
+	, time_formatter_(time_formatter)
+	, login_manager_(lim)
 	, certStore_(certStore)
+	, keyfilePasswordManager_(keyfilePasswordManager)
+	, hostkeyStore_(hostkeyStore)
 {
 	CContextManager::Get()->RegisterHandler(this, STATECHANGE_REMOVECONTEXT, false);
 	m_timer.SetOwner(this);
@@ -78,17 +83,15 @@ bool CAsyncRequestQueue::ProcessDefaults(CFileZillaEngine *pEngine, std::unique_
 			return true;
 		}
 	case reqId_hostkey:
-	case reqId_hostkeyChanged:
 		{
-			auto & hostKeyNotification = static_cast<CHostKeyNotification&>(*pNotification.get());
+			auto & req = static_cast<CHostKeyNotification&>(*pNotification);
 
-			if (!CVerifyHostkeyDialog::IsTrusted(hostKeyNotification)) {
+			Site site(req.server_, req.handle_, Credentials());
+			if (!hostkeyStore_.IsTrusted(site, *req.hostkey_, req.algorithms_, true)) {
 				break;
 			}
 
-			hostKeyNotification.m_trust = true;
-			hostKeyNotification.m_alwaysTrust = false;
-
+			req.trust_ = true;
 			pEngine->SetAsyncRequestReply(std::move(pNotification));
 
 			return true;
@@ -129,10 +132,37 @@ bool CAsyncRequestQueue::ProcessDefaults(CFileZillaEngine *pEngine, std::unique_
 			if (!v || *v) {
 				break;
 			}
-			
+
 			notification.allow_ = true;
 			pEngine->SetAsyncRequestReply(std::move(pNotification));
 			return true;
+		}
+	case reqId_keyfile_password:
+		{
+			auto & req = static_cast<KeyfilePasswordRequest&>(*pNotification.get());
+
+			if (req.repeated_) {
+				keyfilePasswordManager_.clear_password(req.file_, req.fingerprint_);
+				break;
+			}
+
+			Site site(req.server_, req.handle_, Credentials());
+			auto pw = keyfilePasswordManager_.get_password(site, req.file_, req.fingerprint_, req.comment_, true);
+			if (!pw) {
+				break;
+			}
+			req.password_ = pw;
+			pEngine->SetAsyncRequestReply(std::move(pNotification));
+
+			return true;
+		}
+	case reqId_password:
+		{
+			auto & req = static_cast<PasswordRequest&>(*pNotification.get());
+			if (login_manager_.GetPassword(req, true)) {
+				pEngine->SetAsyncRequestReply(std::move(pNotification));
+				return true;
+			}
 		}
 	default:
 		break;
@@ -165,8 +195,7 @@ bool CAsyncRequestQueue::ProcessNextRequest()
 	}
 
 	t_queueEntry &entry = m_requestList.front();
-
-	if (!entry.pEngine || !entry.pEngine->IsPendingAsyncRequestReply(entry.pNotification)) {
+	if (!entry.IsPending()) {
 		m_requestList.pop_front();
 		return true;
 	}
@@ -177,48 +206,57 @@ bool CAsyncRequestQueue::ProcessNextRequest()
 		}
 	}
 	else if (entry.pNotification->GetRequestID() == reqId_interactiveLogin) {
-		auto & notification = static_cast<CInteractiveLoginNotification&>(*entry.pNotification.get());
-
-		if (notification.IsRepeated()) {
-			CLoginManager::Get().CachedPasswordFailed(notification.server, notification.GetChallenge());
-		}
-		bool canRemember = notification.GetType() == CInteractiveLoginNotification::keyfile;
-		bool otp = notification.GetType() == CInteractiveLoginNotification::totp;
-
-		Site site(notification.server, notification.handle_, notification.credentials);
-		if (CLoginManager::Get().GetPassword(site, true, notification.GetChallenge(), otp, canRemember)) {
-			notification.credentials = site.credentials;
-			notification.passwordSet = true;
-		}
-		else {
-			// Retry with prompt
-
-			if (!CheckWindowState()) {
-				return false;
-			}
-
-			if (CLoginManager::Get().GetPassword(site, false, notification.GetChallenge(), otp, canRemember)) {
-				notification.credentials = site.credentials;
-				notification.passwordSet = true;
-			}
-		}
-
-		SendReply(entry);
-	}
-	else if (entry.pNotification->GetRequestID() == reqId_hostkey || entry.pNotification->GetRequestID() == reqId_hostkeyChanged) {
 		if (!CheckWindowState()) {
 			return false;
 		}
 
-		auto & notification = static_cast<CHostKeyNotification&>(*entry.pNotification.get());
+		auto & notification = static_cast<CInteractiveLoginNotification&>(*entry.pNotification.get());
+		Site site(notification.server_, notification.handle_, Credentials());
+		notification.responses_ = CLoginManager::interactive_prompt(site, notification.name_, notification.instruction_, notification.prompts_);
+		SendReply(entry);
+	}
+	else if (entry.pNotification->GetRequestID() == reqId_password) {
+		auto & req = static_cast<PasswordRequest&>(*entry.pNotification.get());
 
-		if (CVerifyHostkeyDialog::IsTrusted(notification)) {
-			notification.m_trust = true;
-			notification.m_alwaysTrust = false;
+		bool silent = !CheckWindowState();
+
+		login_manager_.GetPassword(req, silent);
+		SendReply(entry);
+	}
+	else if (entry.pNotification->GetRequestID() == reqId_otp) {
+		if (!CheckWindowState()) {
+			return false;
 		}
-		else {
-			CVerifyHostkeyDialog::ShowVerificationDialog(parent_, notification);
+
+		auto & req = static_cast<OtpRequest&>(*entry.pNotification.get());
+
+		Site site(req.server_, req.handle_, Credentials());
+		req.otp_ = CLoginManager::get_topt(site);
+		SendReply(entry);
+	}
+	else if (entry.pNotification->GetRequestID() == reqId_keyfile_password) {
+		auto & req = static_cast<KeyfilePasswordRequest&>(*entry.pNotification.get());
+
+		bool silent = !CheckWindowState();
+
+		Site site(req.server_, req.handle_, Credentials());
+		auto pw = keyfilePasswordManager_.get_password(site, req.file_, req.fingerprint_, req.comment_, silent);
+		if (silent && !pw) {
+			// Must retry later
+			return false;
 		}
+		req.password_ = pw;
+		SendReply(entry);
+	}
+	else if (entry.pNotification->GetRequestID() == reqId_hostkey) {
+		if (!CheckWindowState()) {
+			return false;
+		}
+
+		auto & req = static_cast<CHostKeyNotification&>(*entry.pNotification.get());
+
+		Site site(req.server_, req.handle_, Credentials());
+		req.trust_ = hostkeyStore_.IsTrusted(site, *req.hostkey_, req.algorithms_, false);
 
 		SendReply(entry);
 	}
@@ -228,7 +266,7 @@ bool CAsyncRequestQueue::ProcessNextRequest()
 		}
 
 		auto & notification = static_cast<CCertificateNotification&>(*entry.pNotification.get());
-		CVerifyCertDialog::ShowVerificationDialog(certStore_, notification, options_);
+		CVerifyCertDialog::ShowVerificationDialog(certStore_, notification, options_, time_formatter_);
 
 		SendReply(entry);
 	}
@@ -293,7 +331,7 @@ bool CAsyncRequestQueue::ProcessFileExistsNotification(t_queueEntry &entry)
 			return false;
 		}
 
-		CFileExistsDlg dlg(&notification);
+		CFileExistsDlg dlg(&notification, options_, time_formatter_);
 		dlg.Create(parent_);
 		int res = dlg.ShowModal();
 
@@ -542,13 +580,11 @@ void CAsyncRequestQueue::OnTimer(wxTimerEvent&)
 	TriggerProcessing();
 }
 
-bool CAsyncRequestQueue::SendReply(t_queueEntry& entry)
+void CAsyncRequestQueue::SendReply(t_queueEntry& entry)
 {
-	if (!entry.pEngine) {
-		return false;
+	if (entry.pEngine) {
+		entry.pEngine->SetAsyncRequestReply(std::move(entry.pNotification));
 	}
-
-	return entry.pEngine->SetAsyncRequestReply(std::move(entry.pNotification));
 }
 
 void CAsyncRequestQueue::OnStateChange(CState* pState, t_statechange_notifications, std::wstring const&, const void*)

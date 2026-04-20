@@ -7,23 +7,22 @@
 class CChmodDialog final : public wxDialogEx
 {
 public:
-	CChmodDialog(ChmodData & data);
+	CChmodDialog();
 	~CChmodDialog();
 
 	bool Create(wxWindow* parent, int fileCount, int dirCount,
-				wxString const& name, const char permissions[9]);
+				std::wstring const& name, posix_chmod const& initial_chmod);
 
-	bool Recursive() const;
+	ChmodData GetChmodData() const;
 
 protected:
+	posix_chmod GetChmodFromCheckboxes();
 
 	void OnOK(wxCommandEvent&);
 	void OnRecurseChanged(wxCommandEvent&);
 
 	void OnCheckboxClick(wxCommandEvent&);
 	void OnNumericChanged(wxCommandEvent&);
-
-	ChmodData & data_;
 
 	struct impl;
 	std::unique_ptr<impl> impl_;

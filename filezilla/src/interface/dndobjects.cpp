@@ -10,7 +10,7 @@ wxDataFormat LocalDataObjectFormat()
 	static wxDataFormat const fmt = wxDataFormat(L"FileZilla3LocalDataObject");
 	return fmt;
 }
-	
+
 wxDataFormat RemoteDataObjectFormat()
 {
 	static wxDataFormat const fmt = wxDataFormat(L"FileZilla3RemoteDataObject");
@@ -292,16 +292,20 @@ std::unique_ptr<CShellExtensionInterface> CShellExtensionInterface::CreateInitia
 
 #endif
 
-CRemoteDataObject::CRemoteDataObject(Site const& site, const CServerPath& path)
+CRemoteDataObject::CRemoteDataObject(login_manager & lim, COptionsBase & options, Site const& site, const CServerPath& path)
 	: wxDataObjectSimple(wxDataFormat(_T("FileZilla3RemoteDataObject")))
+	, lim_(lim)
+	, options_(options)
 	, site_(site)
 	, m_path(path)
 	, m_processId(wxGetProcessId())
 {
 }
 
-CRemoteDataObject::CRemoteDataObject()
+CRemoteDataObject::CRemoteDataObject(login_manager & lim, COptionsBase & options)
 	: wxDataObjectSimple(wxDataFormat(_T("FileZilla3RemoteDataObject")))
+	, lim_(lim)
+	, options_(options)
 	, m_processId(wxGetProcessId())
 {
 }
@@ -343,7 +347,7 @@ void CRemoteDataObject::Finalize()
 	AddTextElement(element, "Count", m_fileList.size());
 
 	auto xServer = element.append_child("Server");
-	SetServer(xServer, site_);
+	SetServer(xServer, site_, lim_, options_);
 
 	AddTextElement(element, "Path", m_path.GetSafePath());
 
@@ -446,11 +450,10 @@ void CRemoteDataObject::AddFile(std::wstring const& name, bool dir, int64_t size
 	m_fileList.push_back(info);
 }
 
-
-FileDropTargetBase::FileDropTargetBase()
+FileDropTargetBase::FileDropTargetBase(COptionsBase& options, login_manager& lim)
 	: m_pFileDataObject(new wxFileDataObject())
 	, m_pLocalDataObject(new CLocalDataObject())
-	, m_pRemoteDataObject(new CRemoteDataObject())
+	, m_pRemoteDataObject(new CRemoteDataObject(lim, options))
 	, m_pDataObject(new wxDataObjectComposite)
 {
 	m_pDataObject->Add(m_pRemoteDataObject, true);
@@ -494,8 +497,8 @@ CRemoteDataObject* FileDropTargetBase::GetRemoteDataObject()
 }
 
 template<class Control>
-CFileDropTarget<Control>::CFileDropTarget(Control* ctrl)
-	: CScrollableDropTarget<Control, FileDropTargetBase>(ctrl)
+CFileDropTarget<Control>::CFileDropTarget(Control* ctrl, COptionsBase& options, login_manager& lim)
+	: CScrollableDropTarget<Control, FileDropTargetBase, COptionsBase&, login_manager&>(ctrl, options, lim)
 {
 }
 

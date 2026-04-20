@@ -21,7 +21,6 @@ struct COptionsPageTransfer::impl final
 	wxTextCtrlEx* dllimit_{};
 	wxTextCtrlEx* ullimit_{};
 
-	wxCheckBox* enable_replace_{};
 	wxTextCtrlEx* replace_{};
 
 	wxCheckBox* preallocate_{};
@@ -108,9 +107,7 @@ bool COptionsPageTransfer::CreateControls(wxWindow* parent)
 
 	{
 		auto [box, inner] = lay.createStatBox(main, _("Filter invalid characters in filenames"), 1);
-		impl_->enable_replace_ = new wxCheckBox(box, nullID, _("Enable invalid character &filtering"));
-		inner->Add(impl_->enable_replace_);
-		inner->Add(new wxStaticText(box, nullID, _("When enabled, characters that are not supported by the local operating system in filenames are replaced if downloading such a file.")));
+		inner->Add(new wxStaticText(box, nullID, _("Characters that are not supported by the local operating system in filenames are replaced if downloading such a file.")));
 		auto innermost = lay.createFlex(2);
 		inner->Add(innermost);
 		innermost->Add(new wxStaticText(box, nullID, _("&Replace invalid characters with:")), lay.valign);
@@ -156,7 +153,6 @@ bool COptionsPageTransfer::LoadPage()
 	impl_->burst_tolerance_->SetSelection(m_pOptions->get_int(OPTION_SPEEDLIMIT_BURSTTOLERANCE));
 	impl_->burst_tolerance_->Enable(enable_speedlimits);
 
-	impl_->enable_replace_->SetValue(m_pOptions->get_bool(OPTION_INVALID_CHAR_REPLACE_ENABLE));
 	impl_->replace_->ChangeValue(m_pOptions->get_string(OPTION_INVALID_CHAR_REPLACE));
 
 	impl_->preallocate_->SetValue(m_pOptions->get_bool(OPTION_PREALLOCATE_SPACE));
@@ -176,7 +172,6 @@ bool COptionsPageTransfer::SavePage()
 	m_pOptions->set(OPTION_SPEEDLIMIT_OUTBOUND, impl_->ullimit_->GetValue().ToStdWstring());
 	m_pOptions->set(OPTION_SPEEDLIMIT_BURSTTOLERANCE, impl_->burst_tolerance_->GetSelection());
 	m_pOptions->set(OPTION_INVALID_CHAR_REPLACE, impl_->replace_->GetValue().ToStdWstring());
-	m_pOptions->set(OPTION_INVALID_CHAR_REPLACE_ENABLE, impl_->enable_replace_->GetValue());
 	m_pOptions->set(OPTION_PREALLOCATE_SPACE, impl_->preallocate_->GetValue());
 
 	return true;

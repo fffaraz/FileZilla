@@ -155,8 +155,8 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_flag.m4 \
 	$(top_srcdir)/m4/wxwin.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
-DIST_COMMON = $(srcdir)/Makefile.am $(dist_noinst_DATA) \
-	$(am__noinst_HEADERS_DIST) $(am__DIST_COMMON)
+DIST_COMMON = $(srcdir)/Makefile.am $(am__noinst_HEADERS_DIST) \
+	$(am__DIST_COMMON)
 mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/config.h
 CONFIG_CLEAN_FILES =
@@ -172,9 +172,10 @@ am__v_AR_1 =
 libfzmac_a_AR = $(AR) $(ARFLAGS)
 libfzmac_a_RANLIB = $(RANLIB)
 libfzmac_a_LIBADD =
-am__libfzmac_a_SOURCES_DIST = dropsource_mac.mm \
+am__libfzmac_a_SOURCES_DIST = dialogex_mac.mm dropsource_mac.mm \
 	power_management_osx.mm toolbar.mm
 @MACAPPBUNDLE_TRUE@am_libfzmac_a_OBJECTS =  \
+@MACAPPBUNDLE_TRUE@	libfzmac_a-dialogex_mac.$(OBJEXT) \
 @MACAPPBUNDLE_TRUE@	libfzmac_a-dropsource_mac.$(OBJEXT) \
 @MACAPPBUNDLE_TRUE@	libfzmac_a-power_management_osx.$(OBJEXT) \
 @MACAPPBUNDLE_TRUE@	libfzmac_a-toolbar.$(OBJEXT)
@@ -189,20 +190,18 @@ am__filezilla_SOURCES_DIST = aboutdialog.cpp asksavepassworddialog.cpp \
 	export.cpp fileexistsdlg.cpp filelistctrl.cpp \
 	filelist_statusbar.cpp FileZilla.cpp filter_manager.cpp \
 	filter_conditions_dialog.cpp filteredit.cpp file_utils.cpp \
-	fzputtygen_interface.cpp graphics.cpp import.cpp infotext.cpp \
-	inputdialog.cpp led.cpp listctrlex.cpp listingcomparison.cpp \
-	list_search_panel.cpp local_recursive_operation.cpp \
-	locale_initializer.cpp LocalListView.cpp LocalTreeView.cpp \
-	loginmanager.cpp Mainfrm.cpp manual_transfer.cpp menu_bar.cpp \
-	msgbox.cpp netconfwizard.cpp Options.cpp \
-	option_change_event_handler.cpp overlay.cpp \
-	power_management.cpp queue.cpp queue_storage.cpp QueueView.cpp \
-	queueview_failed.cpp queueview_successful.cpp \
+	graphics.cpp import.cpp infotext.cpp inputdialog.cpp led.cpp \
+	listctrlex.cpp listingcomparison.cpp list_search_panel.cpp \
+	local_recursive_operation.cpp locale_initializer.cpp \
+	LocalListView.cpp LocalTreeView.cpp loginmanager.cpp \
+	Mainfrm.cpp manual_transfer.cpp menu_bar.cpp msgbox.cpp \
+	netconfwizard.cpp Options.cpp option_change_event_handler.cpp \
+	overlay.cpp power_management.cpp queue.cpp queue_storage.cpp \
+	QueueView.cpp queueview_failed.cpp queueview_successful.cpp \
 	quickconnectbar.cpp recentserverlist.cpp \
 	recursive_operation_status.cpp remote_recursive_operation.cpp \
 	RemoteListView.cpp RemoteTreeView.cpp renderer.cpp search.cpp \
-	serverdata.cpp settings/optionspage.cpp \
-	settings/optionspage_connection.cpp \
+	settings/optionspage.cpp settings/optionspage_connection.cpp \
 	settings/optionspage_dateformatting.cpp \
 	settings/optionspage_debug.cpp settings/optionspage_edit.cpp \
 	settings/optionspage_edit_associations.cpp \
@@ -272,7 +271,6 @@ am_filezilla_OBJECTS = filezilla-aboutdialog.$(OBJEXT) \
 	filezilla-filter_manager.$(OBJEXT) \
 	filezilla-filter_conditions_dialog.$(OBJEXT) \
 	filezilla-filteredit.$(OBJEXT) filezilla-file_utils.$(OBJEXT) \
-	filezilla-fzputtygen_interface.$(OBJEXT) \
 	filezilla-graphics.$(OBJEXT) filezilla-import.$(OBJEXT) \
 	filezilla-infotext.$(OBJEXT) filezilla-inputdialog.$(OBJEXT) \
 	filezilla-led.$(OBJEXT) filezilla-listctrlex.$(OBJEXT) \
@@ -300,7 +298,6 @@ am_filezilla_OBJECTS = filezilla-aboutdialog.$(OBJEXT) \
 	filezilla-RemoteListView.$(OBJEXT) \
 	filezilla-RemoteTreeView.$(OBJEXT) \
 	filezilla-renderer.$(OBJEXT) filezilla-search.$(OBJEXT) \
-	filezilla-serverdata.$(OBJEXT) \
 	settings/filezilla-optionspage.$(OBJEXT) \
 	settings/filezilla-optionspage_connection.$(OBJEXT) \
 	settings/filezilla-optionspage_dateformatting.$(OBJEXT) \
@@ -409,7 +406,6 @@ am__depfiles_remade = ./$(DEPDIR)/filezilla-FileZilla.Po \
 	./$(DEPDIR)/filezilla-filter_conditions_dialog.Po \
 	./$(DEPDIR)/filezilla-filter_manager.Po \
 	./$(DEPDIR)/filezilla-filteredit.Po \
-	./$(DEPDIR)/filezilla-fzputtygen_interface.Po \
 	./$(DEPDIR)/filezilla-graphics.Po \
 	./$(DEPDIR)/filezilla-import.Po \
 	./$(DEPDIR)/filezilla-infotext.Po \
@@ -439,7 +435,6 @@ am__depfiles_remade = ./$(DEPDIR)/filezilla-FileZilla.Po \
 	./$(DEPDIR)/filezilla-remote_recursive_operation.Po \
 	./$(DEPDIR)/filezilla-renderer.Po \
 	./$(DEPDIR)/filezilla-search.Po \
-	./$(DEPDIR)/filezilla-serverdata.Po \
 	./$(DEPDIR)/filezilla-sftp_crypt_info_dlg.Po \
 	./$(DEPDIR)/filezilla-sitemanager.Po \
 	./$(DEPDIR)/filezilla-sitemanager_controls.Po \
@@ -470,6 +465,7 @@ am__depfiles_remade = ./$(DEPDIR)/filezilla-FileZilla.Po \
 	./$(DEPDIR)/filezilla-xh_text_ex.Po \
 	./$(DEPDIR)/filezilla-xmlfunctions.Po \
 	./$(DEPDIR)/filezilla-xrc_helper.Po \
+	./$(DEPDIR)/libfzmac_a-dialogex_mac.Po \
 	./$(DEPDIR)/libfzmac_a-dropsource_mac.Po \
 	./$(DEPDIR)/libfzmac_a-power_management_osx.Po \
 	./$(DEPDIR)/libfzmac_a-toolbar.Po \
@@ -569,7 +565,7 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-DATA = $(dist_noinst_DATA) $(noinst_DATA)
+DATA = $(noinst_DATA)
 am__noinst_HEADERS_DIST = aboutdialog.h asksavepassworddialog.h \
 	asyncrequestqueue.h aui_notebook_ex.h bookmarks_dialog.h \
 	buildinfo.h chmoddialog.h clearprivatedata.h cmdline.h \
@@ -579,9 +575,8 @@ am__noinst_HEADERS_DIST = aboutdialog.h asksavepassworddialog.h \
 	edithandler.h encoding_converter.h export.h fileexistsdlg.h \
 	filelistctrl.h filelist_statusbar.h filezilla.h filezillaapp.h \
 	filter_manager.h filter_conditions_dialog.h filteredit.h \
-	file_utils.h fzputtygen_interface.h graphics.h import.h \
-	infotext.h inputdialog.h led.h listctrlex.h \
-	listingcomparison.h list_search_panel.h \
+	file_utils.h graphics.h import.h infotext.h inputdialog.h \
+	led.h listctrlex.h listingcomparison.h list_search_panel.h \
 	local_recursive_operation.h locale_initializer.h \
 	LocalListView.h LocalTreeView.h loginmanager.h Mainfrm.h \
 	manual_transfer.h menu_bar.h msgbox.h netconfwizard.h \
@@ -590,7 +585,7 @@ am__noinst_HEADERS_DIST = aboutdialog.h asksavepassworddialog.h \
 	queueview_failed.h queueview_successful.h quickconnectbar.h \
 	recentserverlist.h recursive_operation_status.h \
 	remote_recursive_operation.h RemoteListView.h RemoteTreeView.h \
-	renderer.h search.h serverdata.h settings/optionspage.h \
+	renderer.h search.h settings/optionspage.h \
 	settings/optionspage_connection.h \
 	settings/optionspage_dateformatting.h \
 	settings/optionspage_debug.h settings/optionspage_edit.h \
@@ -720,8 +715,6 @@ FILEZILLA_LINGUAS_PO = @FILEZILLA_LINGUAS_PO@
 FILEZILLA_LINGUAS_PO_NEW = @FILEZILLA_LINGUAS_PO_NEW@
 GREP = @GREP@
 HAVE_CXX17 = @HAVE_CXX17@
-HOGWEED_CFLAGS = @HOGWEED_CFLAGS@
-HOGWEED_LIBS = @HOGWEED_LIBS@
 IDN_LIB = @IDN_LIB@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -734,6 +727,8 @@ LIBDBUS_CFLAGS = @LIBDBUS_CFLAGS@
 LIBDBUS_LIBS = @LIBDBUS_LIBS@
 LIBFILEZILLA_CFLAGS = @LIBFILEZILLA_CFLAGS@
 LIBFILEZILLA_LIBS = @LIBFILEZILLA_LIBS@
+LIBFZSSH_CFLAGS = @LIBFZSSH_CFLAGS@
+LIBFZSSH_LIBS = @LIBFZSSH_LIBS@
 LIBGTK_CFLAGS = @LIBGTK_CFLAGS@
 LIBGTK_LIBS = @LIBGTK_LIBS@
 LIBOBJS = @LIBOBJS@
@@ -750,8 +745,6 @@ LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-NETTLE_CFLAGS = @NETTLE_CFLAGS@
-NETTLE_LIBS = @NETTLE_LIBS@
 NM = @NM@
 NMEDIT = @NMEDIT@
 NSIS_64BIT = @NSIS_64BIT@
@@ -878,6 +871,7 @@ filezilla_DEPENDENCIES = $(am__append_1) \
 @MACAPPBUNDLE_TRUE@	$(WX_CPPFLAGS)
 @MACAPPBUNDLE_TRUE@libfzmac_a_OBJCXXFLAGS = -std=c++17
 @MACAPPBUNDLE_TRUE@libfzmac_a_SOURCES = \
+@MACAPPBUNDLE_TRUE@	dialogex_mac.mm \
 @MACAPPBUNDLE_TRUE@	dropsource_mac.mm \
 @MACAPPBUNDLE_TRUE@	power_management_osx.mm \
 @MACAPPBUNDLE_TRUE@	toolbar.mm
@@ -894,20 +888,18 @@ filezilla_SOURCES = aboutdialog.cpp asksavepassworddialog.cpp \
 	export.cpp fileexistsdlg.cpp filelistctrl.cpp \
 	filelist_statusbar.cpp FileZilla.cpp filter_manager.cpp \
 	filter_conditions_dialog.cpp filteredit.cpp file_utils.cpp \
-	fzputtygen_interface.cpp graphics.cpp import.cpp infotext.cpp \
-	inputdialog.cpp led.cpp listctrlex.cpp listingcomparison.cpp \
-	list_search_panel.cpp local_recursive_operation.cpp \
-	locale_initializer.cpp LocalListView.cpp LocalTreeView.cpp \
-	loginmanager.cpp Mainfrm.cpp manual_transfer.cpp menu_bar.cpp \
-	msgbox.cpp netconfwizard.cpp Options.cpp \
-	option_change_event_handler.cpp overlay.cpp \
-	power_management.cpp queue.cpp queue_storage.cpp QueueView.cpp \
-	queueview_failed.cpp queueview_successful.cpp \
+	graphics.cpp import.cpp infotext.cpp inputdialog.cpp led.cpp \
+	listctrlex.cpp listingcomparison.cpp list_search_panel.cpp \
+	local_recursive_operation.cpp locale_initializer.cpp \
+	LocalListView.cpp LocalTreeView.cpp loginmanager.cpp \
+	Mainfrm.cpp manual_transfer.cpp menu_bar.cpp msgbox.cpp \
+	netconfwizard.cpp Options.cpp option_change_event_handler.cpp \
+	overlay.cpp power_management.cpp queue.cpp queue_storage.cpp \
+	QueueView.cpp queueview_failed.cpp queueview_successful.cpp \
 	quickconnectbar.cpp recentserverlist.cpp \
 	recursive_operation_status.cpp remote_recursive_operation.cpp \
 	RemoteListView.cpp RemoteTreeView.cpp renderer.cpp search.cpp \
-	serverdata.cpp settings/optionspage.cpp \
-	settings/optionspage_connection.cpp \
+	settings/optionspage.cpp settings/optionspage_connection.cpp \
 	settings/optionspage_dateformatting.cpp \
 	settings/optionspage_debug.cpp settings/optionspage_edit.cpp \
 	settings/optionspage_edit_associations.cpp \
@@ -943,9 +935,8 @@ noinst_HEADERS = aboutdialog.h asksavepassworddialog.h \
 	edithandler.h encoding_converter.h export.h fileexistsdlg.h \
 	filelistctrl.h filelist_statusbar.h filezilla.h filezillaapp.h \
 	filter_manager.h filter_conditions_dialog.h filteredit.h \
-	file_utils.h fzputtygen_interface.h graphics.h import.h \
-	infotext.h inputdialog.h led.h listctrlex.h \
-	listingcomparison.h list_search_panel.h \
+	file_utils.h graphics.h import.h infotext.h inputdialog.h \
+	led.h listctrlex.h listingcomparison.h list_search_panel.h \
 	local_recursive_operation.h locale_initializer.h \
 	LocalListView.h LocalTreeView.h loginmanager.h Mainfrm.h \
 	manual_transfer.h menu_bar.h msgbox.h netconfwizard.h \
@@ -954,7 +945,7 @@ noinst_HEADERS = aboutdialog.h asksavepassworddialog.h \
 	queueview_failed.h queueview_successful.h quickconnectbar.h \
 	recentserverlist.h recursive_operation_status.h \
 	remote_recursive_operation.h RemoteListView.h RemoteTreeView.h \
-	renderer.h search.h serverdata.h settings/optionspage.h \
+	renderer.h search.h settings/optionspage.h \
 	settings/optionspage_connection.h \
 	settings/optionspage_dateformatting.h \
 	settings/optionspage_debug.h settings/optionspage_edit.h \
@@ -981,15 +972,15 @@ noinst_HEADERS = aboutdialog.h asksavepassworddialog.h \
 
 # GTK+ libs, empty if not using wxGTK
 filezilla_CPPFLAGS = -I$(top_builddir)/config $(LIBFILEZILLA_CFLAGS) \
-	$(WX_CPPFLAGS) $(LIBSQLITE3_CFLAGS) $(LIBGTK_CFLAGS)
+	$(LIBFZSSH_CFLAGS) $(WX_CPPFLAGS) $(LIBSQLITE3_CFLAGS) \
+	$(LIBGTK_CFLAGS)
 filezilla_CXXFLAGS = $(WX_CXXFLAGS_ONLY)
 filezilla_CFLAGS = $(WX_CFLAGS_ONLY)
 filezilla_LDFLAGS = ../commonui/libfzclient-commonui-private.la \
-	../engine/libfzclient-private.la $(LIBFILEZILLA_LIBS) \
-	$(PUGIXML_LIBS) $(am__append_9) $(WX_LIBS) $(RESOURCEFILE) \
-	$(LIBSQLITE3_LIBS) $(am__append_10) $(LIBGTK_LIBS) \
-	$(am__append_13)
-dist_noinst_DATA = interface.vcxproj
+	../engine/libfzclient-private.la $(LIBFZSSH_LIBS) \
+	$(LIBFILEZILLA_LIBS) $(PUGIXML_LIBS) $(am__append_9) \
+	$(WX_LIBS) $(RESOURCEFILE) $(LIBSQLITE3_LIBS) $(am__append_10) \
+	$(LIBGTK_LIBS) $(am__append_13)
 @MACAPPBUNDLE_TRUE@noinst_DATA = $(top_builddir)/FileZilla.app/Contents/MacOS/filezilla$(EXEEXT)
 CLEANFILES = filezilla.h.gch
 DISTCLEANFILES = ./$(DEPDIR)/filezilla.Po
@@ -1193,7 +1184,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-filter_conditions_dialog.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-filter_manager.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-filteredit.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-fzputtygen_interface.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-graphics.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-import.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-infotext.Po@am__quote@ # am--include-marker
@@ -1223,7 +1213,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-remote_recursive_operation.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-renderer.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-search.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-serverdata.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-sftp_crypt_info_dlg.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-sitemanager.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-sitemanager_controls.Po@am__quote@ # am--include-marker
@@ -1254,6 +1243,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-xh_text_ex.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-xmlfunctions.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filezilla-xrc_helper.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzmac_a-dialogex_mac.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzmac_a-dropsource_mac.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzmac_a-power_management_osx.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzmac_a-toolbar.Po@am__quote@ # am--include-marker
@@ -1732,20 +1722,6 @@ filezilla-file_utils.obj: file_utils.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='file_utils.cpp' object='filezilla-file_utils.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-file_utils.obj `if test -f 'file_utils.cpp'; then $(CYGPATH_W) 'file_utils.cpp'; else $(CYGPATH_W) '$(srcdir)/file_utils.cpp'; fi`
-
-filezilla-fzputtygen_interface.o: fzputtygen_interface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT filezilla-fzputtygen_interface.o -MD -MP -MF $(DEPDIR)/filezilla-fzputtygen_interface.Tpo -c -o filezilla-fzputtygen_interface.o `test -f 'fzputtygen_interface.cpp' || echo '$(srcdir)/'`fzputtygen_interface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/filezilla-fzputtygen_interface.Tpo $(DEPDIR)/filezilla-fzputtygen_interface.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fzputtygen_interface.cpp' object='filezilla-fzputtygen_interface.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-fzputtygen_interface.o `test -f 'fzputtygen_interface.cpp' || echo '$(srcdir)/'`fzputtygen_interface.cpp
-
-filezilla-fzputtygen_interface.obj: fzputtygen_interface.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT filezilla-fzputtygen_interface.obj -MD -MP -MF $(DEPDIR)/filezilla-fzputtygen_interface.Tpo -c -o filezilla-fzputtygen_interface.obj `if test -f 'fzputtygen_interface.cpp'; then $(CYGPATH_W) 'fzputtygen_interface.cpp'; else $(CYGPATH_W) '$(srcdir)/fzputtygen_interface.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/filezilla-fzputtygen_interface.Tpo $(DEPDIR)/filezilla-fzputtygen_interface.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fzputtygen_interface.cpp' object='filezilla-fzputtygen_interface.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-fzputtygen_interface.obj `if test -f 'fzputtygen_interface.cpp'; then $(CYGPATH_W) 'fzputtygen_interface.cpp'; else $(CYGPATH_W) '$(srcdir)/fzputtygen_interface.cpp'; fi`
 
 filezilla-graphics.o: graphics.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT filezilla-graphics.o -MD -MP -MF $(DEPDIR)/filezilla-graphics.Tpo -c -o filezilla-graphics.o `test -f 'graphics.cpp' || echo '$(srcdir)/'`graphics.cpp
@@ -2236,20 +2212,6 @@ filezilla-search.obj: search.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='search.cpp' object='filezilla-search.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-search.obj `if test -f 'search.cpp'; then $(CYGPATH_W) 'search.cpp'; else $(CYGPATH_W) '$(srcdir)/search.cpp'; fi`
-
-filezilla-serverdata.o: serverdata.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT filezilla-serverdata.o -MD -MP -MF $(DEPDIR)/filezilla-serverdata.Tpo -c -o filezilla-serverdata.o `test -f 'serverdata.cpp' || echo '$(srcdir)/'`serverdata.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/filezilla-serverdata.Tpo $(DEPDIR)/filezilla-serverdata.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='serverdata.cpp' object='filezilla-serverdata.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-serverdata.o `test -f 'serverdata.cpp' || echo '$(srcdir)/'`serverdata.cpp
-
-filezilla-serverdata.obj: serverdata.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT filezilla-serverdata.obj -MD -MP -MF $(DEPDIR)/filezilla-serverdata.Tpo -c -o filezilla-serverdata.obj `if test -f 'serverdata.cpp'; then $(CYGPATH_W) 'serverdata.cpp'; else $(CYGPATH_W) '$(srcdir)/serverdata.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/filezilla-serverdata.Tpo $(DEPDIR)/filezilla-serverdata.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='serverdata.cpp' object='filezilla-serverdata.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o filezilla-serverdata.obj `if test -f 'serverdata.cpp'; then $(CYGPATH_W) 'serverdata.cpp'; else $(CYGPATH_W) '$(srcdir)/serverdata.cpp'; fi`
 
 settings/filezilla-optionspage.o: settings/optionspage.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT settings/filezilla-optionspage.o -MD -MP -MF settings/$(DEPDIR)/filezilla-optionspage.Tpo -c -o settings/filezilla-optionspage.o `test -f 'settings/optionspage.cpp' || echo '$(srcdir)/'`settings/optionspage.cpp
@@ -3073,6 +3035,20 @@ filezilla-osx_sandbox_userdirs.obj: osx_sandbox_userdirs.cpp
 @AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(LTOBJCXXCOMPILE) -c -o $@ $<
 
+libfzmac_a-dialogex_mac.o: dialogex_mac.mm
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)$(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzmac_a_CPPFLAGS) $(CPPFLAGS) $(libfzmac_a_OBJCXXFLAGS) $(OBJCXXFLAGS) -MT libfzmac_a-dialogex_mac.o -MD -MP -MF $(DEPDIR)/libfzmac_a-dialogex_mac.Tpo -c -o libfzmac_a-dialogex_mac.o `test -f 'dialogex_mac.mm' || echo '$(srcdir)/'`dialogex_mac.mm
+@am__fastdepOBJCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzmac_a-dialogex_mac.Tpo $(DEPDIR)/libfzmac_a-dialogex_mac.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='dialogex_mac.mm' object='libfzmac_a-dialogex_mac.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzmac_a_CPPFLAGS) $(CPPFLAGS) $(libfzmac_a_OBJCXXFLAGS) $(OBJCXXFLAGS) -c -o libfzmac_a-dialogex_mac.o `test -f 'dialogex_mac.mm' || echo '$(srcdir)/'`dialogex_mac.mm
+
+libfzmac_a-dialogex_mac.obj: dialogex_mac.mm
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)$(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzmac_a_CPPFLAGS) $(CPPFLAGS) $(libfzmac_a_OBJCXXFLAGS) $(OBJCXXFLAGS) -MT libfzmac_a-dialogex_mac.obj -MD -MP -MF $(DEPDIR)/libfzmac_a-dialogex_mac.Tpo -c -o libfzmac_a-dialogex_mac.obj `if test -f 'dialogex_mac.mm'; then $(CYGPATH_W) 'dialogex_mac.mm'; else $(CYGPATH_W) '$(srcdir)/dialogex_mac.mm'; fi`
+@am__fastdepOBJCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzmac_a-dialogex_mac.Tpo $(DEPDIR)/libfzmac_a-dialogex_mac.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='dialogex_mac.mm' object='libfzmac_a-dialogex_mac.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzmac_a_CPPFLAGS) $(CPPFLAGS) $(libfzmac_a_OBJCXXFLAGS) $(OBJCXXFLAGS) -c -o libfzmac_a-dialogex_mac.obj `if test -f 'dialogex_mac.mm'; then $(CYGPATH_W) 'dialogex_mac.mm'; else $(CYGPATH_W) '$(srcdir)/dialogex_mac.mm'; fi`
+
 libfzmac_a-dropsource_mac.o: dropsource_mac.mm
 @am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)$(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzmac_a_CPPFLAGS) $(CPPFLAGS) $(libfzmac_a_OBJCXXFLAGS) $(OBJCXXFLAGS) -MT libfzmac_a-dropsource_mac.o -MD -MP -MF $(DEPDIR)/libfzmac_a-dropsource_mac.Tpo -c -o libfzmac_a-dropsource_mac.o `test -f 'dropsource_mac.mm' || echo '$(srcdir)/'`dropsource_mac.mm
 @am__fastdepOBJCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzmac_a-dropsource_mac.Tpo $(DEPDIR)/libfzmac_a-dropsource_mac.Po
@@ -3369,7 +3345,6 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-filter_conditions_dialog.Po
 	-rm -f ./$(DEPDIR)/filezilla-filter_manager.Po
 	-rm -f ./$(DEPDIR)/filezilla-filteredit.Po
-	-rm -f ./$(DEPDIR)/filezilla-fzputtygen_interface.Po
 	-rm -f ./$(DEPDIR)/filezilla-graphics.Po
 	-rm -f ./$(DEPDIR)/filezilla-import.Po
 	-rm -f ./$(DEPDIR)/filezilla-infotext.Po
@@ -3399,7 +3374,6 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-remote_recursive_operation.Po
 	-rm -f ./$(DEPDIR)/filezilla-renderer.Po
 	-rm -f ./$(DEPDIR)/filezilla-search.Po
-	-rm -f ./$(DEPDIR)/filezilla-serverdata.Po
 	-rm -f ./$(DEPDIR)/filezilla-sftp_crypt_info_dlg.Po
 	-rm -f ./$(DEPDIR)/filezilla-sitemanager.Po
 	-rm -f ./$(DEPDIR)/filezilla-sitemanager_controls.Po
@@ -3430,6 +3404,7 @@ distclean: distclean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-xh_text_ex.Po
 	-rm -f ./$(DEPDIR)/filezilla-xmlfunctions.Po
 	-rm -f ./$(DEPDIR)/filezilla-xrc_helper.Po
+	-rm -f ./$(DEPDIR)/libfzmac_a-dialogex_mac.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-dropsource_mac.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-power_management_osx.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-toolbar.Po
@@ -3541,7 +3516,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-filter_conditions_dialog.Po
 	-rm -f ./$(DEPDIR)/filezilla-filter_manager.Po
 	-rm -f ./$(DEPDIR)/filezilla-filteredit.Po
-	-rm -f ./$(DEPDIR)/filezilla-fzputtygen_interface.Po
 	-rm -f ./$(DEPDIR)/filezilla-graphics.Po
 	-rm -f ./$(DEPDIR)/filezilla-import.Po
 	-rm -f ./$(DEPDIR)/filezilla-infotext.Po
@@ -3571,7 +3545,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-remote_recursive_operation.Po
 	-rm -f ./$(DEPDIR)/filezilla-renderer.Po
 	-rm -f ./$(DEPDIR)/filezilla-search.Po
-	-rm -f ./$(DEPDIR)/filezilla-serverdata.Po
 	-rm -f ./$(DEPDIR)/filezilla-sftp_crypt_info_dlg.Po
 	-rm -f ./$(DEPDIR)/filezilla-sitemanager.Po
 	-rm -f ./$(DEPDIR)/filezilla-sitemanager_controls.Po
@@ -3602,6 +3575,7 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f ./$(DEPDIR)/filezilla-xh_text_ex.Po
 	-rm -f ./$(DEPDIR)/filezilla-xmlfunctions.Po
 	-rm -f ./$(DEPDIR)/filezilla-xrc_helper.Po
+	-rm -f ./$(DEPDIR)/libfzmac_a-dialogex_mac.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-dropsource_mac.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-power_management_osx.Po
 	-rm -f ./$(DEPDIR)/libfzmac_a-toolbar.Po

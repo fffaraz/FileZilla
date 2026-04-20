@@ -9,6 +9,7 @@
 
 #include "../commonui/fz_paths.h"
 #include "../commonui/ipcmutex.h"
+#include "../commonui/protect.h"
 
 #include <libfilezilla/translate.hpp>
 
@@ -268,7 +269,7 @@ std::pair<std::unique_ptr<Site>, Bookmark> CSiteManager::GetSiteByPath(COptionsB
 	return ret;
 }
 
-std::wstring CSiteManager::AddServer(Site site)
+std::wstring CSiteManager::AddServer(Site site, COptionsBase & options, login_manager & lim)
 {
 	// We have to synchronize access to sitemanager.xml so that multiple processed don't write
 	// to the same file or one is reading while the other one writes.
@@ -318,11 +319,11 @@ std::wstring CSiteManager::AddServer(Site site)
 	site.SetName(name);
 
 	auto xServer = element.append_child("Server");
-	SetServer(xServer, site);
+	SetServer(xServer, site, lim, options);
 	AddTextElement(xServer, name);
 
 	if (!file.Save()) {
-		if (COptions::Get()->get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
+		if (options.get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
 			return std::wstring();
 		}
 
@@ -524,7 +525,7 @@ void CSiteManager::Rewrite(CLoginManager & loginManager, COptionsBase& options, 
 					loginManager.AskDecryptor(site->credentials.encrypted_, true, false);
 					unprotect(site->credentials, loginManager.GetDecryptor(site->credentials.encrypted_), on_failure_set_to_ask);
 				}
-				protect(site->credentials);
+				protect(site->credentials, loginManager, options);
 				site_manager::Save(child, *site, loginManager, options);
 			}
 		}
@@ -589,7 +590,7 @@ pugi::xml_node GetOrCreateFolderWithName(pugi::xml_node element, std::wstring co
 }
 }
 
-bool CSiteManager::ImportSites(pugi::xml_node sites)
+bool CSiteManager::ImportSites(pugi::xml_node sites, COptionsBase & options, login_manager& lim)
 {
 	CInterProcessMutex mutex(MUTEX_SITEMANAGER);
 
@@ -607,14 +608,14 @@ bool CSiteManager::ImportSites(pugi::xml_node sites)
 		currentSites = element.append_child("Servers");
 	}
 
-	if (!ImportSites(sites, currentSites, file.GetVersion())) {
+	if (!ImportSites(sites, currentSites, file.GetVersion(), options, lim)) {
 		return false;
 	}
 
 	return SaveWithErrorDialog(file);
 }
 
-bool CSiteManager::ImportSites(pugi::xml_node sitesToImport, pugi::xml_node existingSites, int64_t version)
+bool CSiteManager::ImportSites(pugi::xml_node sitesToImport, pugi::xml_node existingSites, int64_t version, COptionsBase & options, login_manager& lim)
 {
 	for (auto importFolder = sitesToImport.child("Folder"); importFolder; importFolder = importFolder.next_sibling("Folder")) {
 		std::wstring name = GetTextElement_Trimmed(importFolder, "Name").substr(0, 255);
@@ -632,10 +633,8 @@ bool CSiteManager::ImportSites(pugi::xml_node sitesToImport, pugi::xml_node exis
 			newName = fz::sprintf(L"%s %d", name.substr(0, 240), i++);
 		}
 
-		ImportSites(importFolder, folder, version);
+		ImportSites(importFolder, folder, version, options, lim);
 	}
-
-	auto & loginManager = CLoginManager::Get();
 
 	for (auto importSite = sitesToImport.child("Server"); importSite; importSite = importSite.next_sibling("Server")) {
 		auto site = ReadServerElement(importSite, version);
@@ -652,11 +651,11 @@ bool CSiteManager::ImportSites(pugi::xml_node sitesToImport, pugi::xml_node exis
 		}
 		site->SetName(newName);
 
-		unprotect(site->credentials, loginManager.GetDecryptor(site->credentials.encrypted_), false);
-		protect(site->credentials);
+		unprotect(site->credentials, lim.GetDecryptor(site->credentials.encrypted_), false);
+		protect(site->credentials, lim, options);
 
 		auto xsite = existingSites.append_child("Server");
-		site_manager::Save(xsite, *site, loginManager, *COptions::Get());
+		site_manager::Save(xsite, *site, lim, options);
 	}
 
 	return true;

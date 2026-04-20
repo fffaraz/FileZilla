@@ -23,8 +23,12 @@
 #include "logging.h"
 #include "server.h"
 
+#include <fzssh/ssh.hpp>
+
 #include <libfilezilla/time.hpp>
 #include <libfilezilla/tls_info.hpp>
+
+#include <optional>
 
 enum NotificationId : unsigned int
 {
@@ -46,25 +50,33 @@ enum RequestId : unsigned int
 	reqId_fileexists,          // Target file already exists, awaiting further instructions
 	reqId_interactiveLogin,    // gives a challenge prompt for a password
 	reqId_hostkey,             // used only by SSH/SFTP to indicate new host key
-	reqId_hostkeyChanged,      // used only by SSH/SFTP to indicate changed host key
 	reqId_certificate,         // sent after a successful TLS handshake to allow certificate
 	                           // validation.
 	reqId_insecure_connection, // If using opportunistic FTP over TLS, or a completely
 	                           // unprotected protocol ask user whether he really wants
 	                           // to use a plaintext connection.
-	reqId_tls_no_resumption
+	reqId_tls_no_resumption,
+
+	reqId_password,
+	reqId_otp,
+	reqId_keyfile_password,
+
+	reqId_count
 };
 
 class FZC_PUBLIC_SYMBOL CNotification
 {
 public:
 	virtual ~CNotification() = default;
-	virtual NotificationId GetID() const = 0;
+	NotificationId GetID() const { return id_; }
 
 protected:
-	CNotification() = default;
-	CNotification(CNotification const&) = default;
-	CNotification& operator=(CNotification const&) = default;
+	explicit CNotification(NotificationId id);
+	CNotification(CNotification const&) = delete;
+	CNotification& operator=(CNotification const&) = delete;
+
+private:
+	NotificationId const id_;
 };
 
 template<NotificationId id>
@@ -74,9 +86,11 @@ public:
 	virtual NotificationId GetID() const final { return id; }
 
 protected:
-	CNotificationHelper() = default;
-	CNotificationHelper(CNotificationHelper const&) = default;
-	CNotificationHelper& operator=(CNotificationHelper const&) = default;
+	CNotificationHelper()
+		: CNotification(id)
+	{}
+	CNotificationHelper(CNotificationHelper const&) = delete;
+	CNotificationHelper& operator=(CNotificationHelper const&) = delete;
 };
 
 class FZC_PUBLIC_SYMBOL CLogmsgNotification final : public CNotificationHelper<nId_logmsg>
@@ -138,19 +152,27 @@ protected:
 class FZC_PUBLIC_SYMBOL CAsyncRequestNotification : public CNotificationHelper<nId_asyncrequest>
 {
 public:
-	virtual RequestId GetRequestID() const = 0;
-	unsigned int requestNumber{}; // Do never change this
+	RequestId GetRequestID() const { return req_id_; }
+	bool IsPending() const;
+
+	std::weak_ptr<unsigned int> requestNumber_;
 
 protected:
-	CAsyncRequestNotification() = default;
-	CAsyncRequestNotification(CAsyncRequestNotification const&) = default;
-	CAsyncRequestNotification& operator=(CAsyncRequestNotification const&) = default;
+
+	explicit CAsyncRequestNotification(RequestId id);
+	CAsyncRequestNotification(CAsyncRequestNotification const&) = delete;
+	CAsyncRequestNotification& operator=(CAsyncRequestNotification const&) = delete;
+
+private:
+	RequestId const req_id_;
 };
 
 class FZC_PUBLIC_SYMBOL CFileExistsNotification final : public CAsyncRequestNotification
 {
 public:
-	virtual RequestId GetRequestID() const;
+	CFileExistsNotification()
+		: CAsyncRequestNotification(reqId_fileexists)
+	{}
 
 	bool download{};
 
@@ -197,35 +219,58 @@ public:
 class FZC_PUBLIC_SYMBOL CInteractiveLoginNotification final : public CAsyncRequestNotification
 {
 public:
-	enum type {
-		interactive,
-		keyfile,
-		totp
-	};
+	CInteractiveLoginNotification(CServer const& server, ServerHandle const& handle);
 
-	CInteractiveLoginNotification(type t, std::wstring const& challenge, bool repeated);
-	virtual RequestId GetRequestID() const;
-
-	// Set to true if you have set a password
-	bool passwordSet{};
-
-	CServer server;
+	CServer server_;
 	ServerHandle handle_;
-	Credentials credentials;
 
-	std::wstring const& GetChallenge() const { return m_challenge; }
+	// Name and instruction may be empty
+	std::string name_;
+	std::string instruction_;
+	std::vector<fz::ssh::keyboard_interactive_prompt> prompts_;
 
-	type GetType() const { return m_type; }
+	std::optional<std::vector<std::string>> responses_;
+};
 
-	bool IsRepeated() const { return m_repeated; }
+class FZC_PUBLIC_SYMBOL PasswordRequest final : public CAsyncRequestNotification
+{
+public:
+	PasswordRequest(CServer const& server, ServerHandle const& handle, bool canRemember);
 
-protected:
-	// Password prompt string as given by the server
-	std::wstring const m_challenge;
+	CServer server_;
+	ServerHandle handle_;
 
-	type const m_type;
+	std::optional<std::wstring> password_;
 
-	bool const m_repeated;
+	bool const canRemember_;
+};
+class FZC_PUBLIC_SYMBOL OtpRequest final : public CAsyncRequestNotification
+{
+public:
+	OtpRequest(CServer const& server, ServerHandle const& handle);
+
+	CServer server_;
+	ServerHandle handle_;
+
+	std::string otp_;
+};
+
+class FZC_PUBLIC_SYMBOL KeyfilePasswordRequest final : public CAsyncRequestNotification
+{
+public:
+	KeyfilePasswordRequest(CServer const& server, ServerHandle const& handle);
+
+	CServer server_;
+	ServerHandle handle_;
+
+	// These may be empty
+	std::string file_;
+	std::string fingerprint_;
+	std::string comment_;
+
+	bool repeated_{};
+
+	std::optional<std::string> password_;
 };
 
 class FZC_PUBLIC_SYMBOL CTransferStatus final
@@ -270,61 +315,46 @@ protected:
 	CTransferStatus const status_;
 };
 
-class FZC_PUBLIC_SYMBOL CSftpEncryptionDetails
+
+namespace fz::ssh {
+class public_key;
+}
+class FZC_PUBLIC_SYMBOL CHostKeyNotification final : public CAsyncRequestNotification
 {
 public:
-	virtual ~CSftpEncryptionDetails() = default;
+	CHostKeyNotification(CServer const& server, ServerHandle const& handle, std::unique_ptr<fz::ssh::public_key> && hostkey, fz::ssh::algorithm_info && algorithms);
+	~CHostKeyNotification();
 
-	std::wstring hostKeyAlgorithm;
-	std::wstring hostKeyFingerprint;
-	std::wstring kexAlgorithm;
-	std::wstring kexHash;
-	std::wstring kexCurve;
-	std::wstring cipherClientToServer;
-	std::wstring cipherServerToClient;
-	std::wstring macClientToServer;
-	std::wstring macServerToClient;
-};
-
-// Notification about new or changed hostkeys, only used by SSH/SFTP transfers.
-// GetRequestID() returns either reqId_hostkey or reqId_hostkeyChanged
-class FZC_PUBLIC_SYMBOL CHostKeyNotification final : public CAsyncRequestNotification, public CSftpEncryptionDetails
-{
-public:
-	CHostKeyNotification(std::wstring const& host, int port, CSftpEncryptionDetails const& details, bool changed = false);
-
-	virtual RequestId GetRequestID() const;
-
-	std::wstring GetHost() const;
-	int GetPort() const;
+	CServer server_;
+	ServerHandle handle_;
 
 	// Set to true if you trust the server
-	bool m_trust{};
+	bool trust_{};
 
-	// If m_trust is true, set this to true to always trust this server
-	// in future.
-	bool m_alwaysTrust{};
-
-protected:
-
-	const std::wstring m_host;
-	const int m_port;
-	const bool m_changed;
+	std::unique_ptr<fz::ssh::public_key> hostkey_;
+	fz::ssh::algorithm_info algorithms_;
 };
 
 class FZC_PUBLIC_SYMBOL CCertificateNotification final : public CAsyncRequestNotification
 {
 public:
 	CCertificateNotification(fz::tls_session_info && info);
-	virtual RequestId GetRequestID() const { return reqId_certificate; }
 
 	fz::tls_session_info info_;
 
 	bool trusted_{};
 };
 
-class FZC_PUBLIC_SYMBOL CSftpEncryptionNotification final : public CNotificationHelper<nId_sftp_encryption>, public CSftpEncryptionDetails
+class FZC_PUBLIC_SYMBOL CSftpEncryptionNotification final : public CNotificationHelper<nId_sftp_encryption>
 {
+public:
+	CSftpEncryptionNotification(fz::ssh::algorithm_info const& algs, std::string const& fingerprint)
+		: algorithms_(algs)
+		, hostkey_fingerprint_(fingerprint)
+	{}
+
+	fz::ssh::algorithm_info algorithms_;
+	std::string hostkey_fingerprint_;
 };
 
 class FZC_PUBLIC_SYMBOL CLocalDirCreatedNotification final : public CNotificationHelper<nId_local_dir_created>
@@ -371,10 +401,9 @@ class FZC_PUBLIC_SYMBOL FtpTlsNoResumptionNotification final : public CAsyncRequ
 {
 public:
 	FtpTlsNoResumptionNotification(CServer const& server)
-	    : server_(server)
+		: CAsyncRequestNotification(reqId_tls_no_resumption)
+	    , server_(server)
 	{}
-
-	virtual RequestId GetRequestID() const { return reqId_tls_no_resumption; }
 
 	CServer const server_;
 	bool allow_{};

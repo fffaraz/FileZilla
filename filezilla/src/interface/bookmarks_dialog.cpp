@@ -39,9 +39,10 @@ struct CNewBookmarkDialog::impl
 	wxCheckBox* comparison_{};
 };
 
-CNewBookmarkDialog::CNewBookmarkDialog(wxWindow* parent, COptionsBase & options, std::wstring& site_path, Site const* site)
+CNewBookmarkDialog::CNewBookmarkDialog(wxWindow* parent, COptionsBase & options, login_manager & lim, std::wstring& site_path, Site const* site)
 	: m_parent(parent)
 	, options_(options)
+	, login_manager_(lim)
 	, m_site_path(site_path)
 	, site_(site)
 	, impl_(std::make_unique<impl>())
@@ -161,7 +162,7 @@ void CNewBookmarkDialog::OnOK()
 				return;
 			}
 
-			m_site_path = CSiteManager::AddServer(*site_);
+			m_site_path = CSiteManager::AddServer(*site_, options_, login_manager_);
 			if (m_site_path.empty()) {
 				wxMessageBoxEx(_("Could not add connection to Site Manager"), _("New bookmark"), wxICON_EXCLAMATION, this);
 				EndModal(wxID_CANCEL);
@@ -217,9 +218,10 @@ public:
 	bool m_comparison{};
 };
 
-CBookmarksDialog::CBookmarksDialog(wxWindow* parent, COptionsBase & options, std::wstring& site_path, Site const* site)
+CBookmarksDialog::CBookmarksDialog(wxWindow* parent, COptionsBase & options, login_manager & lim, std::wstring& site_path, Site const* site)
 	: m_parent(parent)
 	, options_(options)
+	, login_manager_(lim)
 	, m_site_path(site_path)
 	, site_(site)
 {
@@ -669,7 +671,7 @@ void CBookmarksDialog::OnNewBookmark(wxCommandEvent&)
 				return;
 			}
 
-			m_site_path = CSiteManager::AddServer(*site_);
+			m_site_path = CSiteManager::AddServer(*site_, options_, login_manager_);
 			if (m_site_path.empty()) {
 				wxMessageBoxEx(_("Could not add connection to Site Manager"), _("New bookmark"), wxICON_EXCLAMATION, this);
 				return;

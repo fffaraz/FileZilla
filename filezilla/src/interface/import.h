@@ -7,12 +7,13 @@
 
 class CQueueView;
 class XmlOptions;
+class login_manager;
 class CImportDialog final : public wxDialogEx
 {
 public:
 	CImportDialog(wxWindow* parent, CQueueView* pQueueView);
 
-	void Run(XmlOptions & options);
+	void Run(XmlOptions & options, login_manager & lim);
 
 protected:
 

@@ -9,7 +9,9 @@
 
 #ifdef __WXMAC__
 #include "filezillaapp.h"
+#include "dropsource.h"
 #endif
+
 
 BEGIN_EVENT_TABLE(wxDialogEx, wxDialog)
 EVT_CHAR_HOOK(wxDialogEx::OnChar)
@@ -36,8 +38,6 @@ wxTextEntry* GetSpecialTextEntry(wxWindow*, wxChar)
 #endif
 
 #ifdef __WXMAC__
-std::vector<void*> wxDialogEx::shown_dialogs_creation_events_;
-
 static int const pasteId = wxNewId();
 static int const copyId = wxNewId();
 static int const cutId = wxNewId();
@@ -131,9 +131,6 @@ int wxDialogEx::ShowModal()
 #endif
 
 	shown_dialogs_.push_back(this);
-#ifdef __WXMAC__
-	shown_dialogs_creation_events_.push_back(wxGetApp().MacGetCurrentEvent());
-#endif
 
 	if (acceleratorTable_.empty()) {
 		SetAcceleratorTable(wxNullAcceleratorTable);
@@ -144,9 +141,6 @@ int wxDialogEx::ShowModal()
 
 	int ret = wxDialog::ShowModal();
 
-#ifdef __WXMAC__
-	shown_dialogs_creation_events_.pop_back();
-#endif
 	shown_dialogs_.pop_back();
 
 	return ret;
@@ -181,9 +175,7 @@ bool wxDialogEx::CanShowPopupDialog(wxTopLevelWindow * parent)
 #endif
 
 #ifdef __WXMAC__
-	void* ev = wxGetApp().MacGetCurrentEvent();
-	if (ev && (shown_dialogs_creation_events_.empty() || ev != shown_dialogs_creation_events_.back())) {
-		// We're inside an event handler for a native mac event, such as a popup menu
+	if (MacIsMouseTracking()) {
 		return false;
 	}
 #endif

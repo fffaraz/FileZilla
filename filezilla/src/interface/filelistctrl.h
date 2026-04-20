@@ -513,11 +513,13 @@ namespace genericTypes {
 }
 
 class COptionsBase;
+class TimeFormatter;
+class login_manager;
 template<class CFileData> class CFileListCtrl : public wxListCtrlEx, public CComparableListing
 {
 	template<typename Listing, typename DataEntry> friend class CFileListCtrlSortType;
 public:
-	CFileListCtrl(wxWindow* pParent, CQueueView *pQueue, COptionsBase & options, bool border = false);
+	CFileListCtrl(wxWindow* pParent, CQueueView *pQueue, COptionsBase & options, TimeFormatter & time_formatter, bool border = false);
 	virtual ~CFileListCtrl() = default;
 
 	void SetFilelistStatusBar(CFilelistStatusBar* pFilelistStatusBar) { m_pFilelistStatusBar = pFilelistStatusBar; }
@@ -630,6 +632,7 @@ private:
 	void OnColorChange(wxSysColourChangedEvent & ev);
 
 	COptionsBase& options_;
+	TimeFormatter & time_formatter_;
 
 	std::unique_ptr<CFileListCtrlSortBase> sortComparisonObject_;
 };

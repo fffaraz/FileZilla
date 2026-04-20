@@ -4,7 +4,6 @@
 #include "statusbar.h"
 #include "../include/engine_context.h"
 #include "../include/notification.h"
-#include "serverdata.h"
 
 #include <wx/timer.h>
 
@@ -32,6 +31,9 @@ class CStatusView;
 class CState;
 class CToolBar;
 class CWindowStateManager;
+class KeyfilePasswordManager;
+class HostkeyStore;
+class TimeFormatter;
 
 class CMainFrame final : public wxNavigationEnabled<wxFrame>, public COptionChangeEventHandler
 #if FZ_MANUALUPDATECHECK
@@ -70,6 +72,11 @@ public:
 
 	CFileZillaEngineContext& GetEngineContext() { return m_engineContext; }
 	void OnEngineEvent(CFileZillaEngine* engine);
+
+	TimeFormatter & GetTimeFormatter() const { return *time_formatter_; }
+	login_manager & GetLoginManager() const { return *login_manager_; }
+	KeyfilePasswordManager & GetKeyfilePasswordManager() const { return *keyfilePasswordManager_; }
+	HostkeyStore & GetHostkeyStore() const { return *hostkeyStore_; }
 
 private:
 	void UpdateLayout();
@@ -172,7 +179,11 @@ private:
 	wxEventType m_closeEvent{};
 	wxTimer m_closeEventTimer;
 
+	std::unique_ptr<TimeFormatter> time_formatter_;
+	std::unique_ptr<login_manager> login_manager_;
 	std::unique_ptr<CertStore> cert_store_;
+	std::unique_ptr<KeyfilePasswordManager> keyfilePasswordManager_;
+	std::unique_ptr<HostkeyStore> hostkeyStore_;
 	std::unique_ptr<CAsyncRequestQueue> async_request_queue_;
 	CMainFrameStateEventHandler* m_pStateEventHandler{};
 	std::unique_ptr<CEditHandler> edit_handler_;

@@ -97,7 +97,7 @@ class CSearchDialogFileList final : public CFileListCtrl<CGenericFileData>
 	friend class CSearchSortType;
 
 public:
-	CSearchDialogFileList(CSearchDialog* pParent, CQueueView* pQueue, COptionsBase & options);
+	CSearchDialogFileList(CSearchDialog* pParent, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter);
 
 	void clear();
 	void set_mode(CSearchDialog::search_mode mode);
@@ -147,8 +147,8 @@ BEGIN_EVENT_TABLE(CSearchDialogFileList, CFileListCtrl<CGenericFileData>)
 EVT_LIST_COL_CLICK(wxID_ANY, CSearchDialogFileList::OnColumnClicked)
 END_EVENT_TABLE()
 
-CSearchDialogFileList::CSearchDialogFileList(CSearchDialog* pParent, CQueueView* pQueue, COptionsBase & options)
-	: CFileListCtrl<CGenericFileData>(pParent, pQueue, options, true),
+CSearchDialogFileList::CSearchDialogFileList(CSearchDialog* pParent, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter)
+	: CFileListCtrl<CGenericFileData>(pParent, pQueue, options, time_formatter,  true),
 	m_searchDialog(pParent)
 {
 	m_hasParent = false;
@@ -168,7 +168,7 @@ CSearchDialogFileList::CSearchDialogFileList(CSearchDialog* pParent, CQueueView*
 	AddColumn(_("Last modified"), wxLIST_FORMAT_LEFT, widths[4]);
 	AddColumn(_("Permissions"), wxLIST_FORMAT_LEFT, widths[5]);
 	AddColumn(_("Owner/Group"), wxLIST_FORMAT_LEFT, widths[6]);
-	LoadColumnSettings(OPTION_SEARCH_COLUMN_WIDTHS, OPTION_SEARCH_COLUMN_SHOWN, OPTION_SEARCH_COLUMN_ORDER);
+	LoadColumnSettings(options_, OPTION_SEARCH_COLUMN_WIDTHS, OPTION_SEARCH_COLUMN_SHOWN, OPTION_SEARCH_COLUMN_ORDER);
 
 	InitSort(OPTION_SEARCH_SORTORDER);
 }
@@ -182,7 +182,7 @@ void CSearchDialogFileList::clear()
 	remoteFileData_.clear();
 	SetItemCount(0);
 	RefreshListOnly(true);
-	if (auto* sbar = GetFilelistStatusBar()) {	
+	if (auto* sbar = GetFilelistStatusBar()) {
 		sbar->Clear();
 	}
 	m_canStartComparison = false;
@@ -342,7 +342,7 @@ wxString CSearchDialogFileList::GetItemText(int item, unsigned int column)
 			return data.fileType;
 		}
 		else if (column == 4) {
-			return CTimeFormat::Format(entry.time);
+			return time_formatter_.Format(entry.time);
 		}
 	}
 	else {
@@ -380,7 +380,7 @@ wxString CSearchDialogFileList::GetItemText(int item, unsigned int column)
 			return data.fileType;
 		}
 		else if (column == 4) {
-			return CTimeFormat::Format(entry.time);
+			return time_formatter_.Format(entry.time);
 		}
 		else if (column == 5) {
 			return *entry.permissions;
@@ -612,11 +612,12 @@ EVT_RADIOBUTTON(XRCID("ID_COMPARE_DATE"), CSearchDialog::OnChangeCompareOption)
 EVT_CHECKBOX(XRCID("ID_COMPARE_HIDEIDENTICAL"), CSearchDialog::OnChangeCompareOption)
 END_EVENT_TABLE()
 
-CSearchDialog::CSearchDialog(wxWindow* parent, CState& state, CQueueView* pQueue, COptionsBase & options, CEditHandler* edit_handler)
+CSearchDialog::CSearchDialog(wxWindow* parent, CState& state, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter, CEditHandler* edit_handler)
 	: CStateEventHandler(state)
 	, m_parent(parent)
 	, m_pQueue(pQueue)
 	, options_(options)
+	, time_formatter_(time_formatter)
 	, edit_handler_(edit_handler)
 {
 	m_pComparisonManager = new CComparisonManager(state, options);
@@ -728,11 +729,11 @@ bool CSearchDialog::Load()
 		return false;
 	}
 
-	m_results = new CSearchDialogFileList(this, 0, options_);
+	m_results = new CSearchDialogFileList(this, 0, options_, time_formatter_);
 	ReplaceControl(XRCCTRL(*this, "ID_RESULTS", wxWindow), m_results);
 	m_results->SetFilelistStatusBar(pStatusBar);
 
-	m_remoteResults = new CSearchDialogFileList(this, 0, options_);
+	m_remoteResults = new CSearchDialogFileList(this, 0, options_, time_formatter_);
 	ReplaceControl(XRCCTRL(*this, "ID_REMOTE_RESULTS", wxWindow), m_remoteResults);
 	m_remoteResults->SetFilelistStatusBar(m_remoteStatusBar);
 	m_remoteResults->Show(false);

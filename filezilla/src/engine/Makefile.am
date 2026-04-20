@@ -4,8 +4,8 @@ lib_LTLIBRARIES = libfzclient-private.la
 
 libfzclient_private_la_CPPFLAGS = -I$(top_builddir)/config
 libfzclient_private_la_CPPFLAGS += $(LIBFILEZILLA_CFLAGS)
+libfzclient_private_la_CPPFLAGS += $(LIBFZSSH_CFLAGS)
 libfzclient_private_la_CPPFLAGS += -DBUILDING_FILEZILLA
-
 
 libfzclient_private_la_SOURCES = \
 		activity_logger.cpp \
@@ -32,6 +32,7 @@ libfzclient_private_la_SOURCES = \
 		oplock_manager.cpp \
 		optionsbase.cpp \
 		pathcache.cpp \
+		posix_chmod.cpp \
 		proxy.cpp \
 		rtt.cpp \
 		server.cpp \
@@ -100,7 +101,6 @@ libfzclient_private_la_SOURCES += \
 		sftp/cwd.cpp \
 		sftp/delete.cpp \
 		sftp/filetransfer.cpp \
-		sftp/input_parser.cpp \
 		sftp/list.cpp \
 		sftp/mkd.cpp \
 		sftp/rename.cpp \
@@ -112,9 +112,7 @@ noinst_HEADERS += \
 		sftp/connect.h \
 		sftp/cwd.h \
 		sftp/delete.h \
-		sftp/event.h \
 		sftp/filetransfer.h \
-		sftp/input_parser.h \
 		sftp/list.h \
 		sftp/mkd.h \
 		sftp/rename.h \
@@ -151,14 +149,12 @@ endif
 
 libfzclient_private_la_CXXFLAGS = -fvisibility=hidden
 libfzclient_private_la_LDFLAGS = -no-undefined -release $(ENGINE_VERSION_MAJOR).$(ENGINE_VERSION_MINOR).$(ENGINE_VERSION_MICRO)
-libfzclient_private_la_LDFLAGS += $(LIBFILEZILLA_LIBS)
+libfzclient_private_la_LDFLAGS += $(LIBFZSSH_LIBS) $(LIBFILEZILLA_LIBS)
 libfzclient_private_la_LDFLAGS += $(IDN_LIB)
 
 if FZ_MAC
 libfzclient_private_la_LDFLAGS += -framework CoreServices
 endif
-
-dist_noinst_DATA = engine.vcxproj
 
 CLEANFILES = filezilla.h.gch
 DISTCLEANFILES = ./$(DEPDIR)/filezilla.Po

@@ -1109,8 +1109,6 @@ Section "FileZilla Client" SecMain
 !ifndef DUMMY_INSTALLER
 
   File "..\src\interface\${LT_EXEDIR}FileZilla.exe"
-  File "..\src\putty\${LT_EXEDIR}fzsftp.exe"
-  File "..\src\putty\${LT_EXEDIR}fzputtygen.exe"
 !if /FileExists "..\src\storj\${LT_EXEDIR}fzstorj.exe"
   File "..\src\storj\${LT_EXEDIR}fzstorj.exe"
 !endif
@@ -1229,8 +1227,6 @@ Section "FileZilla Client" SecMain
       SetRegView 64
     ${EndIf}
     WriteRegDWORD HKLM "${DUMP_KEY}\filezilla.exe"  "DumpType" "1"
-    WriteRegDWORD HKLM "${DUMP_KEY}\fzsftp.exe"     "DumpType" "1"
-    WriteRegDWORD HKLM "${DUMP_KEY}\fzputtygen.exe" "DumpType" "1"
 !if /FileExists "..\src\storj\${LT_EXEDIR}fzstorj.exe"
     WriteRegDWORD HKLM "${DUMP_KEY}\fzstorj.exe"    "DumpType" "1"
 !endif
@@ -1621,8 +1617,6 @@ Section "Uninstall"
   !undef LIBRARY_X64
 
   Delete "$INSTDIR\filezilla.exe"
-  Delete "$INSTDIR\fzsftp.exe"
-  Delete "$INSTDIR\fzputtygen.exe"
 !if /FileExists "..\src\storj\${LT_EXEDIR}fzstorj.exe"
   Delete "$INSTDIR\fzstorj.exe"
 !endif
@@ -1706,14 +1700,10 @@ Section "Uninstall"
       SetRegView 64
     ${EndIf}
     DeleteRegValue HKLM "${DUMP_KEY}\filezilla.exe"  "DumpType"
-    DeleteRegValue HKLM "${DUMP_KEY}\fzsftp.exe"     "DumpType"
-    DeleteRegValue HKLM "${DUMP_KEY}\fzputtygen.exe" "DumpType"
 !if /FileExists "..\src\storj\${LT_EXEDIR}fzstorj.exe"
     DeleteRegValue HKLM "${DUMP_KEY}\fzstorj.exe"    "DumpType"
 !endif
     DeleteRegKey /ifempty HKLM "${DUMP_KEY}\filezilla.exe"
-    DeleteRegKey /ifempty HKLM "${DUMP_KEY}\fzsftp.exe"
-    DeleteRegKey /ifempty HKLM "${DUMP_KEY}\fzputtygen.exe"
 !if /FileExists "..\src\storj\${LT_EXEDIR}fzstorj.exe"
     DeleteRegKey /ifempty HKLM "${DUMP_KEY}\fzstorj.exe"
 !endif

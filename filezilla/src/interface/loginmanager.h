@@ -1,7 +1,6 @@
 #ifndef FILEZILLA_INTERFACE_LOGINMANAGER_HEADER
 #define FILEZILLA_INTERFACE_LOGINMANAGER_HEADER
 
-#include "serverdata.h"
 #include "../commonui/login_manager.h"
 
 #include <list>
@@ -14,15 +13,20 @@
 class CLoginManager : public login_manager
 {
 public:
-	static CLoginManager& Get() { return m_theLoginManager; }
-
 	bool AskDecryptor(fz::public_key const& pub, bool allowForgotten, bool allowCancel);
 
-protected:
-	bool query_unprotect_site(Site & site);
-	bool query_credentials(Site & site, std::wstring const& challenge, bool otp, bool canRemember);
+	static std::string get_topt(Site const& site);
+	static std::optional<std::vector<std::string>> interactive_prompt(Site const& site, std::string const& name, std::string const& instruction, fz::ssh::keyboard_interactive_prompts const& p);
 
-	static CLoginManager m_theLoginManager;
+protected:
+	virtual bool query_unprotect_site(Site & site) override;
+	virtual bool query_credentials(Site & site, bool canRemember) override;
+};
+
+class KeyfilePasswordManager final : public keyfile_password_manager
+{
+protected:
+	virtual std::optional<std::string> query_password(Site const& site, std::string const& file, std::string const& fingerprint, std::string const& comment, bool & remember) override;
 };
 
 #endif

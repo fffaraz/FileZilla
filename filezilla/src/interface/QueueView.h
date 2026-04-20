@@ -116,7 +116,7 @@ class CQueueView final : public CQueueViewBase,
 	friend class CActionAfterBlocker;
 
 public:
-	CQueueView(CQueue* parent, int index, CMainFrame* pMainFrame, CAsyncRequestQueue* pAsyncRequestQueue, cert_store & certStore);
+	CQueueView(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame, CAsyncRequestQueue* pAsyncRequestQueue, cert_store & certStore);
 	virtual ~CQueueView();
 
 	bool QueueFile(bool const queueOnly, bool const download,

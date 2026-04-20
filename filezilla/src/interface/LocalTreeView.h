@@ -19,7 +19,7 @@ class CLocalTreeView final : public wxTreeCtrlEx, CSystemImageList, CStateEventH
 	friend class CLocalTreeViewDropTarget;
 
 public:
-	CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView *pQueueView, COptionsBase & options);
+	CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView *pQueueView, COptionsBase & options, login_manager & lim);
 	virtual ~CLocalTreeView();
 
 #ifdef __WXMSW__

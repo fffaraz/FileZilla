@@ -33,7 +33,7 @@ class CRemoteTreeViewDropTarget final : public CFileDropTarget<wxTreeCtrlEx>
 {
 public:
 	CRemoteTreeViewDropTarget(CRemoteTreeView* pRemoteTreeView)
-		: CFileDropTarget<wxTreeCtrlEx>(pRemoteTreeView)
+		: CFileDropTarget<wxTreeCtrlEx>(pRemoteTreeView, pRemoteTreeView->options_, pRemoteTreeView->login_manager_)
 		, m_pRemoteTreeView(pRemoteTreeView)
 	{
 	}
@@ -229,11 +229,12 @@ EVT_CHAR(CRemoteTreeView::OnChar)
 EVT_MENU(XRCID("ID_GETURL"), CRemoteTreeView::OnMenuGeturl)
 END_EVENT_TABLE()
 
-CRemoteTreeView::CRemoteTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView* pQueue, COptionsBase & options)
+CRemoteTreeView::CRemoteTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView* pQueue, COptionsBase & options, login_manager & lim)
 	: wxTreeCtrlEx(parent, id, wxDefaultPosition, wxDefaultSize, DEFAULT_TREE_STYLE | wxTAB_TRAVERSAL | wxTR_EDIT_LABELS | wxNO_BORDER | wxTR_HIDE_ROOT)
 	, CSystemImageList(CThemeProvider::GetIconSize(iconSizeSmall).x)
 	, CStateEventHandler(state)
 	, COptionChangeEventHandler(this)
+	, login_manager_(lim)
 	, options_(options)
 {
 #ifdef __WXMAC__
@@ -670,7 +671,7 @@ void CRemoteTreeView::RefreshItem(wxTreeItemId parent, const CDirectoryListing& 
 			++iter;
 		}
 	}
-	
+
 	for (auto it = toDelete.rbegin(); it != toDelete.rend(); ++it) {
 		Delete(*it);
 	}
@@ -815,7 +816,7 @@ void CRemoteTreeView::OnBeginDrag(wxTreeEvent& event)
 		return;
 	}
 
-	CRemoteDataObject *pRemoteDataObject = new CRemoteDataObject(site, parent);
+	CRemoteDataObject *pRemoteDataObject = new CRemoteDataObject(login_manager_, options_, site, parent);
 	pRemoteDataObject->AddFile(lastSegment, true, -1, false);
 
 	pRemoteDataObject->Finalize();
@@ -962,13 +963,10 @@ void CRemoteTreeView::OnMenuChmod(wxCommandEvent&)
 
 	const bool hasParent = path.HasParent();
 
-	auto chmodData = std::make_unique<ChmodData>();
-	auto chmodDialog = std::make_unique<CChmodDialog>(*chmodData);
-
 	// Get current permissions of directory
 	std::wstring const name = GetItemText(m_contextMenuItem).ToStdWstring();
-	char permissions[9] = {0};
 	bool cached = false;
+	posix_chmod chmod;
 
 	// Obviously item needs to have a parent directory...
 	if (hasParent) {
@@ -984,16 +982,23 @@ void CRemoteTreeView::OnMenuChmod(wxCommandEvent&)
 					continue;
 				}
 
-				chmodData->ConvertPermissions(*entry.permissions, permissions);
+				std::optional<posix_permissions> p = parse_permissions(fz::to_utf8(*entry.permissions));
+				if (p) {
+					if (!chmod) {
+						chmod.mask_ = posix_permissions::mask;
+						chmod.perms_ = *p;
+					}
+				}
 			}
 		}
 	}
 
-	if (!chmodDialog->Create(this, 0, 1, name, permissions)) {
+	CChmodDialog chmodDialog;
+	if (!chmodDialog.Create(this, 0, 1, name, chmod)) {
 		return;
 	}
 
-	if (chmodDialog->ShowModal() != wxID_OK) {
+	if (chmodDialog.ShowModal() != wxID_OK) {
 		return;
 	}
 
@@ -1002,37 +1007,38 @@ void CRemoteTreeView::OnMenuChmod(wxCommandEvent&)
 		return;
 	}
 
-	int const applyType = chmodData->GetApplyType();
+	ChmodData chmodData = chmodDialog.GetChmodData();
 
 	recursion_root root(hasParent ? path.GetParent() : path, !cached);
 	if (cached) { // Implies hasParent
 		// Change directory permissions
-		if (!applyType || applyType == 2) {
-			std::wstring const newPerms = chmodData->GetPermissions(permissions, true);
-
+		if (chmodData.apply_dirs_) {
+			if (!chmod) {
+				chmod.perms_ = posix_permissions::all_read | posix_permissions::all_execute | posix_permissions::user_write;
+			}
+			std::wstring const newPerms = fz::to_wstring_from_utf8(to_octal(chmodData.Apply(chmod.perms_), true));
 			m_state.m_pCommandQueue->ProcessCommand(new CChmodCommand(path.GetParent(), name, newPerms));
 		}
 
-		if (chmodDialog->Recursive()) {
+		if (chmodData.recurse_) {
 			// Start recursion
 			root.add_dir_to_visit(path, std::wstring(), CLocalPath());
 		}
 	}
 	else {
 		if (hasParent) {
-			root.add_dir_to_visit_restricted(path.GetParent(), name, chmodDialog->Recursive());
+			root.add_dir_to_visit_restricted(path.GetParent(), name, chmodData.recurse_);
 		}
 		else {
-			root.add_dir_to_visit_restricted(path, std::wstring(), chmodDialog->Recursive());
+			root.add_dir_to_visit_restricted(path, std::wstring(), chmodData.recurse_);
 		}
 	}
 
-	if (!cached || chmodDialog->Recursive()) {
+	if (!cached || chmodData.recurse_) {
 		CRemoteRecursiveOperation* pRecursiveOperation = m_state.GetRemoteRecursiveOperation();
 		pRecursiveOperation->AddRecursionRoot(std::move(root));
 
-		chmodDialog.reset();
-		pRecursiveOperation->SetChmodData(std::move(chmodData));
+		pRecursiveOperation->SetChmodData(chmodData);
 
 		CFilterManager filter;
 		pRecursiveOperation->StartRecursiveOperation(recursive_operation::recursive_chmod, filter.GetActiveFilters());

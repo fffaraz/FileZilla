@@ -4,11 +4,12 @@ lib_LTLIBRARIES = libfzclient-commonui-private.la
 
 libfzclient_commonui_private_la_CPPFLAGS = -I$(top_builddir)/config
 libfzclient_commonui_private_la_CPPFLAGS += $(LIBFILEZILLA_CFLAGS)
+libfzclient_commonui_private_la_CPPFLAGS += $(LIBFZSSH_CFLAGS)
 libfzclient_commonui_private_la_CPPFLAGS += -DBUILDING_FZ_COMMONUI
 
 libfzclient_commonui_private_la_CXXFLAGS = -fvisibility=hidden
 libfzclient_commonui_private_la_LDFLAGS = -no-undefined -release $(PACKAGE_VERSION_MAJOR).$(PACKAGE_VERSION_MINOR).$(PACKAGE_VERSION_MICRO)
-libfzclient_commonui_private_la_LDFLAGS += ../engine/libfzclient-private.la $(LIBFILEZILLA_LIBS) $(PUGIXML_LIBS)
+libfzclient_commonui_private_la_LDFLAGS += ../engine/libfzclient-private.la $(LIBFILEZILLA_LIBS) $(PUGIXML_LIBS) $(LIBFZSSH_LIBS)
 
 libfzclient_commonui_private_la_DEPENDENCIES = ../engine/libfzclient-private.la
 
@@ -20,6 +21,7 @@ libfzclient_commonui_private_la_SOURCES = \
 	file_utils.cpp \
 	filter.cpp \
 	fz_paths.cpp \
+	hostkey_store.cpp \
 	ipcmutex.cpp \
 	local_recursive_operation.cpp \
 	login_manager.cpp \
@@ -43,6 +45,7 @@ noinst_HEADERS = \
 	file_utils.h \
 	filter.h \
 	fz_paths.h \
+	hostkey_store.h \
 	ipcmutex.h \
 	local_recursive_operation.h \
 	login_manager.h \

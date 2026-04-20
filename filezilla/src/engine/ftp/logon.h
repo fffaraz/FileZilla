@@ -52,7 +52,7 @@ public:
 
 	void ParseFeat(std::wstring line);
 
-	std::wstring challenge; // Used for interactive logons
+	std::wstring challenge_; // Used for interactive logons
 
 	enum challengeMode {
 		none,

@@ -1,4 +1,4 @@
-AC_INIT([FileZilla],[3.69.6], [tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
+AC_INIT([FileZilla],[3.70.4],[tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
 
 ENGINE_VERSION="$PACKAGE_VERSION"
 
@@ -188,11 +188,19 @@ if test "$buildmain" = "yes"; then
 
   # Find libfilezilla
   # -----------------
-  PKG_CHECK_MODULES(LIBFILEZILLA, [libfilezilla >= 0.51.1],, [
+  PKG_CHECK_MODULES(LIBFILEZILLA, [libfilezilla >= 0.55.0],, [
 	AC_MSG_ERROR([libfilezilla not found: $LIBFILEZILLA_PKG_ERRORS. You can download it from https://lib.filezilla-project.org/])
   ])
   AC_SUBST(LIBFILEZILLA_CFLAGS)
   AC_SUBST(LIBFILEZILLA_LIBS)
+
+  # Find fzssh
+  # -----------------
+  PKG_CHECK_MODULES(LIBFZSSH, [libfzssh-client >= 1.1.9],, [
+	AC_MSG_ERROR([libfzssh-client not found: $LIBFZSSH_PKG_ERRORS. You can download it from https://fzssh.filezilla-project.org/])
+  ])
+  AC_SUBST(LIBFZSSH_CFLAGS)
+  AC_SUBST(LIBFZSSH_LIBS)
 
   # Detect wxWidgets
   # ----------------
@@ -274,44 +282,6 @@ if test "$buildmain" = "yes"; then
 
     AC_CACHE_SAVE
   fi
-
-  # Checks for PuTTY
-  # ----------------
-
-  AC_CHECK_HEADERS([utmpx.h sys/select.h],,,[
-  #include <sys/types.h>
-  #include <utmp.h>])
-
-  AC_SEARCH_LIBS([socket], [xnet])
-  AC_SEARCH_LIBS([getaddrinfo], [xnet])
-  AC_SEARCH_LIBS([in6addr_loopback], [socket])
-
-  AC_CHECK_FUNCS([getaddrinfo ptsname setresuid strsignal updwtmpx])
-  AC_CHECK_FUNCS([gettimeofday ftime])
-  AC_CHECK_FUNCS([in6addr_loopback in6addr_any])
-  AC_CHECK_DECLS([CLOCK_MONOTONIC], [], [], [[#include <time.h>]])
-
-  AC_CACHE_CHECK([for SO_PEERCRED and dependencies], [x_cv_linux_so_peercred], [
-      AC_COMPILE_IFELSE([
-          AC_LANG_PROGRAM([[
-              #define _GNU_SOURCE
-              #include <features.h>
-              #include <sys/socket.h>
-            ]],[[
-              struct ucred cr;
-              socklen_t crlen = sizeof(cr);
-              return getsockopt(0, SOL_SOCKET, SO_PEERCRED, &cr, &crlen) +
-              cr.pid + cr.uid + cr.gid;
-            ]]
-          )],
-          AS_VAR_SET(x_cv_linux_so_peercred, yes),
-          AS_VAR_SET(x_cv_linux_so_peercred, no)
-      )
-  ])
-  AS_IF([test AS_VAR_GET(x_cv_linux_so_peercred) = yes],
-      [AC_DEFINE([HAVE_SO_PEERCRED], [1],
-       [Define if SO_PEERCRED works in the Linux fashion.])]
-  )
 
   if test "$windows" = "1"; then
     FZ_CHECK_ICOPYHOOKW
@@ -567,23 +537,6 @@ if test "$buildmain" = "yes"; then
   fi
   AC_DEFINE_UNQUOTED(FZ_AUTOUPDATECHECK, $autoupdatecheck, [Set to 1 to add support for automated update checks])
 
-  # Nettle
-  # ------
-
-  PKG_CHECK_MODULES([NETTLE], [nettle >= 3.1],, [
-    AC_MSG_ERROR([nettle 3.1 greater was not found. You can get it from https://www.lysator.liu.se/~nisse/nettle/])
-  ])
-
-  AC_SUBST(NETTLE_LIBS)
-  AC_SUBST(NETTLE_CFLAGS)
-
-  PKG_CHECK_MODULES([HOGWEED], [hogweed >= 3.1],, [
-    AC_MSG_ERROR([hogweed 3.1 greater was not found. You can get it from https://www.lysator.liu.se/~nisse/nettle/])
-  ])
-
-  AC_SUBST(HOGWEED_LIBS)
-  AC_SUBST(HOGWEED_CFLAGS)
-
   # pugixml
   # ------
 
@@ -833,7 +786,6 @@ src/interface/resources/minimal/Makefile
 src/interface/resources/opencrystal/Makefile
 src/interface/resources/sun/Makefile
 src/interface/resources/tango/Makefile
-src/putty/Makefile
 src/storj/Makefile
 tests/Makefile
 src/interface/resources/version.rc

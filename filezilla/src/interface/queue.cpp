@@ -7,6 +7,8 @@
 #include "timeformatting.h"
 #include "themeprovider.h"
 
+#include "../commonui/login_manager.h"
+
 #include "../include/sizeformatting.h"
 
 #include <wx/filedlg.h>
@@ -757,10 +759,10 @@ void CServerItem::QueueImmediateFile(CFileItem* pItem)
 	wxASSERT(false);
 }
 
-void CServerItem::SaveItem(pugi::xml_node& element) const
+void CServerItem::Save(pugi::xml_node& element, COptionsBase & options, login_manager & lim) const
 {
 	auto server_node = element.append_child("Server");
-	SetServer(server_node, site_);
+	SetServer(server_node, site_, lim, options);
 
 	for (auto iter = m_children.cbegin() + m_removed_at_front; iter != m_children.cend(); ++iter) {
 		(*iter)->SaveItem(server_node);
@@ -904,9 +906,11 @@ namespace {
 #endif
 }
 
-CQueueViewBase::CQueueViewBase(CQueue* parent, COptionsBase & options, int index, const wxString& title)
+CQueueViewBase::CQueueViewBase(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, const wxString& title)
 	: wxListCtrlEx(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxCLIP_CHILDREN | wxLC_REPORT | wxLC_VIRTUAL | border | wxTAB_TRAVERSAL)
 	, options_(options)
+	, time_formatter_(time_formatter)
+	, login_manager_(lim)
 	, m_pageIndex(index)
 	, m_title(title)
 {
@@ -1058,7 +1062,7 @@ wxString CQueueViewBase::OnGetItemText(CQueueItem* pItem, ColumnId column) const
 			case colErrorReason:
 				return pFileItem->GetStatusMessage();
 			case colTime:
-				return CTimeFormat::FormatDateTime(pItem->GetTime());
+				return time_formatter_.FormatDateTime(pItem->GetTime());
 			default:
 				break;
 			}
@@ -1120,7 +1124,7 @@ wxString CQueueViewBase::OnGetItemText(CQueueItem* pItem, ColumnId column) const
 			case colErrorReason:
 				return pFolderItem->GetStatusMessage();
 			case colTime:
-				return CTimeFormat::FormatDateTime(pItem->GetTime());
+				return time_formatter_.FormatDateTime(pItem->GetTime());
 			default:
 				break;
 			}
@@ -1345,7 +1349,7 @@ void CQueueViewBase::CreateColumns(std::vector<ColumnId> const& extraColumns)
 		AddQueueColumn(id);
 	}
 
-	LoadColumnSettings(OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
+	LoadColumnSettings(options_, OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
 }
 
 CServerItem* CQueueViewBase::GetServerItem(Site const& site)
@@ -1607,7 +1611,7 @@ void CQueueViewBase::WriteToFile(pugi::xml_node element) const
 	}
 
 	for (std::vector<CServerItem*>::const_iterator iter = m_serverList.begin(); iter != m_serverList.end(); ++iter) {
-		(*iter)->SaveItem(queue);
+		(*iter)->Save(queue, options_, login_manager_);
 	}
 }
 
@@ -1634,17 +1638,17 @@ void CQueueViewBase::OnExport(wxCommandEvent&)
 // CQueue
 // ------
 
-CQueue::CQueue(wxWindow* parent, CMainFrame *pMainFrame, CAsyncRequestQueue *pAsyncRequestQueue, cert_store & certStore)
+CQueue::CQueue(wxWindow* parent, CMainFrame *pMainFrame, CAsyncRequestQueue *pAsyncRequestQueue, login_manager & lim, cert_store & certStore)
 {
 	Create(parent, -1, wxDefaultPosition, wxDefaultSize, wxNO_BORDER | wxAUI_NB_BOTTOM);
 	SetExArtProvider();
 
-	m_pQueueView = new CQueueView(this, 0, pMainFrame, pAsyncRequestQueue, certStore);
-	AddPage(m_pQueueView, m_pQueueView->GetTitle());
+	m_pQueueView = new CQueueView(this, pMainFrame->GetOptions(), pMainFrame->GetTimeFormatter(), lim, 0, pMainFrame, pAsyncRequestQueue, certStore);
+	m_pQueueView_Failed = new CQueueViewFailed(this, pMainFrame->GetOptions(), pMainFrame->GetTimeFormatter(), lim, 1, pMainFrame);
+	m_pQueueView_Successful = new CQueueViewSuccessful(this, pMainFrame->GetOptions(), pMainFrame->GetTimeFormatter(), lim, 2, pMainFrame);
 
-	m_pQueueView_Failed = new CQueueViewFailed(this, pMainFrame->GetOptions(), 1, pMainFrame);
+	AddPage(m_pQueueView, m_pQueueView->GetTitle());
 	AddPage(m_pQueueView_Failed, m_pQueueView_Failed->GetTitle());
-	m_pQueueView_Successful = new CQueueViewSuccessful(this, pMainFrame->GetOptions(), 2, pMainFrame);
 	AddPage(m_pQueueView_Successful, m_pQueueView_Successful->GetTitle());
 
 	RemoveExtraBorders();

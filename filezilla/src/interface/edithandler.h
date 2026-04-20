@@ -2,7 +2,8 @@
 #define FILEZILLA_INTERFACE_EDITHANDLER_HEADER
 
 #include "dialogex.h"
-#include "serverdata.h"
+
+#include "../commonui/site.h"
 
 #include <wx/timer.h>
 

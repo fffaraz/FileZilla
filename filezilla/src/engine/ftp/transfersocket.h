@@ -103,7 +103,7 @@ protected:
 	std::unique_ptr<fz::socket> socket_;
 	std::unique_ptr<activity_logger_layer> activity_logger_layer_;
 	std::unique_ptr<fz::rate_limited_layer> ratelimit_layer_;
-	std::unique_ptr<CProxySocket> proxy_layer_;
+	std::unique_ptr<ProxyBase> proxy_layer_;
 	std::unique_ptr<fz::tls_layer> tls_layer_;
 #if HAVE_ASCII_TRANSFORM
 	std::unique_ptr<fz::ascii_layer> ascii_layer_;

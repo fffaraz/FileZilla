@@ -176,6 +176,7 @@ am_libfzclient_commonui_private_la_OBJECTS =  \
 	libfzclient_commonui_private_la-file_utils.lo \
 	libfzclient_commonui_private_la-filter.lo \
 	libfzclient_commonui_private_la-fz_paths.lo \
+	libfzclient_commonui_private_la-hostkey_store.lo \
 	libfzclient_commonui_private_la-ipcmutex.lo \
 	libfzclient_commonui_private_la-local_recursive_operation.lo \
 	libfzclient_commonui_private_la-login_manager.lo \
@@ -218,6 +219,7 @@ am__depfiles_remade = ./$(DEPDIR)/libfzclient_commonui_private_la-auto_ascii_fil
 	./$(DEPDIR)/libfzclient_commonui_private_la-file_utils.Plo \
 	./$(DEPDIR)/libfzclient_commonui_private_la-filter.Plo \
 	./$(DEPDIR)/libfzclient_commonui_private_la-fz_paths.Plo \
+	./$(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Plo \
 	./$(DEPDIR)/libfzclient_commonui_private_la-ipcmutex.Plo \
 	./$(DEPDIR)/libfzclient_commonui_private_la-local_recursive_operation.Plo \
 	./$(DEPDIR)/libfzclient_commonui_private_la-login_manager.Plo \
@@ -365,8 +367,6 @@ FILEZILLA_LINGUAS_PO = @FILEZILLA_LINGUAS_PO@
 FILEZILLA_LINGUAS_PO_NEW = @FILEZILLA_LINGUAS_PO_NEW@
 GREP = @GREP@
 HAVE_CXX17 = @HAVE_CXX17@
-HOGWEED_CFLAGS = @HOGWEED_CFLAGS@
-HOGWEED_LIBS = @HOGWEED_LIBS@
 IDN_LIB = @IDN_LIB@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -379,6 +379,8 @@ LIBDBUS_CFLAGS = @LIBDBUS_CFLAGS@
 LIBDBUS_LIBS = @LIBDBUS_LIBS@
 LIBFILEZILLA_CFLAGS = @LIBFILEZILLA_CFLAGS@
 LIBFILEZILLA_LIBS = @LIBFILEZILLA_LIBS@
+LIBFZSSH_CFLAGS = @LIBFZSSH_CFLAGS@
+LIBFZSSH_LIBS = @LIBFZSSH_LIBS@
 LIBGTK_CFLAGS = @LIBGTK_CFLAGS@
 LIBGTK_LIBS = @LIBGTK_LIBS@
 LIBOBJS = @LIBOBJS@
@@ -395,8 +397,6 @@ LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MKDIR_P = @MKDIR_P@
-NETTLE_CFLAGS = @NETTLE_CFLAGS@
-NETTLE_LIBS = @NETTLE_LIBS@
 NM = @NM@
 NMEDIT = @NMEDIT@
 NSIS_64BIT = @NSIS_64BIT@
@@ -510,12 +510,13 @@ xgettext = @xgettext@
 AUTOMAKE_OPTIONS = subdir-objects
 lib_LTLIBRARIES = libfzclient-commonui-private.la
 libfzclient_commonui_private_la_CPPFLAGS = -I$(top_builddir)/config \
-	$(LIBFILEZILLA_CFLAGS) -DBUILDING_FZ_COMMONUI
+	$(LIBFILEZILLA_CFLAGS) $(LIBFZSSH_CFLAGS) \
+	-DBUILDING_FZ_COMMONUI
 libfzclient_commonui_private_la_CXXFLAGS = -fvisibility=hidden
 libfzclient_commonui_private_la_LDFLAGS = -no-undefined -release \
 	$(PACKAGE_VERSION_MAJOR).$(PACKAGE_VERSION_MINOR).$(PACKAGE_VERSION_MICRO) \
 	../engine/libfzclient-private.la $(LIBFILEZILLA_LIBS) \
-	$(PUGIXML_LIBS) $(am__append_1)
+	$(PUGIXML_LIBS) $(LIBFZSSH_LIBS) $(am__append_1)
 libfzclient_commonui_private_la_DEPENDENCIES =  \
 	../engine/libfzclient-private.la $(am__append_2)
 libfzclient_commonui_private_la_SOURCES = \
@@ -526,6 +527,7 @@ libfzclient_commonui_private_la_SOURCES = \
 	file_utils.cpp \
 	filter.cpp \
 	fz_paths.cpp \
+	hostkey_store.cpp \
 	ipcmutex.cpp \
 	local_recursive_operation.cpp \
 	login_manager.cpp \
@@ -549,6 +551,7 @@ noinst_HEADERS = \
 	file_utils.h \
 	filter.h \
 	fz_paths.h \
+	hostkey_store.h \
 	ipcmutex.h \
 	local_recursive_operation.h \
 	login_manager.h \
@@ -674,6 +677,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-file_utils.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-filter.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-fz_paths.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-ipcmutex.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-local_recursive_operation.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_commonui_private_la-login_manager.Plo@am__quote@ # am--include-marker
@@ -768,6 +772,13 @@ libfzclient_commonui_private_la-fz_paths.lo: fz_paths.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='fz_paths.cpp' object='libfzclient_commonui_private_la-fz_paths.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_commonui_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_commonui_private_la_CXXFLAGS) $(CXXFLAGS) -c -o libfzclient_commonui_private_la-fz_paths.lo `test -f 'fz_paths.cpp' || echo '$(srcdir)/'`fz_paths.cpp
+
+libfzclient_commonui_private_la-hostkey_store.lo: hostkey_store.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_commonui_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_commonui_private_la_CXXFLAGS) $(CXXFLAGS) -MT libfzclient_commonui_private_la-hostkey_store.lo -MD -MP -MF $(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Tpo -c -o libfzclient_commonui_private_la-hostkey_store.lo `test -f 'hostkey_store.cpp' || echo '$(srcdir)/'`hostkey_store.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Tpo $(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hostkey_store.cpp' object='libfzclient_commonui_private_la-hostkey_store.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_commonui_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_commonui_private_la_CXXFLAGS) $(CXXFLAGS) -c -o libfzclient_commonui_private_la-hostkey_store.lo `test -f 'hostkey_store.cpp' || echo '$(srcdir)/'`hostkey_store.cpp
 
 libfzclient_commonui_private_la-ipcmutex.lo: ipcmutex.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_commonui_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_commonui_private_la_CXXFLAGS) $(CXXFLAGS) -MT libfzclient_commonui_private_la-ipcmutex.lo -MD -MP -MF $(DEPDIR)/libfzclient_commonui_private_la-ipcmutex.Tpo -c -o libfzclient_commonui_private_la-ipcmutex.lo `test -f 'ipcmutex.cpp' || echo '$(srcdir)/'`ipcmutex.cpp
@@ -1038,6 +1049,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-file_utils.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-filter.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-fz_paths.Plo
+	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-ipcmutex.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-local_recursive_operation.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-login_manager.Plo
@@ -1105,6 +1117,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-file_utils.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-filter.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-fz_paths.Plo
+	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-hostkey_store.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-ipcmutex.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-local_recursive_operation.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_commonui_private_la-login_manager.Plo

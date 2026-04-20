@@ -2,12 +2,13 @@
 
 #include <algorithm>
 
+#include "../include/notification.h"
 
-std::list<login_manager::t_passwordcache>::iterator login_manager::FindItem(CServer const& server, std::wstring const& challenge)
+std::list<login_manager::t_passwordcache>::iterator login_manager::FindItem(CServer const& server)
 {
 	return std::find_if(m_passwordCache.begin(), m_passwordCache.end(), [&](t_passwordcache const& item)
 		{
-			return item.host == server.GetHost() && item.port == server.GetPort() && item.user == server.GetUser() && item.challenge == challenge;
+			return item.host == server.GetHost() && item.port == server.GetPort() && item.user == server.GetUser();
 		}
 	);
 }
@@ -31,52 +32,57 @@ bool login_manager::GetPassword(Site & site, bool silent)
 		}
 	}
 	else {
-		auto it = FindItem(site.server, std::wstring());
+		auto it = FindItem(site.server);
 		if (it != m_passwordCache.end()) {
 			site.credentials.SetPass(it->password);
 			return true;
 		}
 
 		if (!silent) {
-			return query_credentials(site, std::wstring(), false, true);
+			return query_credentials(site, true);
 		}
 	}
 
 	return false;
 }
 
-
-bool login_manager::GetPassword(Site & site, bool silent, std::wstring const& challenge, bool otp, bool canRemember)
+bool login_manager::GetPassword(PasswordRequest & req, bool silent)
 {
-	if (canRemember) {
-		auto it = FindItem(site.server, challenge);
-		if (it != m_passwordCache.end()) {
-			site.credentials.SetPass(it->password);
-			return true;
-		}
+	auto it = FindItem(req.server_);
+	if (it != m_passwordCache.end()) {
+		req.password_ = it->password;
+		return true;
 	}
+
 	if (silent) {
 		return false;
 	}
 
-	return query_credentials(site, challenge, otp, canRemember);
+	Site site(req.server_, req.handle_, Credentials());
+	site.credentials.logonType_ = LogonType::ask;
+	if (query_credentials(site, req.canRemember_)) {
+		req.password_ = site.credentials.GetPass();
+		return true;
+	}
+
+	return false;
 }
 
-void login_manager::CachedPasswordFailed(CServer const& server, std::wstring const& challenge)
+void login_manager::CachedPasswordFailed(CServer const& server)
 {
-	auto it = FindItem(server, challenge);
+	auto it = FindItem(server);
 	if (it != m_passwordCache.end()) {
 		m_passwordCache.erase(it);
 	}
 }
 
-void login_manager::RememberPassword(Site & site, std::wstring const& challenge)
+void login_manager::RememberPassword(Site & site)
 {
 	if (site.credentials.logonType_ == LogonType::anonymous) {
 		return;
 	}
 
-	auto it = FindItem(site.server, challenge);
+	auto it = FindItem(site.server);
 	if (it != m_passwordCache.end()) {
 		it->password = site.credentials.GetPass();
 	}
@@ -86,7 +92,6 @@ void login_manager::RememberPassword(Site & site, std::wstring const& challenge)
 		entry.port = site.server.GetPort();
 		entry.user = site.server.GetUser();
 		entry.password = site.credentials.GetPass();
-		entry.challenge = challenge;
 		m_passwordCache.push_back(entry);
 	}
 }
@@ -134,3 +139,31 @@ void login_manager::RememberAsForgotten(fz::public_key const& pub_key)
 		decryptors_.emplace(std::make_pair(pub_key, fz::private_key()));
 	}
 }
+
+std::optional<std::string> keyfile_password_manager::get_password(Site const& site, std::string const& file, std::string const& fingerprint, std::string const& comment, bool silent)
+{
+	if (!file.empty() || !fingerprint.empty()) {
+		auto it = passwords_.find(entry{file, fingerprint});
+		if (it != passwords_.end()) {
+			return it->second;
+		}
+	}
+
+	if (silent) {
+		return {};
+	}
+
+	bool remember{};
+	auto pw = query_password(site, file, fingerprint, comment, remember);
+	if (pw && remember && (!file.empty() || !fingerprint.empty())) {
+		passwords_[entry{file, fingerprint}] = *pw;
+	}
+
+	return pw;
+}
+
+void keyfile_password_manager::clear_password(std::string const& file, std::string const& fingerprint)
+{
+	passwords_.erase(entry{file, fingerprint});
+}
+

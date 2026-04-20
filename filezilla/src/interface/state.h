@@ -8,6 +8,7 @@
 #include "../include/local_path.h"
 
 #include <memory>
+#include <optional>
 
 enum t_statechange_notifications
 {
@@ -198,10 +199,11 @@ public:
 	void SetLastSite(Site const& server, CServerPath const& path)
 		{ m_last_site = server; m_last_path = path; }
 
-	bool GetSecurityInfo(CCertificateNotification *& pInfo);
-	bool GetSecurityInfo(CSftpEncryptionNotification *& pInfo);
-	void SetSecurityInfo(CCertificateNotification const& info);
-	void SetSecurityInfo(CSftpEncryptionNotification const& info);
+	std::optional<fz::tls_session_info> const& GetTlsSessionInfo() const;
+	void SetTlsSessionInfo(fz::tls_session_info const& info);
+
+	std::optional<std::pair<fz::ssh::algorithm_info, std::string>> GetSshSessionInfo();
+	void SetSshSessionInfo(fz::ssh::algorithm_info const& algs, std::string const& fingerprint);
 
 	// If the previously selected directory was a direct child of the current directory, this
 	// returns the relative name of the subdirectory.
@@ -273,8 +275,8 @@ protected:
 		bool syncbrowse{};
 	} m_changeDirFlags;
 
-	std::unique_ptr<CCertificateNotification> m_pCertificate;
-	std::unique_ptr<CSftpEncryptionNotification> m_pSftpEncryptionInfo;
+	std::optional<fz::tls_session_info> tls_session_info_;
+	std::optional<std::pair<fz::ssh::algorithm_info, std::string>> ssh_session_info_;
 
 	std::wstring m_previouslyVisitedLocalSubdir;
 	std::wstring m_previouslyVisitedRemoteSubdir;

@@ -7,22 +7,30 @@
 #include "../state.h"
 #include "../textctrlex.h"
 
+#include "../../commonui/protect.h"
+
 #include <libfilezilla/util.hpp>
 
 #include <wx/statbox.h>
 
 struct COptionsPagePasswords::impl final
 {
+	impl(login_manager & lim)
+		: login_manager_(lim)
+	{}
+
 	wxRadioButton* save_{};
 	wxRadioButton* nosave_{};
 	wxRadioButton* usemaster_{};
 
 	wxTextCtrlEx* masterpw_{};
 	wxTextCtrlEx* masterrepeat_{};
+
+	login_manager& login_manager_;
 };
 
-COptionsPagePasswords::COptionsPagePasswords()
-	: impl_(std::make_unique<impl>())
+COptionsPagePasswords::COptionsPagePasswords(login_manager & lim)
+	: impl_(std::make_unique<impl>(lim))
 {
 }
 
@@ -135,7 +143,7 @@ bool COptionsPagePasswords::SavePage()
 
 	// Something is being changed
 
-	CLoginManager loginManager;
+	CLoginManager loginManager; // Intentially use a separate instance
 	if (oldPub && !forget) {
 		if (!loginManager.AskDecryptor(oldPub, true, true)) {
 			return true;
@@ -166,9 +174,9 @@ bool COptionsPagePasswords::SavePage()
 				loginManager.AskDecryptor(site.credentials.encrypted_, true, false);
 				unprotect(site.credentials, loginManager.GetDecryptor(site.credentials.encrypted_), true);
 			}
-			protect(site.credentials);
+			protect(site.credentials, impl_->login_manager_, *m_pOptions);
 		}
-		CRecentServerList::SetMostRecentServers(recentServers, *m_pOptions);
+		CRecentServerList::SetMostRecentServers(recentServers, impl_->login_manager_, *m_pOptions);
 	}
 
 	for (auto state : *CContextManager::Get()->GetAllStates()) {
@@ -178,7 +186,7 @@ bool COptionsPagePasswords::SavePage()
 			loginManager.AskDecryptor(site.credentials.encrypted_, true, false);
 			unprotect(site.credentials, loginManager.GetDecryptor(site.credentials.encrypted_), true);
 		}
-		protect(site.credentials);
+		protect(site.credentials, impl_->login_manager_, *m_pOptions);
 		state->SetLastSite(site, path);
 	}
 

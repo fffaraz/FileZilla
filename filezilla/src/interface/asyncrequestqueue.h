@@ -8,13 +8,16 @@
 #include <list>
 
 class cert_store;
+class HostkeyStore;
 class COptionsBase;
 class CQueueView;
+class KeyfilePasswordManager;
+class TimeFormatter;
 
 class CAsyncRequestQueue final : public wxEvtHandler, protected CGlobalStateEventHandler
 {
 public:
-	CAsyncRequestQueue(wxTopLevelWindow * parent, COptionsBase & options, cert_store & certStore);
+	CAsyncRequestQueue(wxTopLevelWindow * parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, cert_store & certStore, KeyfilePasswordManager & keyfilePasswordManager, HostkeyStore & hostkeyStore);
 	~CAsyncRequestQueue();
 
 	bool AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> && pNotification);
@@ -36,7 +39,11 @@ protected:
 	CQueueView *m_pQueueView{};
 
 	COptionsBase & options_;
+	TimeFormatter & time_formatter_;
+	login_manager & login_manager_;
 	cert_store & certStore_;
+	KeyfilePasswordManager & keyfilePasswordManager_;
+	HostkeyStore & hostkeyStore_;
 
 	bool ProcessNextRequest();
 	bool ProcessDefaults(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> & pNotification);
@@ -49,6 +56,11 @@ protected:
 		{
 		}
 
+		bool IsPending() const
+		{
+			return pEngine && pNotification && pNotification->IsPending();
+		}
+
 		CFileZillaEngine *pEngine{};
 		std::unique_ptr<CAsyncRequestNotification> pNotification;
 	};
@@ -56,7 +68,7 @@ protected:
 
 	bool ProcessFileExistsNotification(t_queueEntry &entry);
 
-	bool SendReply(t_queueEntry & entry);
+	void SendReply(t_queueEntry & entry);
 
 	DECLARE_EVENT_TABLE()
 	void OnProcessQueue(wxCommandEvent &event);

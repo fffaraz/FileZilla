@@ -1,12 +1,16 @@
 #include "options.h"
 
 #include "fz_paths.h"
+#include "hostkey_store.h"
 #include "ipcmutex.h"
 #include "xml_file.h"
+
+#include "../include/version.h"
 
 #include <libfilezilla/local_filesys.hpp>
 #include <libfilezilla/translate.hpp>
 #include <libfilezilla/util.hpp>
+
 
 #ifdef FZ_WINDOWS
 #include <shlobj.h>
@@ -79,7 +83,7 @@ bool XmlOptions::Load(std::wstring & error)
 
 	CLocalPath const dir = InitSettingsDir();
 
-	CInterProcessMutex mutex(MUTEX_OPTIONS);
+	CReentrantInterProcessMutexLocker mutex(MUTEX_OPTIONS);
 	xmlFile_ = std::make_unique<CXmlFile>(dir.GetPath() + L"filezilla.xml");
 	if (!xmlFile_->Load()) {
 		error = xmlFile_->GetError();
@@ -87,6 +91,13 @@ bool XmlOptions::Load(std::wstring & error)
 	else {
 		auto settings = CreateSettingsXmlElement();
 		Load(settings, false, false);
+		int64_t version = xmlFile_->GetVersion();
+		if (version > 0) {
+			if (RunMigrations(version)) {
+				std::wstring tmp;
+				Save(false, tmp);
+			}
+		}
 		ret = true;
 	}
 
@@ -253,7 +264,7 @@ bool XmlOptions::Save(bool processChanged, std::wstring & error)
 		return false;
 	}
 
-	CInterProcessMutex mutex(MUTEX_OPTIONS);
+	CReentrantInterProcessMutexLocker mutex(MUTEX_OPTIONS);
 	bool ret = xmlFile_->Save(true);
 	error = xmlFile_->GetError();
 	return ret;
@@ -423,4 +434,17 @@ void XmlOptions::set_dirty()
 {
 	dirty_ = true;
 	on_dirty();
+}
+
+bool XmlOptions::RunMigrations(int64_t old_version)
+{
+	bool made_changes{};
+	if (old_version < ConvertToVersionNumber(L"3.70.0-beta1")) {
+		if (fz::local_filesys::get_file_type(fz::to_native(get_string(OPTION_DEFAULT_SETTINGSDIR) + L"hostkeys.xml"), true) == fz::local_filesys::unknown) {
+			ImportPuttyHostkeys(*this);
+			made_changes = true;
+		}
+	}
+
+	return made_changes;
 }

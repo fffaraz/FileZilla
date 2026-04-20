@@ -9,6 +9,8 @@
 
 #include <libfilezilla/uri.hpp>
 
+#include "../commonui/protect.h"
+
 #define INVALID_DATA -1
 
 enum class Column_type
@@ -133,8 +135,9 @@ _column path_table_columns[] = {
 class CQueueStorage::Impl final
 {
 public:
-	Impl(COptionsBase & options)
+	Impl(COptionsBase & options, login_manager & lim)
 		: options_(options)
+		, login_manager_(lim)
 	{}
 
 	void CreateTables();
@@ -205,6 +208,7 @@ public:
 	std::map<int64_t, CServerPath> reverseRemotePaths_;
 
 	COptionsBase & options_;
+	login_manager & login_manager_;
 };
 
 
@@ -678,7 +682,7 @@ bool CQueueStorage::Impl::SaveServer(CServerItem const& item)
 	Bind(insertServerQuery_, server_table_column_names::type, static_cast<int>(site.server.GetType()));
 
 	ProtectedCredentials credentials = site.credentials;
-	protect(credentials);
+	protect(credentials, login_manager_, options_);
 
 	LogonType logonType = credentials.logonType_;
 	if (logonType != LogonType::anonymous) {
@@ -754,9 +758,6 @@ bool CQueueStorage::Impl::SaveServer(CServerItem const& item)
 	switch (site.server.GetEncodingType())
 	{
 	default:
-	case ENCODING_AUTO:
-		Bind(insertServerQuery_, server_table_column_names::encoding, _T("Auto"));
-		break;
 	case ENCODING_UTF8:
 		Bind(insertServerQuery_, server_table_column_names::encoding, _T("UTF-8"));
 		break;
@@ -1114,10 +1115,7 @@ int64_t CQueueStorage::Impl::ParseServerFromRow(Site & site)
 	site.connection_limit_ = static_cast<unsigned int>(maximumMultipleConnections);
 
 	std::wstring encodingType = GetColumnText(selectServersQuery_, server_table_column_names::encoding);
-	if (encodingType.empty() || encodingType == _T("Auto")) {
-		site.server.SetEncodingType(ENCODING_AUTO);
-	}
-	else if (encodingType == _T("UTF-8")) {
+	if (encodingType.empty() || encodingType == L"Auto" || encodingType == L"UTF-8") {
 		site.server.SetEncodingType(ENCODING_UTF8);
 	}
 	else {
@@ -1250,8 +1248,8 @@ void CQueueStorage::Impl::Close()
 	db_ = 0;
 }
 
-CQueueStorage::CQueueStorage(COptionsBase& options)
-: d_(new Impl(options))
+CQueueStorage::CQueueStorage(COptionsBase& options, login_manager & lim)
+: d_(new Impl(options, lim))
 {
 	int ret = sqlite3_open(fz::to_utf8(GetDatabaseFilename()).c_str(), &d_->db_ );
 	if (ret != SQLITE_OK) {

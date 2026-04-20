@@ -22,7 +22,7 @@ enum commonOptions : unsigned int {
 
 	OPTION_COMPARISON_THRESHOLD,
 
-	OPTION_REMOTE_ROP_LISTING_REFFRESH,
+	OPTION_REMOTE_ROP_LISTING_REFRESH,
 
 	OPTIONS_COMMON_NUM
 };
@@ -48,6 +48,8 @@ public:
 
 protected:
 	std::unique_ptr<CXmlFile> xmlFile_;
+
+	virtual bool RunMigrations(int64_t old_version);
 
 private:
 

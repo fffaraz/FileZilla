@@ -9,7 +9,7 @@ public:
 	CStorjFileTransferOpData(CStorjControlSocket & controlSocket, CFileTransferCommand const& cmd)
 		: CFileTransferOpData(L"CStorjFileTransferOpData", cmd)
 		, CStorjOpData(controlSocket)
-		, fz::event_handler(controlSocket.event_loop_)
+		, fz::event_handler(controlSocket, fz::child_event_handler)
 	{
 	}
 

@@ -100,7 +100,6 @@ static unsigned int register_interface_options()
 		{ "Edit track local", true, option_flags::normal },
 		{ "Prevent idle sleep", true, option_flags::normal },
 		{ "Filteredit window size", L"", option_flags::normal },
-		{ "Enable invalid char filter", true, option_flags::normal },
 		{ "Invalid char replace", L"_", option_flags::normal, option_type::string, 1, [](std::wstring& v) {
 			return v.size() == 1 && !IsInvalidChar(v[0], true);
 		}},

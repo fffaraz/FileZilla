@@ -246,8 +246,9 @@ protected:
 	CSiteManagerDialog* m_pSiteManager;
 };
 
-CSiteManagerDialog::CSiteManagerDialog(COptionsBase & options)
+CSiteManagerDialog::CSiteManagerDialog(COptionsBase & options, login_manager & lim)
 	: options_(options)
+	, login_manager_(lim)
 {
 }
 
@@ -850,7 +851,7 @@ bool CSiteManagerDialog::SaveChild(pugi::xml_node element, wxTreeItemId child)
 			CSiteManager::UpdateGoogleDrivePath(data->m_site->m_default_bookmark.m_remoteDir);
 		}
 
-		CSiteManager::Save(node, *data->m_site, CLoginManager::Get(), options_);
+		CSiteManager::Save(node, *data->m_site, login_manager_, options_);
 
 		if (data->connected_item != -1) {
 			(*m_connected_sites)[data->connected_item].site = *data->m_site;

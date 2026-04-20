@@ -3,19 +3,26 @@
 #include "cwd.h"
 #include "../pathcache.h"
 
+using namespace std::literals;
+
 namespace {
 enum cwdStates
 {
 	cwd_init = 0,
 	cwd_pwd,
 	cwd_cwd,
-	cwd_cwd_subdir
+	cwd_cwd_subdir,
+	cwd_stat,
+	cwd_stat_subdir
 };
 }
 
 int CSftpChangeDirOpData::Send()
 {
-	std::wstring cmd;
+	if (!sftp_) {
+		return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
+	}
+
 	switch (opState)
 	{
 	case cwd_init:
@@ -26,6 +33,8 @@ int CSftpChangeDirOpData::Send()
 		if (path_.empty()) {
 			if (currentPath_.empty()) {
 				opState = cwd_pwd;
+				sftp_->realpath(this, "."sv);
+				return FZ_REPLY_WOULDBLOCK;
 			}
 			else {
 				return FZ_REPLY_OK;
@@ -48,7 +57,8 @@ int CSftpChangeDirOpData::Send()
 					// Target unknown, check for the parent's target
 					target_ = engine_.GetPathCache().Lookup(currentServer_, path_, L"");
 					if (currentPath_ == path_ || (!target_.empty() && target_ == currentPath_)) {
-						target_.clear();
+						target_ = currentPath_;
+						target_.ChangePath(subDir_);
 						opState = cwd_cwd_subdir;
 					}
 					else {
@@ -65,9 +75,6 @@ int CSftpChangeDirOpData::Send()
 			}
 		}
 		return FZ_REPLY_CONTINUE;
-	case cwd_pwd:
-		cmd = L"pwd";
-		break;
 	case cwd_cwd:
 		if (tryMkdOnFail_ && !opLock_) {
 			opLock_ = controlSocket_.Lock(locking_reason::mkdir, path_);
@@ -78,7 +85,7 @@ int CSftpChangeDirOpData::Send()
 			tryMkdOnFail_ = false;
 			return FZ_REPLY_WOULDBLOCK;
 		}
-		cmd = L"cd " + controlSocket_.QuoteFilename(path_.GetPath());
+		sftp_->realpath(this, controlSocket_.ConvToServer(path_.GetPath()));
 		currentPath_.clear();
 		break;
 	case cwd_cwd_subdir:
@@ -86,81 +93,127 @@ int CSftpChangeDirOpData::Send()
 			return FZ_REPLY_INTERNALERROR;
 		}
 		else {
-			cmd = L"cd " + controlSocket_.QuoteFilename(subDir_);
+			sftp_->realpath(this, controlSocket_.ConvToServer(target_.GetPath()));
 		}
 		currentPath_.clear();
 		break;
-	}
-
-	if (!cmd.empty()) {
-		return controlSocket_.SendCommand(cmd);
+	case cwd_stat:
+	case cwd_stat_subdir:
+		sftp_->stat(this, controlSocket_.ConvToServer(target_.GetPath()));
+		break;
 	}
 
 	return FZ_REPLY_WOULDBLOCK;
 }
 
-int CSftpChangeDirOpData::ParseResponse()
+CSftpOpData::continuation CSftpChangeDirOpData::process_name(fz::ssh::sftp::entry & e, bool)
 {
-	bool const successful = controlSocket_.result_ == FZ_REPLY_OK;
-	switch (opState)
-	{
+	std::wstring name = controlSocket_.ConvToLocal(e.name_.data(), e.name_.size());
+	if (name.empty()) {
+		trigger_reset(FZ_REPLY_ERROR);
+		return continuation::next;
+	}
+
+	target_ = controlSocket_.ParsePath(name);
+	if (target_.empty()) {
+		trigger_reset(FZ_REPLY_ERROR);
+		return continuation::next;
+	}
+	switch (opState) {
 	case cwd_pwd:
-		if (!successful || controlSocket_.response_.empty()) {
-			return FZ_REPLY_ERROR;
-		}
-
-		if (!controlSocket_.ParsePwdReply(controlSocket_.response_)) {
-			return FZ_REPLY_ERROR;
-		}
-
-		return FZ_REPLY_OK;
+		opState = cwd_stat;
+		sftp_->stat(this, e.name_);
+		break;
 	case cwd_cwd:
-		if (!successful) {
-			// Create remote directory if part of a file upload
-			if (tryMkdOnFail_) {
-				tryMkdOnFail_ = false;
-				controlSocket_.Mkdir(path_);
-				return FZ_REPLY_CONTINUE;
-			}
-			else {
-				return FZ_REPLY_ERROR;
-			}
-		}
-		else if (controlSocket_.response_.empty()) {
-			return FZ_REPLY_ERROR;
-		}
-		else if (controlSocket_.ParsePwdReply(controlSocket_.response_)) {
-			engine_.GetPathCache().Store(currentServer_, currentPath_, path_);
-
-			if (subDir_.empty()) {
-				return FZ_REPLY_OK;
-			}
-
-			target_.clear();
-			opState = cwd_cwd_subdir;
-			return FZ_REPLY_CONTINUE;
-		}
-		return FZ_REPLY_ERROR;
+		opState = cwd_stat;
+		sftp_->stat(this, e.name_);
+		break;
 	case cwd_cwd_subdir:
-		if (!successful || controlSocket_.response_.empty()) {
-			if (link_discovery_) {
-				log(logmsg::debug_info, L"Symlink does not link to a directory, probably a file");
-				return FZ_REPLY_LINKNOTDIR;
-			}
-			else {
-				return FZ_REPLY_ERROR;
-			}
-		}
-		else if (controlSocket_.ParsePwdReply(controlSocket_.response_)) {
-			engine_.GetPathCache().Store(currentServer_, currentPath_, path_, subDir_);
-
-			return FZ_REPLY_OK;
-		}
-		return FZ_REPLY_ERROR;
+		opState = cwd_stat_subdir;
+		sftp_->stat(this, e.name_);
+		break;
 	default:
-		log(logmsg::debug_warning, L"Unknown opState %d", opState);
+		trigger_reset(FZ_REPLY_INTERNALERROR);
 		break;
 	}
 
-	return FZ_REPLY_INTERNALERROR;
+	return continuation::next;
+}
+
+CSftpOpData::continuation CSftpChangeDirOpData::process_attributes(fz::ssh::sftp::attributes & attrs)
+{
+	if (!attrs.perms_ || !attrs.is_directory()) {
+		log(fz::logmsg::error, _("Not a directory"));
+		if (link_discovery_) {
+			log(logmsg::debug_info, L"Symlink does not link to a directory, probably a file");
+			trigger_reset(FZ_REPLY_LINKNOTDIR);
+		}
+		else {
+			trigger_reset(FZ_REPLY_ERROR);
+		}
+		return continuation::next;
+	}
+
+	switch (opState) {
+	case cwd_stat:
+		currentPath_ = target_;
+		if (!path_.empty()) {
+			engine_.GetPathCache().Store(currentServer_, currentPath_, path_);
+		}
+		if (subDir_.empty()) {
+			trigger_reset(FZ_REPLY_OK);
+		}
+		else {
+			path_ = currentPath_;
+			target_ = path_;
+			target_.ChangePath(subDir_);
+			sftp_->realpath(this, controlSocket_.ConvToServer(target_.GetPath()));
+			currentPath_.clear();
+			opState = cwd_cwd_subdir;
+		}
+		break;
+	case cwd_stat_subdir:
+		currentPath_ = target_;
+		engine_.GetPathCache().Store(currentServer_, currentPath_, path_, subDir_);
+		trigger_reset(FZ_REPLY_OK);
+		break;
+	default:
+		trigger_reset(FZ_REPLY_INTERNALERROR);
+		break;
+	}
+
+	return continuation::next;
+}
+
+CSftpOpData::continuation CSftpChangeDirOpData::do_process_status(fz::ssh::sftp::status_code /*code*/, std::wstring_view msg)
+{
+	switch (opState) {
+	case cwd_pwd:
+		log(logmsg::error, _("Could not get initial directory: %s"), msg);
+		trigger_reset(FZ_REPLY_ERROR);
+		break;
+	case cwd_stat:
+	case cwd_stat_subdir:
+	case cwd_cwd:
+		if (tryMkdOnFail_) {
+			tryMkdOnFail_ = false;
+			controlSocket_.Mkdir(path_);
+			trigger_next();
+		}
+		else {
+			log(logmsg::error, _("Could not get directory information: %s"), msg);
+			trigger_reset(FZ_REPLY_ERROR);
+		}
+		break;
+	case cwd_cwd_subdir:
+		if (link_discovery_) {
+			log(logmsg::debug_info, L"Symlink does not link to a directory, probably a file");
+			trigger_reset(FZ_REPLY_LINKNOTDIR);
+		}
+		else {
+			trigger_reset(FZ_REPLY_ERROR);
+		}
+		break;
+	}
+	return continuation::next;
 }

@@ -2,7 +2,6 @@
 #include "viewheader.h"
 #include "commandqueue.h"
 #include "graphics.h"
-#include "serverdata.h"
 
 #ifdef __WXMSW__
 #include <wx/msw/uxtheme.h>

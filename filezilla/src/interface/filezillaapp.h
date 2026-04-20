@@ -26,7 +26,6 @@ public:
 
 	std::wstring GetSettingsFile(std::wstring const& name) const;
 
-	void CheckExistsFzsftp();
 #if ENABLE_STORJ
 	void CheckExistsFzstorj();
 #endif
@@ -46,7 +45,9 @@ public:
 	void AddStartupProfileRecord(std::string_view const& msg);
 
 protected:
+#if ENABLE_STORJ
 	void CheckExistsTool(std::wstring const& tool, std::wstring const& buildRelPath, char const* env, engineOptions setting, std::wstring const& description);
+#endif
 
 	bool LoadResourceFiles();
 	bool LoadLocales();

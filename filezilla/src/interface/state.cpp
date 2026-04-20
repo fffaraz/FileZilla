@@ -230,7 +230,7 @@ CState::CState(CMainFrame &mainFrame)
 	m_pComparisonManager = new CComparisonManager(*this, m_mainFrame.GetOptions());
 
 	m_pLocalRecursiveOperation = new CLocalRecursiveOperation(*this);
-	m_pRemoteRecursiveOperation = new CRemoteRecursiveOperation(*this);
+	m_pRemoteRecursiveOperation = new CRemoteRecursiveOperation(m_mainFrame.GetOptions(), *this);
 
 	m_localDir.SetPath(std::wstring(1, CLocalPath::path_separator));
 }
@@ -297,8 +297,14 @@ bool CState::DoSetLocalDir(CLocalPath & dir, std::wstring *error, bool rememberP
 			break;
 		}
 		auto path = dir.GetPath();
+		auto target = fz::local_filesys::get_link_target(fz::to_native(path));
+#ifdef FZ_WINDOWS
+		if (fz::starts_with(target, L"\\??\\Volume{")) {
+			break;
+		}
+#endif
 		dir.MakeParent();
-		if (!dir.ChangePath(fz::to_wstring(fz::local_filesys::get_link_target(fz::to_native(path))))) {
+		if (!dir.ChangePath(fz::to_wstring(target))) {
 			return false;
 		}
 	}
@@ -540,8 +546,8 @@ void CState::SetSite(Site const& site, CServerPath const& path)
 		}
 
 		SetRemoteDir(nullptr, true);
-		m_pCertificate.reset();
-		m_pSftpEncryptionInfo.reset();
+		tls_session_info_.reset();
+		ssh_session_info_.reset();
 	}
 	if (site) {
 		if (!path.empty()) {
@@ -1366,29 +1372,27 @@ bool CState::RefreshRemote(bool clear_cache)
 	return ChangeRemoteDir(GetRemotePath(), std::wstring(), flags);
 }
 
-bool CState::GetSecurityInfo(CCertificateNotification *& pInfo)
+std::optional<fz::tls_session_info> const& CState::GetTlsSessionInfo() const
 {
-	pInfo = m_pCertificate.get();
-	return m_pCertificate != 0;
+	return tls_session_info_;
 }
 
-bool CState::GetSecurityInfo(CSftpEncryptionNotification *& pInfo)
+void CState::SetTlsSessionInfo(fz::tls_session_info const& info)
 {
-	pInfo = m_pSftpEncryptionInfo.get();
-	return m_pSftpEncryptionInfo != 0;
-}
-
-void CState::SetSecurityInfo(CCertificateNotification const& info)
-{
-	m_pSftpEncryptionInfo.reset();
-	m_pCertificate = std::make_unique<CCertificateNotification>(info);
+	ssh_session_info_.reset();
+	tls_session_info_ = info;
 	NotifyHandlers(STATECHANGE_ENCRYPTION);
 }
 
-void CState::SetSecurityInfo(CSftpEncryptionNotification const& info)
+std::optional<std::pair<fz::ssh::algorithm_info, std::string>> CState::GetSshSessionInfo()
 {
-	m_pCertificate.reset();
-	m_pSftpEncryptionInfo = std::make_unique<CSftpEncryptionNotification>(info);
+	return ssh_session_info_;
+}
+
+void CState::SetSshSessionInfo(fz::ssh::algorithm_info const& algs, std::string const& fingerprint)
+{
+	tls_session_info_.reset();
+	ssh_session_info_ = std::make_pair(algs, fingerprint);
 	NotifyHandlers(STATECHANGE_ENCRYPTION);
 }
 

@@ -10,6 +10,54 @@ Legend:
     *nix: Unix (e.g BSD) and Unix-like systems (e.g. Linux)
     macOS/OS X: Apple macOS
 
+3.70.4 (2026-04-16)
+
+- Updated to libfilezilla 0.55.4 to address a crash
+- SFTP: Updated to fzssh 1.2.0
+
+3.70.3 (2026-04-14)
+
+- SFTP: Added a heuristic to reply to a keyboard-interactive request with the site's password, if it consists of a single prompt named "Password"
+- SFTP: Updated to fzssh 1.1.10 for increased compatibility with broken servers that blatantly violate the SSH specifications
+
+3.70.2 (2026-04-14)
+
+- SFTP: Updated to fzssh 1.1.9 to address an issue with servers sending nonsensical SSH_MSG_USERAUTH_INFO_REQUEST packages
+
+3.70.1 (2026-04-13)
+
+- SFTP: Updated to fzssh 1.1.8 to address an issue with servers sending empty longnames
+- SFTP: Updated to fzssh 1.1.8 to address an issue with servers incapable of handling large receive windows of 2^32 - 1 bytes
+- SFTP: Fixed an issue creating directories during file upload
+
+3.70.0 (2026-04-09)
+
+- Replacing of invalid characters in filenames when downloading can no longer be disabled
+- If saving of password was disabled, temporarily remembering passwords until FileZilla gets closed could result in additional password prompts
+- SFTP: Fix accessing symbolic links
+
+3.70.0-rc3 (2026-03-23)
+
+- SFTP: Updated fzssh to 1.1.7 to address corrupted uploads
+
+3.70.0-rc2 (2026-03-23)
+
+- Updated fzssh to 1.1.6 to improve SSH channel window handling
+
+3.70.0-rc1 (2026-03-16)
+
+- Fix detection of OTP requests from FileZilla Pro Enterprise Server if using non-default FTP encryption options
+- MSW: Improve handling of volumes mounted as path instead of as drive letter
+- *nix, macOS: Remove custom send buffer option, rely on operating system auto-tuning
+
+3.70.0-beta2 (2026-03-02)
+
+- SFTP: Migrate saved hostkey data from prior versions
+
+3.70.0-beta1 (2026-02-24)
+
++ SFTP support is now based on the fzssh library
+
 3.69.6 (2026-02-12)
 
 ! Official binaries are now linked against GnuTLS 3.8.12

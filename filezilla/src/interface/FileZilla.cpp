@@ -190,17 +190,6 @@ bool CFileZillaApp::OnInit()
 	AddStartupProfileRecord("CFileZillaApp::OnInit(): Loading options"sv);
 	options_ = std::make_unique<COptions>();
 
-#if USE_MAC_SANDBOX
-	// Set PUTTYDIR so that fzsftp uses the sandboxed home to put settings.
-	std::wstring home = GetEnv("HOME");
-	if (!home.empty()) {
-		if (home.back() != '/') {
-			home += '/';
-		}
-		wxSetEnv("PUTTYDIR", home + L".config/putty");
-	}
-#endif
-
 	InitLocale();
 
 #ifndef _DEBUG
@@ -228,9 +217,7 @@ USE AT OWN RISK"), _T("Important Information"));
 	}
 
 	themeProvider_ = std::make_unique<CThemeProvider>(*options_);
-#if ENABLE_SFTP
-	CheckExistsFzsftp();
-#endif
+
 #if ENABLE_STORJ
 	CheckExistsFzstorj();
 #endif
@@ -419,19 +406,12 @@ CWrapEngine* CFileZillaApp::GetWrapEngine()
 	return m_pWrapEngine.get();
 }
 
-void CFileZillaApp::CheckExistsFzsftp()
-{
-	AddStartupProfileRecord("FileZillaApp::CheckExistsFzsftp"sv);
-	CheckExistsTool(L"fzsftp", L"../putty/", "FZ_FZSFTP", OPTION_FZSFTP_EXECUTABLE, fztranslate("SFTP support"));
-}
-
 #if ENABLE_STORJ
 void CFileZillaApp::CheckExistsFzstorj()
 {
 	AddStartupProfileRecord("FileZillaApp::CheckExistsFzstorj"sv);
 	CheckExistsTool(L"fzstorj", L"../storj/", "FZ_FZSTORJ", OPTION_FZSTORJ_EXECUTABLE, fztranslate("Storj support"));
 }
-#endif
 
 void CFileZillaApp::CheckExistsTool(std::wstring const& tool, std::wstring const& buildRelPath, char const* env, engineOptions setting, std::wstring const& description)
 {
@@ -447,6 +427,7 @@ void CFileZillaApp::CheckExistsTool(std::wstring const& tool, std::wstring const
 	}
 	options_->set(setting, executable);
 }
+#endif
 
 #ifdef __WXMSW__
 extern "C" BOOL CALLBACK EnumWindowCallback(HWND hwnd, LPARAM)

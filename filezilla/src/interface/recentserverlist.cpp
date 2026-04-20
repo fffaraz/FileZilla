@@ -52,7 +52,7 @@ const std::deque<Site> CRecentServerList::GetMostRecentServers(bool lockMutex)
 	return mostRecentServers;
 }
 
-void CRecentServerList::SetMostRecentServer(Site const& site, COptionsBase & options)
+void CRecentServerList::SetMostRecentServer(Site const& site, login_manager & lim, COptionsBase & options)
 {
 	CInterProcessMutex mutex(MUTEX_MOSTRECENTSERVERS);
 
@@ -79,10 +79,10 @@ void CRecentServerList::SetMostRecentServer(Site const& site, COptionsBase & opt
 		return;
 	}
 
-	SetMostRecentServers(mostRecentServers, options, false);
+	SetMostRecentServers(mostRecentServers, lim, options, false);
 }
 
-void CRecentServerList::SetMostRecentServers(std::deque<Site> const& sites, COptionsBase & options, bool lockMutex)
+void CRecentServerList::SetMostRecentServers(std::deque<Site> const& sites, login_manager & lim, COptionsBase & options, bool lockMutex)
 {
 	CInterProcessMutex mutex(MUTEX_MOSTRECENTSERVERS, false);
 	if (lockMutex) {
@@ -106,7 +106,7 @@ void CRecentServerList::SetMostRecentServers(std::deque<Site> const& sites, COpt
 
 	for (auto const& site : sites) {
 		auto node = serversNode.append_child("Server");
-		SetServer(node, site);
+		SetServer(node, site, lim, options);
 	}
 
 	SaveWithErrorDialog(xmlFile);

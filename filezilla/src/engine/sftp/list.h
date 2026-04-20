@@ -16,17 +16,20 @@ public:
 	{}
 
 	virtual int Send() override;
-	virtual int ParseResponse() override;
+	virtual int ParseResponse() override { return FZ_REPLY_INTERNALERROR; }
 	virtual int SubcommandResult(int prevResult, COpData const& previousOperation) override;
+	virtual int Reset(int result) override;
 
-	int ParseEntry(std::wstring && entry, uint64_t mtime, std::wstring && name);
+	virtual continuation process_handle(std::string_view handle) override;
+	virtual continuation process_name(fz::ssh::sftp::entry & e, bool more) override;
+	virtual continuation do_process_status(fz::ssh::sftp::status_code code, std::wstring_view msg) override;
 
 private:
 	std::unique_ptr<CDirectoryListingParser> listing_parser_;
 
 	CServerPath path_;
-	std::wstring subDir_; 
-	
+	std::wstring subDir_;
+
 	int flags_{};
 
 	// Set to true to get a directory listing even if a cache
@@ -37,6 +40,8 @@ private:
 	CDirectoryListing directoryListing_;
 
 	fz::monotonic_clock time_before_locking_;
+
+	std::string handle_;
 };
 
 #endif

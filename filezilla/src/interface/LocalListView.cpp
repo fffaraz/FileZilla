@@ -38,8 +38,8 @@ using namespace std::literals;
 class CLocalListViewDropTarget final : public CFileDropTarget<wxListCtrlEx>
 {
 public:
-	CLocalListViewDropTarget(CLocalListView* pLocalListView)
-		: CFileDropTarget<wxListCtrlEx>(pLocalListView)
+	CLocalListViewDropTarget(CLocalListView* pLocalListView, login_manager& lim)
+		: CFileDropTarget<wxListCtrlEx>(pLocalListView, pLocalListView->options_, lim)
 		, m_pLocalListView(pLocalListView)
 	{
 	}
@@ -275,8 +275,8 @@ BEGIN_EVENT_TABLE(CLocalListView, CFileListCtrl<CLocalFileData>)
 	EVT_MENU(XRCID("ID_CONTEXT_REFRESH"), CLocalListView::OnMenuRefresh)
 END_EVENT_TABLE()
 
-CLocalListView::CLocalListView(CView* pParent, CState& state, CQueueView *pQueue, COptionsBase & options, CEditHandler* edit_handler)
-	: CFileListCtrl<CLocalFileData>(pParent, pQueue, options)
+CLocalListView::CLocalListView(CView* pParent, CState& state, CQueueView *pQueue, COptionsBase & options, TimeFormatter & time_formatter, login_manager& lim, CEditHandler* edit_handler)
+	: CFileListCtrl<CLocalFileData>(pParent, pQueue, options, time_formatter)
 	, CStateEventHandler(state)
 	, m_parentView(pParent)
 	, edit_handler_(edit_handler)
@@ -293,7 +293,7 @@ CLocalListView::CLocalListView(CView* pParent, CState& state, CQueueView *pQueue
 	AddColumn(_("Filesize"), wxLIST_FORMAT_RIGHT, widths[1]);
 	AddColumn(_("Filetype"), wxLIST_FORMAT_LEFT, widths[2]);
 	AddColumn(_("Last modified"), wxLIST_FORMAT_LEFT, widths[3]);
-	LoadColumnSettings(OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
+	LoadColumnSettings(options_, OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
 
 	SetImageList(GetSystemImageList(), wxIMAGE_LIST_SMALL);
 
@@ -301,7 +301,7 @@ CLocalListView::CLocalListView(CView* pParent, CState& state, CQueueView *pQueue
 
 	InitSort(OPTION_LOCALFILELIST_SORTORDER);
 
-	SetDropTarget(new CLocalListViewDropTarget(this));
+	SetDropTarget(new CLocalListViewDropTarget(this, lim));
 
 	EnablePrefixSearch(true);
 
@@ -1808,7 +1808,7 @@ wxString CLocalListView::GetItemText(int item, unsigned int column)
 		return data->fileType;
 	}
 	else if (column == 3) {
-		return CTimeFormat::Format(data->time);
+		return time_formatter_.Format(data->time);
 	}
 	return wxString();
 }

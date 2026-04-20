@@ -391,7 +391,7 @@ libfzshellext_la_CXXFLAGS = $(AM_CXXFLAGS) -fno-exceptions -fno-rtti
 # Due to a braindead Libtool, we _NEED_ to use -Wl to link with some win32 system libraries
 libfzshellext_la_LDFLAGS = -Wl,--kill-at -Wl,-lole32 -Wl,-luuid -Wl,-lversion -no-undefined -version-info 0:0:0 $(RESOURCEFILE)
 noinst_HEADERS = shellext.h resource.h
-dist_noinst_DATA = fzshellext.def fzshellext.vcxproj fzshellext.rc version.rc.in
+dist_noinst_DATA = fzshellext.rc version.rc.in
 @USE_RESOURCEFILE_TRUE@BUILT_SOURCES = fzshellext.o
 all: $(BUILT_SOURCES) config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am

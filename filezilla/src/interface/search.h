@@ -13,6 +13,7 @@ class COptionsBase;
 class CQueueView;
 class CSearchDialogFileList;
 class CWindowStateManager;
+class TimeFormatter;
 
 class CSearchDialog final : public CFilterConditionsDialog, public CStateEventHandler
 {
@@ -25,7 +26,7 @@ public:
 		comparison
 	};
 
-	CSearchDialog(wxWindow* parent, CState& state, CQueueView* pQueue, COptionsBase & options, CEditHandler* edit_handler);
+	CSearchDialog(wxWindow* parent, CState& state, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter, CEditHandler* edit_handler);
 	virtual ~CSearchDialog();
 
 	bool Load();
@@ -47,6 +48,7 @@ protected:
 	CSearchDialogFileList *m_remoteResults{};
 	CQueueView* m_pQueue{};
 	COptionsBase& options_;
+	TimeFormatter & time_formatter_;
 	wxSize m_otherSize{-1, -1};
 
 	CFilelistStatusBar* m_remoteStatusBar{};

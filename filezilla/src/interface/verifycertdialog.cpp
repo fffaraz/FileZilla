@@ -32,6 +32,11 @@ void CertStore::SavingFileFailed(std::wstring const& file, std::wstring const& e
 
 struct CVerifyCertDialog::impl final
 {
+	explicit impl(TimeFormatter & time_formatter)
+		: time_formatter_(time_formatter)
+	{}
+
+	TimeFormatter & time_formatter_;
 	std::vector<fz::x509_certificate> certificates_;
 
 	wxCheckBox* san_trust_{};
@@ -51,8 +56,8 @@ struct CVerifyCertDialog::impl final
 	wxFlexGridSizer* issuerSizer_{};
 };
 
-CVerifyCertDialog::CVerifyCertDialog()
-	: impl_(std::make_unique<impl>())
+CVerifyCertDialog::CVerifyCertDialog(TimeFormatter & time_formatter)
+	: impl_(std::make_unique<impl>(time_formatter))
 {
 }
 
@@ -73,7 +78,7 @@ bool CVerifyCertDialog::DisplayCert(fz::x509_certificate const& cert)
 	}
 	else {
 		// @translator: Placeholders will be filled with dates
-		label = wxString::Format(_("From %s to %s"), CTimeFormat::Format(cert.get_activation_time()), CTimeFormat::Format(cert.get_expiration_time()));
+		label = wxString::Format(_("From %s to %s"), impl_->time_formatter_.Format(cert.get_activation_time()), impl_->time_formatter_.Format(cert.get_expiration_time()));
 
 		if (cert.get_activation_time() > fz::datetime::now()) {
 			label += L" - ";
@@ -174,10 +179,10 @@ void CVerifyCertDialog::AddAlgorithm(wxWindow* parent, wxGridBagSizer* sizer, st
 	}
 }
 
-void CVerifyCertDialog::ShowVerificationDialog(cert_store & certStore, CCertificateNotification& notification, COptionsBase & options)
+void CVerifyCertDialog::ShowVerificationDialog(cert_store & certStore, CCertificateNotification& notification, COptionsBase & options, TimeFormatter & time_formatter)
 {
-	CVerifyCertDialog dlg;
-	if (!dlg.CreateVerificationDialog(notification, options, false)) {
+	CVerifyCertDialog dlg(time_formatter);
+	if (!dlg.CreateVerificationDialog(notification.info_, options, false)) {
 		return;
 	}
 
@@ -196,24 +201,21 @@ void CVerifyCertDialog::ShowVerificationDialog(cert_store & certStore, CCertific
 	}
 }
 
-void CVerifyCertDialog::DisplayCertificate(CCertificateNotification const& notification, COptionsBase & options)
+void CVerifyCertDialog::DisplayCertificate(fz::tls_session_info const& info, COptionsBase & options, TimeFormatter & time_formatter)
 {
-	CVerifyCertDialog dlg;
-	if (dlg.CreateVerificationDialog(notification, options, true)) {
+	CVerifyCertDialog dlg(time_formatter);
+	if (dlg.CreateVerificationDialog(info, options, true)) {
 		dlg.ShowModal();
 	}
 }
 
 
-bool CVerifyCertDialog::CreateVerificationDialog(CCertificateNotification const& notification, COptionsBase & options, bool displayOnly)
+bool CVerifyCertDialog::CreateVerificationDialog(fz::tls_session_info const& info, COptionsBase & options, bool displayOnly)
 {
-	fz::tls_session_info const& info = notification.info_;
-
 	auto& lay = layout();
-	if (!Create(m_parent, nullID, displayOnly ? _("Certificate details") : _("Unknown certificate"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)) {
+	if (!Create(wxGetApp().GetTopWindow(), nullID, displayOnly ? _("Certificate details") : _("Unknown certificate"), wxDefaultPosition, wxDefaultSize, wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER)) {
 		return false;
 	}
-	impl_ = std::make_unique<impl>();
 
 	auto outer = lay.createMain(this, 2);
 	outer->AddGrowableCol(1);
@@ -424,7 +426,7 @@ bool CVerifyCertDialog::CreateVerificationDialog(CCertificateNotification const&
 	}
 
 	if (!displayOnly) {
-		bool const dnsname = fz::get_address_type(info.get_host()) == fz::address_type::unknown;
+		bool const dnsname = !info.get_host().empty() && fz::get_address_type(info.get_host()) == fz::address_type::unknown;
 		sanTrustAllowed_ = !warning_ && dnsname && !info.mismatched_hostname();
 		impl_->san_trust_->Enable(sanTrustAllowed_);
 

@@ -17,6 +17,10 @@ enum listStates
 
 int CSftpListOpData::Send()
 {
+	if (!sftp_) {
+		return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
+	}
+
 	if (opState == list_init) {
 		if (path_.GetType() == DEFAULT) {
 			path_.SetType(currentServer_.GetType());
@@ -63,33 +67,15 @@ int CSftpListOpData::Send()
 	}
 	else if (opState == list_list) {
 		listing_parser_ = std::make_unique<CDirectoryListingParser>(&controlSocket_, currentServer_, listingEncoding::unknown);
-		return controlSocket_.SendCommand(L"ls");
+		std::string path = controlSocket_.ConvToServer(currentPath_.GetPath());
+		if (path.empty()) {
+			return FZ_REPLY_ERROR;
+		}
+		sftp_->opendir(this, path);
+		return FZ_REPLY_WOULDBLOCK;
 	}
 
 	log(logmsg::debug_warning, L"Unknown opState in CSftpListOpData::Send()");
-	return FZ_REPLY_INTERNALERROR;
-}
-
-int CSftpListOpData::ParseResponse()
-{
-	if (opState == list_list) {
-		if (controlSocket_.result_ != FZ_REPLY_OK) {
-			return FZ_REPLY_ERROR;
-		}
-
-		if (!listing_parser_) {
-			log(logmsg::debug_warning, L"listing_parser_ is empty");
-			return FZ_REPLY_INTERNALERROR;
-		}
-
-		directoryListing_ = listing_parser_->Parse(currentPath_);
-		engine_.GetDirectoryCache().Store(directoryListing_, currentServer_);
-		controlSocket_.SendDirectoryListingNotification(currentPath_, false);
-
-		return FZ_REPLY_OK;
-	}
-
-	log(logmsg::debug_warning, L"ListParseResponse called at improper time: %d", opState);
 	return FZ_REPLY_INTERNALERROR;
 }
 
@@ -119,31 +105,82 @@ int CSftpListOpData::SubcommandResult(int prevResult, COpData const&)
 	return FZ_REPLY_CONTINUE;
 }
 
-int CSftpListOpData::ParseEntry(std::wstring && entry, uint64_t mtime, std::wstring && name)
+int CSftpListOpData::Reset(int result)
 {
-	if (opState != list_list) {
-		controlSocket_.log_raw(logmsg::listing, entry);
-		log(logmsg::debug_warning, L"CSftpListOpData::ParseEntry called at improper time: %d", opState);
-		return FZ_REPLY_INTERNALERROR;
+	if (sftp_ && !handle_.empty()) {
+		sftp_->close(nullptr, handle_);
+	}
+	handle_.clear();
+	return result;
+}
+
+CSftpOpData::continuation CSftpListOpData::process_handle(std::string_view handle)
+{
+	handle_ = handle;
+
+	// Pipeline requests
+	for (size_t i = 0; i < 4; ++i) {
+		sftp_->readdir(this, handle_);
 	}
 
-	if (entry.size() > 65536 || name.size() > 65536) {
-		log(fz::logmsg::error, _("Received too long response line from server, closing connection."));
-		return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
+	return continuation::next;
+}
+
+CSftpOpData::continuation CSftpListOpData::do_process_status(fz::ssh::sftp::status_code code, std::wstring_view msg)
+{
+	if (code == fz::ssh::sftp::status_code::SSH_FX_EOF) {
+		if (!listing_parser_) {
+			log(logmsg::debug_warning, L"listing_parser_ is empty");
+			trigger_reset(FZ_REPLY_INTERNALERROR);
+			return continuation::error;
+		}
+
+		directoryListing_ = listing_parser_->Parse(currentPath_);
+		engine_.GetDirectoryCache().Store(directoryListing_, currentServer_);
+		controlSocket_.SendDirectoryListingNotification(currentPath_, false);
+		trigger_reset(FZ_REPLY_OK);
+		return continuation::next;
+	}
+	else if (handle_.empty()) {
+		log(logmsg::error, _("Could not open directory: %s"), msg);
+	}
+	else {
+		log(logmsg::error, _("Could not read directory: %s"), msg);
 	}
 
+	trigger_reset(FZ_REPLY_ERROR);
+
+	return continuation::next;
+}
+
+CSftpOpData::continuation CSftpListOpData::process_name(fz::ssh::sftp::entry & e, bool more)
+{
+	std::wstring name = controlSocket_.ConvToLocal(e.name_.data(), e.name_.size());
+	std::wstring longname = controlSocket_.ConvToLocal(e.longname_.data(), e.longname_.size());
+
+	if (!more) {
+		sftp_->readdir(this, handle_);
+	}
 
 	if (!listing_parser_) {
-		controlSocket_.log_raw(logmsg::listing, entry);
 		log(logmsg::debug_warning, L"listing_parser_ is null");
-		return FZ_REPLY_INTERNALERROR;
+		trigger_reset(FZ_REPLY_INTERNALERROR);
+		return continuation::error;
 	}
 
-	fz::datetime time;
-	if (mtime) {
-		time = fz::datetime(static_cast<time_t>(mtime), fz::datetime::seconds);
+	std::optional<int> flags;
+	if (longname.empty() && e.perms_) {
+		flags.emplace();
+		if (e.is_directory()) {
+			*flags |= CDirentry::flag_dir;
+		}
+		if (e.is_symlink()) {
+			*flags |= CDirentry::flag_link;
+		}
 	}
-	listing_parser_->AddLine(std::move(entry), std::move(name), time);
 
-	return FZ_REPLY_WOULDBLOCK;
+	listing_parser_->AddLine(std::move(longname), std::move(name), e.modified_ ? *e.modified_ : fz::datetime(), e.size_, flags);
+
+	return continuation::next;
 }
+

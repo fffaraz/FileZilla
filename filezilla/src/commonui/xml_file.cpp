@@ -494,10 +494,7 @@ bool GetServer(pugi::xml_node node, Site & site)
 	site.connection_limit_ = static_cast<unsigned int>(maximumMultipleConnections);
 
 	std::string_view encodingType = node.child_value("EncodingType");
-	if (encodingType == "UTF-8") {
-		site.server.SetEncodingType(ENCODING_UTF8);
-	}
-	else if (encodingType == "Custom") {
+	if (encodingType == "Custom") {
 		std::wstring customEncoding = GetTextElement(node, "CustomEncoding");
 		if (customEncoding.empty()) {
 			return false;
@@ -507,7 +504,7 @@ bool GetServer(pugi::xml_node node, Site & site)
 		}
 	}
 	else {
-		site.server.SetEncodingType(ENCODING_AUTO);
+		site.server.SetEncodingType(ENCODING_UTF8);
 	}
 
 	if (CServer::ProtocolHasFeature(site.server.GetProtocol(), ProtocolFeature::PostLoginCommands)) {

@@ -11,8 +11,9 @@
 #include <libfilezilla/local_filesys.hpp>
 #include <libfilezilla/recursive_remove.hpp>
 
-CRemoteRecursiveOperation::CRemoteRecursiveOperation(CState &state)
+CRemoteRecursiveOperation::CRemoteRecursiveOperation(COptionsBase & options, CState &state)
 : CStateEventHandler(state)
+, options_(options)
 , m_state(state)
 {
 	state.RegisterHandler(this, STATECHANGE_REMOTE_DIR_OTHER);
@@ -55,7 +56,7 @@ void CRemoteRecursiveOperation::StartRecursiveOperation(OperationMode mode, Acti
 	}
 	m_immediate = immediate;
 	m_failed = false;
-	remote_recursive_operation::start_recursive_operation(mode, filters, COptions::Get()->get_bool(OPTION_REMOTE_ROP_LISTING_REFFRESH));
+	remote_recursive_operation::start_recursive_operation(mode, filters, options_.get_bool(OPTION_REMOTE_ROP_LISTING_REFRESH));
 }
 
 void CRemoteRecursiveOperation::do_start_recursive_operation(OperationMode mode, ActiveFilters const& filters)
@@ -77,7 +78,7 @@ void CRemoteRecursiveOperation::process_command(std::unique_ptr<CCommand> pComma
 
 std::wstring CRemoteRecursiveOperation::sanitize_filename(std::wstring const& name)
 {
-	return CQueueView::ReplaceInvalidCharacters(*COptions::Get(), name);
+	return CQueueView::ReplaceInvalidCharacters(options_, name);
 }
 
 void CRemoteRecursiveOperation::operation_finished()
@@ -90,7 +91,7 @@ void CRemoteRecursiveOperation::operation_finished()
 void CRemoteRecursiveOperation::handle_file(std::wstring const& sourceFile, CLocalPath const& localPath, CServerPath const& remotePath, int64_t size)
 {
 	std::wstring file = sanitize_filename(sourceFile);
-	if (remotePath.GetType() == VMS && COptions::Get()->get_int(OPTION_STRIP_VMS_REVISION)) {
+	if (remotePath.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
 		file = StripVMSRevision(file);
 	}
 	m_pQueue->QueueFile(!m_immediate, true, sourceFile, (sourceFile == file) ? std::wstring() : file, localPath, remotePath, m_state.GetSite(), size);

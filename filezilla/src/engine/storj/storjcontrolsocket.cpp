@@ -33,7 +33,6 @@ using namespace storjConnectStates;
 CStorjControlSocket::CStorjControlSocket(CFileZillaEnginePrivate & engine)
     : CControlSocket(engine, true)
 {
-	m_useUTF8 = true;
 }
 
 CStorjControlSocket::~CStorjControlSocket()
@@ -230,7 +229,7 @@ int CStorjControlSocket::SendCommand(std::wstring const& cmd, std::wstring const
 
 int CStorjControlSocket::AddToStream(std::wstring const& cmd)
 {
-	std::string const str = ConvToServer(cmd, true);
+	std::string const str = fz::to_utf8(cmd);
 	if (str.empty()) {
 		log(logmsg::error, _("Could not convert command to server encoding"));
 		return FZ_REPLY_ERROR;

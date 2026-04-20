@@ -17,18 +17,12 @@ if ENABLE_STORJ
   MAYBE_STORJ = storj
 endif
 
-if ENABLE_SFTP
-  MAYBE_PUTTY = putty
-endif
-
 if ENABLE_GUI
   MAYBE_GUI = interface
 endif
 
-SUBDIRS = include engine $(MAYBE_PUGIXML) $(MAYBE_DBUS) commonui $(MAYBE_GUI) $(MAYBE_PUTTY) $(MAYBE_STORJ) $(MAYBE_FZSHELLEXT) .
-DIST_SUBDIRS = include engine pugixml dbus commonui interface putty storj fzshellext/64 .
-
-dist_noinst_DATA = FileZilla.sln Dependencies.props.example
+SUBDIRS = include engine $(MAYBE_PUGIXML) $(MAYBE_DBUS) commonui $(MAYBE_GUI) $(MAYBE_STORJ) $(MAYBE_FZSHELLEXT) .
+DIST_SUBDIRS = include engine pugixml dbus commonui interface storj fzshellext/64 .
 
 dist-hook:
 	mkdir -p $(distdir)/fzshellext/32

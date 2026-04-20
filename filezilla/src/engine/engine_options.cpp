@@ -26,7 +26,6 @@ unsigned int register_engine_options()
 		},
 		{ "Logging Debug Level", 0, option_flags::normal, 0, 4 },
 		{ "Logging Raw Listing", false, option_flags::normal },
-		{ "fzsftp executable", L"", option_flags::internal },
 		{ "fzstorj executable", L"", option_flags::internal },
 		{ "Allow transfermode fallback", true, option_flags::normal },
 		{ "Reconnect count", 2, option_flags::numeric_clamp, 0, 99 },
@@ -42,14 +41,6 @@ unsigned int register_engine_options()
 		// Make it large enough by default
 		// to enable a large TCP window scale
 		{ "Socket recv buffer size (v2)", 4194304, option_flags::numeric_clamp, -1, 64 * 1024 * 1024, [](int& v)
-			{
-				if (v >= 0 && v < 4096) {
-					v = 4096;
-				}
-				return true;
-			}
-		},
-		{ "Socket send buffer size (v2)", 262144, option_flags::numeric_clamp, -1, 64 * 1024 * 1024, [](int& v)
 			{
 				if (v >= 0 && v < 4096) {
 					v = 4096;

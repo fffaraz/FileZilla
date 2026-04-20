@@ -199,15 +199,11 @@ void remote_recursive_operation::process_entries(recursion_root& root, CDirector
 		}
 
 		if (m_operationMode == recursive_chmod && chmodData_) {
-			const int applyType = chmodData_->GetApplyType();
-			if (!applyType ||
-				(!entry.is_dir() && applyType == 1) ||
-				(entry.is_dir() && applyType == 2))
+			if (	(!entry.is_dir() && chmodData_->apply_files_) ||
+				(entry.is_dir() && chmodData_->apply_dirs_))
 			{
-				char permissions[9];
-				bool res = chmodData_->ConvertPermissions(*entry.permissions, permissions);
-				std::wstring newPerms = chmodData_->GetPermissions(res ? permissions : 0, entry.is_dir());
-				process_command(std::make_unique<CChmodCommand>(pDirectoryListing->path, entry.name, newPerms));
+				posix_permissions newPerms = chmodData_->Apply(fz::to_utf8(*entry.permissions), entry.is_dir());
+				process_command(std::make_unique<CChmodCommand>(pDirectoryListing->path, entry.name, fz::to_wstring_from_utf8(to_octal(newPerms, true))));
 			}
 		}
 	}
@@ -281,9 +277,9 @@ void remote_recursive_operation::ProcessDirectoryListing(CDirectoryListing const
 	NextOperation();
 }
 
-void remote_recursive_operation::SetChmodData(std::unique_ptr<ChmodData>&& chmodData)
+void remote_recursive_operation::SetChmodData(ChmodData const& chmodData)
 {
-	chmodData_ = std::move(chmodData);
+	chmodData_ = chmodData;
 }
 
 void remote_recursive_operation::StopRecursiveOperation()

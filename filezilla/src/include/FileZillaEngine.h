@@ -40,12 +40,8 @@ public:
 	// See notification.h for details.
 	std::unique_ptr<CNotification> GetNextNotification();
 
-	// Sets the reply to an async request, e.g. a file exists request.
-	// See notifiction.h for details.
-	bool IsPendingAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> const& pNotification);
-
 	// Sets the reply to the asynchronous request. Takes ownership of the pointer.
-	bool SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification);
+	void SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification);
 
 	// Get a progress update about the current transfer. changed will be set
 	// to true if the data has been updated compared to the last time

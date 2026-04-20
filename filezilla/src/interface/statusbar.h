@@ -93,10 +93,11 @@ protected:
 class activity_logger;
 class CLed;
 class COptionsBase;
+class TimeFormatter;
 class CStatusBar final : public CWidgetsStatusBar, public COptionChangeEventHandler, protected CGlobalStateEventHandler
 {
 public:
-	CStatusBar(wxTopLevelWindow* parent, activity_logger& al, COptionsBase& options);
+	CStatusBar(wxTopLevelWindow* parent, activity_logger& al, COptionsBase& options, TimeFormatter & time_formatter);
 	virtual ~CStatusBar();
 
 	void DisplayQueueSize(int64_t totalSize, bool hasUnknown);
@@ -124,6 +125,7 @@ protected:
 	void DoDisplayQueueSize();
 
 	COptionsBase& options_;
+	TimeFormatter & time_formatter_;
 
 	SizeFormat m_sizeFormat;
 	bool m_sizeFormatThousandsSep;

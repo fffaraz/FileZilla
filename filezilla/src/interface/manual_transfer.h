@@ -2,7 +2,8 @@
 #define FILEZILLA_INTERFACE_MANUAL_TRANSFER_HEADER
 
 #include "dialogex.h"
-#include "serverdata.h"
+
+#include "../commonui/site.h"
 
 class COptionsBase;
 class CQueueView;

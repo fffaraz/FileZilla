@@ -43,7 +43,7 @@ class CRemoteListViewDropTarget final : public CFileDropTarget<wxListCtrlEx>
 {
 public:
 	CRemoteListViewDropTarget(CRemoteListView* pRemoteListView)
-		: CFileDropTarget<wxListCtrlEx>(pRemoteListView)
+		: CFileDropTarget<wxListCtrlEx>(pRemoteListView, pRemoteListView->options_, pRemoteListView->login_manager_)
 		, m_pRemoteListView(pRemoteListView)
 	{
 	}
@@ -316,9 +316,10 @@ BEGIN_EVENT_TABLE(CRemoteListView, CFileListCtrl<CGenericFileData>)
 	EVT_MENU(XRCID("ID_CONTEXT_REFRESH"), CRemoteListView::OnMenuRefresh)
 END_EVENT_TABLE()
 
-CRemoteListView::CRemoteListView(CView* pParent, CState& state, CQueueView* pQueue, COptionsBase & options, CEditHandler* edit_handler)
-	: CFileListCtrl<CGenericFileData>(pParent, pQueue, options)
+CRemoteListView::CRemoteListView(CView* pParent, CState& state, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, CEditHandler* edit_handler)
+	: CFileListCtrl<CGenericFileData>(pParent, pQueue, options, time_formatter)
 	, CStateEventHandler(state)
+	, login_manager_(lim)
 	, m_parentView(pParent)
 	, edit_handler_(edit_handler)
 {
@@ -341,7 +342,7 @@ CRemoteListView::CRemoteListView(CView* pParent, CState& state, CQueueView* pQue
 	AddColumn(_("Last modified"), wxLIST_FORMAT_LEFT, widths[3]);
 	AddColumn(_("Permissions"), wxLIST_FORMAT_LEFT, widths[4]);
 	AddColumn(_("Owner/Group"), wxLIST_FORMAT_LEFT, widths[5]);
-	LoadColumnSettings(OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
+	LoadColumnSettings(options_, OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
 
 	m_dirIcon = GetIconIndex(iconType::dir);
 	SetImageList(GetSystemImageList(), wxIMAGE_LIST_SMALL);
@@ -1711,7 +1712,7 @@ void CRemoteListView::OnMenuChmod(wxCommandEvent&)
 	int dirCount = 0;
 	std::wstring name;
 
-	char permissions[9] = {};
+	posix_chmod chmod;
 
 	long item = -1;
 	for (;;) {
@@ -1742,15 +1743,16 @@ void CRemoteListView::OnMenuChmod(wxCommandEvent&)
 		}
 		name = entry.name;
 
-		char file_perms[9];
-		if (ChmodData::ConvertPermissions(*entry.permissions, file_perms)) {
-			for (int i = 0; i < 9; i++) {
-				if (!permissions[i] || permissions[i] == file_perms[i]) {
-					permissions[i] = file_perms[i];
-				}
-				else {
-					permissions[i] = -1;
-				}
+		std::optional<posix_permissions> p = parse_permissions(fz::to_utf8(*entry.permissions));
+		if (p) {
+			if (!chmod) {
+				chmod.mask_ = posix_permissions::mask;
+				chmod.perms_ = *p;
+			}
+			else {
+				auto diff = (*p & chmod.mask_) ^ chmod.perms_;
+				chmod.mask_ &= ~diff;
+				chmod.perms_ &= ~diff;
 			}
 		}
 	}
@@ -1759,21 +1761,13 @@ void CRemoteListView::OnMenuChmod(wxCommandEvent&)
 		return;
 	}
 
-	for (int i = 0; i < 9; ++i) {
-		if (permissions[i] == -1) {
-			permissions[i] = 0;
-		}
-	}
+	CChmodDialog chmodDialog;
 
-
-	auto chmodData = std::make_unique<ChmodData>();
-	auto chmodDialog = std::make_unique<CChmodDialog>(*chmodData);
-
-	if (!chmodDialog->Create(this, fileCount, dirCount, name, permissions)) {
+	if (!chmodDialog.Create(this, fileCount, dirCount, name, chmod)) {
 		return;
 	}
 
-	if (chmodDialog->ShowModal() != wxID_OK) {
+	if (chmodDialog.ShowModal() != wxID_OK) {
 		return;
 	}
 
@@ -1783,7 +1777,7 @@ void CRemoteListView::OnMenuChmod(wxCommandEvent&)
 		return;
 	}
 
-	int const applyType = chmodData->GetApplyType();
+	ChmodData chmodData = chmodDialog.GetChmodData();
 
 	CRemoteRecursiveOperation* pRecursiveOperation = m_state.GetRemoteRecursiveOperation();
 	wxASSERT(pRecursiveOperation);
@@ -1810,25 +1804,20 @@ void CRemoteListView::OnMenuChmod(wxCommandEvent&)
 
 		const CDirentry& entry = (*m_pDirectoryListing)[index];
 
-		if (!applyType ||
-			(!entry.is_dir() && applyType == 1) ||
-			(entry.is_dir() && applyType == 2))
+		if ((!entry.is_dir() && chmodData.apply_files_) ||
+			(entry.is_dir() && chmodData.apply_dirs_))
 		{
-			char newPermissions[9]{};
-			bool res = ChmodData::ConvertPermissions(*entry.permissions, newPermissions);
-			std::wstring const newPerms = chmodData->GetPermissions(res ? newPermissions : 0, entry.is_dir());
-
-			m_state.m_pCommandQueue->ProcessCommand(new CChmodCommand(m_pDirectoryListing->path, entry.name, newPerms));
+			posix_permissions newPerms = chmodData.Apply(fz::to_utf8(*entry.permissions), entry.is_dir());
+			m_state.m_pCommandQueue->ProcessCommand(new CChmodCommand(m_pDirectoryListing->path, entry.name, fz::to_wstring_from_utf8(to_octal(newPerms, true))));
 		}
 
-		if (chmodDialog->Recursive() && entry.is_dir()) {
+		if (chmodData.recurse_ && entry.is_dir()) {
 			root.add_dir_to_visit(m_pDirectoryListing->path, entry.name);
 		}
 	}
 
-	if (chmodDialog->Recursive()) {
-		chmodDialog.reset();
-		pRecursiveOperation->SetChmodData(std::move(chmodData));
+	if (chmodData.recurse_) {
+		pRecursiveOperation->SetChmodData(chmodData);
 		pRecursiveOperation->AddRecursionRoot(std::move(root));
 		CFilterManager filter;
 		pRecursiveOperation->StartRecursiveOperation(recursive_operation::recursive_chmod, filter.GetActiveFilters());
@@ -2203,7 +2192,7 @@ void CRemoteListView::OnBeginDrag(wxListEvent&)
 	}
 	CServerPath const path = m_pDirectoryListing->path;
 
-	CRemoteDataObject *pRemoteDataObject = new CRemoteDataObject(site, m_pDirectoryListing->path);
+	CRemoteDataObject *pRemoteDataObject = new CRemoteDataObject(login_manager_, options_, site, m_pDirectoryListing->path);
 	pRemoteDataObject->Reserve(count);
 
 	CDragDropManager* pDragDropManager = CDragDropManager::Init();
@@ -2548,7 +2537,7 @@ wxString CRemoteListView::GetItemText(int item, unsigned int column)
 	}
 	else if (column == 3) {
 		const CDirentry& entry = (*m_pDirectoryListing)[index];
-		return CTimeFormat::Format(entry.time);
+		return time_formatter_.Format(entry.time);
 	}
 	else if (column == 4) {
 		return *(*m_pDirectoryListing)[index].permissions;

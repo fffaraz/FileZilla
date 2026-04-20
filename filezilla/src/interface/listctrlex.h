@@ -50,8 +50,8 @@ public:
 
 	// LoadColumnSettings needs to be called exactly once after adding
 	// all columns
-	void LoadColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId);
-	void SaveColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId);
+	void LoadColumnSettings(COptionsBase & options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId);
+	void SaveColumnSettings(COptionsBase & options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId);
 
 	int GetColumnVisibleIndex(int col) const;
 	int GetColumnActualIndex(int col) const;
@@ -141,8 +141,8 @@ private:
 	fz::datetime m_prefixSearch_lastKeyPress;
 	wxString m_prefixSearch_prefix;
 
-	bool ReadColumnWidths(interfaceOptions optionId);
-	void SaveColumnWidths(interfaceOptions optionId);
+	bool ReadColumnWidths(COptionsBase & options, interfaceOptions optionId);
+	void SaveColumnWidths(COptionsBase & options, interfaceOptions optionId);
 
 	void CreateVisibleColumnMapping();
 

@@ -104,7 +104,7 @@ public:
 	void QueueImmediateFiles();
 	void QueueImmediateFile(CFileItem* pItem);
 
-	virtual void SaveItem(pugi::xml_node& element) const override;
+	void Save(pugi::xml_node& element, COptionsBase & options, login_manager & lim) const;
 
 	void SetDefaultFileExistsAction(CFileExistsNotification::OverwriteAction action, const TransferDirection direction);
 
@@ -302,6 +302,7 @@ public:
 };
 
 class CQueue;
+class TimeFormatter;
 class CQueueViewBase : public wxListCtrlEx
 {
 public:
@@ -318,7 +319,7 @@ public:
 		colErrorReason
 	};
 
-	CQueueViewBase(CQueue* parent, COptionsBase & options, int index, wxString const& title);
+	CQueueViewBase(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, wxString const& title);
 	virtual ~CQueueViewBase();
 
 	// Gets item for given server or creates new if it doesn't exist
@@ -360,6 +361,8 @@ protected:
 	void DisplayNumberQueuedFiles();
 
 	COptionsBase& options_;
+	TimeFormatter& time_formatter_;
+	login_manager& login_manager_;
 
 	// Position at which insertions start and number of insertions
 	int m_insertionStart{-1};
@@ -402,13 +405,14 @@ class CQueueView;
 class CQueueViewFailed;
 class CQueueViewSuccessful;
 
-class CMainFrame;
 class CAsyncRequestQueue;
+class CMainFrame;
 class cert_store;
+class login_manager;
 class CQueue final : public wxAuiNotebookEx
 {
 public:
-	CQueue(wxWindow* parent, CMainFrame* pMainFrame, CAsyncRequestQueue* pAsyncRequestQueue, cert_store & certStore);
+	CQueue(wxWindow* parent, CMainFrame* pMainFrame, CAsyncRequestQueue* pAsyncRequestQueue, login_manager & lim, cert_store & certStore);
 	virtual ~CQueue() {}
 
 	inline CQueueView* GetQueueView() { return m_pQueueView; }

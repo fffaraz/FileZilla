@@ -26,8 +26,6 @@ dll_gui_install.nsh: Makefile
 	@rm -rf dlls_gui
 	@mkdir -p dlls_gui
 	"$(srcdir)/dllcopy.sh" gui "$(top_builddir)/src/interface" filezilla.exe "$(OBJDUMP)" "$(CXX)" "../src/engine/:../src/commonui/:$$PATH" "$(WX_LIBS)"
-	"$(srcdir)/dllcopy.sh" gui "$(top_builddir)/src/putty" fzsftp.exe "$(OBJDUMP)" "$(CXX)" $$PATH
-	"$(srcdir)/dllcopy.sh" gui "$(top_builddir)/src/putty" fzputtygen.exe "$(OBJDUMP)" "$(CXX)" $$PATH
 	if test -f "${top_builddir}/src/storj/fzstorj.exe"; then \
 		"$(srcdir)/dllcopy.sh" gui "$(top_builddir)/src/storj" fzstorj.exe "$(OBJDUMP)" "$(CXX)" $$PATH; \
 	fi

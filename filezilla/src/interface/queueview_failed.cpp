@@ -15,16 +15,16 @@ EVT_MENU(XRCID("ID_REQUEUEALL"), CQueueViewFailed::OnRequeueAll)
 EVT_CHAR(CQueueViewFailed::OnChar)
 END_EVENT_TABLE()
 
-CQueueViewFailed::CQueueViewFailed(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame)
-	: CQueueViewBase(parent, options, index, _("Failed transfers"))
+CQueueViewFailed::CQueueViewFailed(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame)
+	: CQueueViewBase(parent, options, time_formatter, lim, index, _("Failed transfers"))
 	, m_pMainFrame(pMainFrame)
 {
 	std::vector<ColumnId> extraCols({colTime, colErrorReason});
 	CreateColumns(extraCols);
 }
 
-CQueueViewFailed::CQueueViewFailed(CQueue* parent, COptionsBase & options, int index, CMainFrame* pMainFrame, const wxString& title)
-	: CQueueViewBase(parent, options, index, title)
+CQueueViewFailed::CQueueViewFailed(CQueue* parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, int index, CMainFrame* pMainFrame, const wxString& title)
+	: CQueueViewBase(parent, options, time_formatter, lim, index, title)
 	, m_pMainFrame(pMainFrame)
 {
 }

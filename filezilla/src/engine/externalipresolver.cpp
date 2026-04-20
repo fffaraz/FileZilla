@@ -13,8 +13,8 @@ bool checked = false;
 }
 
 CExternalIPResolver::CExternalIPResolver(fz::thread_pool & pool, fz::event_handler & handler)
-	: fz::event_handler(handler.event_loop_)
-    , fz::http::client::client(*this, fz::get_null_logger(), "FileZilla/"s + ENGINE_VERSION)
+	: fz::event_handler(handler, fz::child_event_handler)
+	, fz::http::client::client(*this, fz::get_null_logger(), "FileZilla/"s + ENGINE_VERSION)
 	, thread_pool_(pool)
 	, handler_(handler)
 {

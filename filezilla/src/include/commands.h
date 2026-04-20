@@ -290,7 +290,7 @@ public:
 	const std::vector<std::wstring>& GetFiles() const { return files_; }
 	std::vector<std::wstring>&& ExtractFiles() { return std::move(files_); }
 
-	bool valid() const { return !GetPath().empty() && !GetFiles().empty(); }
+	virtual bool valid() const override;
 
 protected:
 	CServerPath const m_path;

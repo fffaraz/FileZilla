@@ -26,14 +26,9 @@ std::unique_ptr<CNotification> CFileZillaEngine::GetNextNotification()
 	return impl_->GetNextNotification();
 }
 
-bool CFileZillaEngine::SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification)
+void CFileZillaEngine::SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification)
 {
-	return impl_->SetAsyncRequestReply(std::move(pNotification));
-}
-
-bool CFileZillaEngine::IsPendingAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> const& pNotification)
-{
-	return impl_->IsPendingAsyncRequestReply(pNotification);
+	impl_->SetAsyncRequestReply(std::move(pNotification));
 }
 
 CTransferStatus CFileZillaEngine::GetTransferStatus(bool &changed)

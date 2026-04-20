@@ -440,19 +440,19 @@ void wxListCtrlEx::ShowColumn(unsigned int col, bool show)
 	}
 }
 
-void wxListCtrlEx::LoadColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
+void wxListCtrlEx::LoadColumnSettings(COptionsBase & options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
 {
 	wxASSERT(!GetColumnCount());
 
 	if (widthsOptionId != OPTIONS_NUM) {
-		ReadColumnWidths(widthsOptionId);
+		ReadColumnWidths(options, widthsOptionId);
 	}
 
 	delete [] m_pVisibleColumnMapping;
 	m_pVisibleColumnMapping = new unsigned int[m_columnInfo.size()];
 
 	if (visibilityOptionId != OPTIONS_NUM) {
-		wxString visibleColumns = COptions::Get()->get_string(visibilityOptionId);
+		wxString visibleColumns = options.get_string(visibilityOptionId);
 		if (visibleColumns.Len() >= m_columnInfo.size()) {
 			for (unsigned int i = 0; i < m_columnInfo.size(); ++i) {
 				if (!m_columnInfo[i].fixed) {
@@ -463,7 +463,7 @@ void wxListCtrlEx::LoadColumnSettings(interfaceOptions widthsOptionId, interface
 	}
 
 	if (sortOptionId != OPTIONS_NUM) {
-		auto tokens = fz::strtok(COptions::Get()->get_string(sortOptionId), L",");
+		auto tokens = fz::strtok(options.get_string(sortOptionId), L",");
 
 		if (tokens.size() >= m_columnInfo.size()) {
 			unsigned int *order = new unsigned int[m_columnInfo.size()];
@@ -510,10 +510,10 @@ void wxListCtrlEx::LoadColumnSettings(interfaceOptions widthsOptionId, interface
 	CreateVisibleColumnMapping();
 }
 
-void wxListCtrlEx::SaveColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
+void wxListCtrlEx::SaveColumnSettings(COptionsBase& options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
 {
 	if (widthsOptionId != OPTIONS_NUM) {
-		SaveColumnWidths(widthsOptionId);
+		SaveColumnWidths(options, widthsOptionId);
 	}
 
 	if (visibilityOptionId != OPTIONS_NUM) {
@@ -526,7 +526,7 @@ void wxListCtrlEx::SaveColumnSettings(interfaceOptions widthsOptionId, interface
 				visibleColumns += L"0";
 			}
 		}
-		COptions::Get()->set(visibilityOptionId, visibleColumns);
+		options.set(visibilityOptionId, visibleColumns);
 	}
 
 	if (sortOptionId != OPTIONS_NUM) {
@@ -537,11 +537,11 @@ void wxListCtrlEx::SaveColumnSettings(interfaceOptions widthsOptionId, interface
 			}
 			order += fz::to_wstring(m_columnInfo[i].order);
 		}
-		COptions::Get()->set(sortOptionId, order);
+		options.set(sortOptionId, order);
 	}
 }
 
-bool wxListCtrlEx::ReadColumnWidths(interfaceOptions optionId)
+bool wxListCtrlEx::ReadColumnWidths(COptionsBase & options, interfaceOptions optionId)
 {
 	wxASSERT(!GetColumnCount());
 
@@ -553,7 +553,7 @@ bool wxListCtrlEx::ReadColumnWidths(interfaceOptions optionId)
 	}
 
 
-	auto tokens = fz::strtok(COptions::Get()->get_string(optionId), L" ");
+	auto tokens = fz::strtok(options.get_string(optionId), L" ");
 
 	auto const count = std::min(tokens.size(), m_columnInfo.size());
 	for (size_t i = 0; i < count; ++i) {
@@ -566,7 +566,7 @@ bool wxListCtrlEx::ReadColumnWidths(interfaceOptions optionId)
 	return true;
 }
 
-void wxListCtrlEx::SaveColumnWidths(interfaceOptions optionId)
+void wxListCtrlEx::SaveColumnWidths(COptionsBase & options, interfaceOptions optionId)
 {
 	const unsigned int count = m_columnInfo.size();
 
@@ -590,7 +590,7 @@ void wxListCtrlEx::SaveColumnWidths(interfaceOptions optionId)
 	}
 	widths.RemoveLast();
 
-	COptions::Get()->set(optionId, widths.ToStdWstring());
+	options.set(optionId, widths.ToStdWstring());
 }
 
 
@@ -822,7 +822,7 @@ void wxListCtrlEx::ShowColumnEditor()
 	if (!dlg.Create(this)) {
 		return;
 	}
-	
+
 	dlg.order_.resize(m_columnInfo.size());
 	for (size_t j = 0; j < m_columnInfo.size(); ++j) {
 		for (size_t i = 0; i < m_columnInfo.size(); ++i) {

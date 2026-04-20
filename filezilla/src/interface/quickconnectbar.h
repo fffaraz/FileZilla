@@ -1,10 +1,13 @@
 #ifndef FILEZILLA_INTERFACE_QUICKCONNECTBAR_HEADER
 #define FILEZILLA_INTERFACE_QUICKCONNECTBAR_HEADER
 
-#include "serverdata.h"
+#include "../commonui/site.h"
+
+#include <wx/panel.h>
 
 class CMainFrame;
 class COptionsBase;
+class wxTextCtrl;
 class CQuickconnectBar final : public wxPanel
 {
 public:

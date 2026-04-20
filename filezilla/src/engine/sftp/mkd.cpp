@@ -3,17 +3,6 @@
 #include "../directorycache.h"
 #include "mkd.h"
 
-namespace {
-enum mkdStates
-{
-	mkd_init = 0,
-	mkd_findparent,
-	mkd_mkdsub,
-	mkd_cwdsub,
-	mkd_tryfull
-};
-}
-
 /* Directory creation works like this: First find a parent directory into
  * which we can CWD, then create the subdirs one by one. If either part
  * fails, try MKD with the full path directly.
@@ -21,6 +10,10 @@ enum mkdStates
 
 int CSftpMkdirOpData::Send()
 {
+	if (!sftp_) {
+		return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
+	}
+
 	if (!opLock_) {
 		opLock_ = controlSocket_.Lock(locking_reason::mkdir, path_);
 	}
@@ -28,115 +21,63 @@ int CSftpMkdirOpData::Send()
 		return FZ_REPLY_WOULDBLOCK;
 	}
 
-	switch (opState)
-	{
-	case mkd_init:
-		if (controlSocket_.operations_.size() == 1) {
-			log(logmsg::status, _("Creating directory '%s'..."), path_.GetPath());
-		}
-
-		if (!currentPath_.empty()) {
-			// Unless the server is broken, a directory already exists if current directory is a subdir of it.
-			if (currentPath_ == path_ || currentPath_.IsSubdirOf(path_, false)) {
-				return FZ_REPLY_OK;
-			}
-
-			if (currentPath_.IsParentOf(path_, false)) {
-				commonParent_ = currentPath_;
-			}
-			else {
-				commonParent_ = path_.GetCommonParent(currentPath_);
-			}
-		}
-
-		if (!path_.HasParent()) {
-			opState = mkd_tryfull;
-		}
-		else {
-			currentMkdPath_ = path_.GetParent();
-			segments_.push_back(path_.GetLastSegment());
-
-			if (currentMkdPath_ == currentPath_) {
-				opState = mkd_mkdsub;
-			}
-			else {
-				opState = mkd_findparent;
-			}
-		}
-		return FZ_REPLY_CONTINUE;
-	case mkd_findparent:
-	case mkd_cwdsub:
-		currentPath_.clear();
-		return controlSocket_.SendCommand(L"cd " + controlSocket_.QuoteFilename(currentMkdPath_.GetPath()));
-	case mkd_mkdsub:
-		return controlSocket_.SendCommand(L"mkdir " + controlSocket_.QuoteFilename(segments_.back()));
-	case mkd_tryfull:
-		return controlSocket_.SendCommand(L"mkdir " + controlSocket_.QuoteFilename(path_.GetPath()));
-	default:
-		log(logmsg::debug_warning, L"unknown op state: %d", opState);
+	if (controlSocket_.operations_.size() == 1) {
+		log(logmsg::status, _("Creating directory '%s'..."), path_.GetPath());
 	}
 
-	return FZ_REPLY_INTERNALERROR;
+	if (!currentPath_.empty()) {
+		// Unless the server is broken, a directory already exists if current directory is a subdir of it.
+		if (currentPath_ == path_ || currentPath_.IsSubdirOf(path_, false)) {
+			return FZ_REPLY_OK;
+		}
+
+		if (currentPath_.IsParentOf(path_, false)) {
+			commonParent_ = currentPath_;
+		}
+		else {
+			commonParent_ = path_.GetCommonParent(currentPath_);
+		}
+	}
+
+	auto p = path_;
+	while (p.HasParent() && p != commonParent_) {
+		paths_.push_back(p);
+		p.MakeParent();
+	}
+	if (p != commonParent_) {
+		paths_.push_back(p);
+	}
+
+	fz::ssh::sftp::attributes attrs;
+	for (auto it = paths_.rbegin(); it != paths_.rend(); ++it) {
+		sftp_->mkdir(this, controlSocket_.ConvToServer(it->GetPath()), attrs);
+	}
+
+	return FZ_REPLY_WOULDBLOCK;
 }
 
-int CSftpMkdirOpData::ParseResponse()
+CSftpOpData::continuation CSftpMkdirOpData::do_process_status(fz::ssh::sftp::status_code code, std::wstring_view msg)
 {
-	bool successful = controlSocket_.result_ == FZ_REPLY_OK;
-	switch (opState)
-	{
-	case mkd_findparent:
-		if (successful) {
-			currentPath_ = currentMkdPath_;
-			opState = mkd_mkdsub;
-		}
-		else if (currentMkdPath_ == commonParent_) {
-			opState = mkd_tryfull;
-		}
-		else if (currentMkdPath_.HasParent()) {
-			segments_.push_back(currentMkdPath_.GetLastSegment());
-			currentMkdPath_ = currentMkdPath_.GetParent();
-		}
-		else {
-			opState = mkd_tryfull;
-		}
-		return FZ_REPLY_CONTINUE;
-	case mkd_mkdsub:
-		if (successful) {
-			if (segments_.empty()) {
-				log(logmsg::debug_warning, L"  segments_ is empty");
-				return FZ_REPLY_INTERNALERROR;
-			}
-			engine_.GetDirectoryCache().UpdateFile(currentServer_, currentMkdPath_, segments_.back(), true, CDirectoryCache::dir);
-			controlSocket_.SendDirectoryListingNotification(currentMkdPath_, false);
+	bool success = code == fz::ssh::sftp::status_code::SSH_FX_OK;
 
-			currentMkdPath_.AddSegment(segments_.back());
-			segments_.pop_back();
-
-			if (segments_.empty()) {
-				return FZ_REPLY_OK;
-			}
-			else {
-				opState = mkd_cwdsub;
-			}
+	if (success) {
+		auto p = paths_.back();
+		if (p.HasParent()) {
+			engine_.GetDirectoryCache().UpdateFile(currentServer_, p.GetParent(), p.GetLastSegment(), true, CDirectoryCache::dir);
+			controlSocket_.SendDirectoryListingNotification(p.GetParent(), false);
+		}
+	}
+	if (paths_.size() == 1) {
+		if (success) {
+			log(fz::logmsg::status, _("Directory creation succeeded."), msg);
+			trigger_reset(FZ_REPLY_OK);
 		}
 		else {
-			opState = mkd_tryfull;
+			log(fz::logmsg::error, _("Could not create directory: %s"), msg);
+			trigger_reset(FZ_REPLY_ERROR);
 		}
-		return FZ_REPLY_CONTINUE;
-	case mkd_cwdsub:
-		if (successful) {
-			currentPath_ = currentMkdPath_;
-			opState = mkd_mkdsub;
-		}
-		else {
-			opState = mkd_tryfull;
-		}
-		return FZ_REPLY_CONTINUE;
-	case mkd_tryfull:
-		return successful ? FZ_REPLY_OK : FZ_REPLY_ERROR;
-	default:
-		log(logmsg::debug_warning, L"unknown op state: %d", opState);
 	}
 
-	return FZ_REPLY_INTERNALERROR;
+	paths_.pop_back();
+	return continuation::next;
 }

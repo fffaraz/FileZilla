@@ -6,6 +6,7 @@
 #include "../include/serverpath.h"
 #include "../include/directorylisting.h"
 
+#include "chmod_data.h"
 #include "filter.h"
 #include "recursive_operation.h"
 #include "visibility.h"
@@ -71,7 +72,7 @@ public:
 	void start_recursive_operation(OperationMode mode, ActiveFilters const& filters, bool refresh_listings);
 
 	// Needed for recursive_chmod
-	void SetChmodData(std::unique_ptr<ChmodData>&& chmodData);
+	void SetChmodData(ChmodData const& chmodData);
 
 	virtual void StopRecursiveOperation();
 
@@ -122,7 +123,7 @@ protected:
 	std::deque<recursion_root> recursion_roots_;
 
 	// Needed for recursive_chmod
-	std::unique_ptr<ChmodData> chmodData_;
+	std::optional<ChmodData> chmodData_;
 
 	int listFlags_{};
 };

@@ -4,11 +4,11 @@
 #include <wx/dnd.h>
 #include <wx/timer.h>
 
-template<class Control, class Base = wxDropTarget>
-class CScrollableDropTarget : public wxEvtHandler, public Base
+template<class Control, class Base = wxDropTarget, typename ...Args>
+class CScrollableDropTarget : public Base
 {
 public:
-	CScrollableDropTarget(Control* pCtrl);
+	CScrollableDropTarget(Control* pCtrl, Args&&... args);
 
 	virtual bool OnDrop(wxCoord x, wxCoord y);
 
@@ -27,15 +27,13 @@ protected:
 	bool IsTopScroll(wxPoint p) const;
 	bool IsBottomScroll(wxPoint p) const;
 
-	void OnTimer(wxTimerEvent& /*event*/);
+	void OnTimer();
 
 protected:
 	Control *m_pCtrl;
 
 	wxTimer m_timer;
 	int m_count{};
-
-	DECLARE_EVENT_TABLE()
 };
 
 #endif

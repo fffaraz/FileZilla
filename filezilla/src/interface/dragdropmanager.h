@@ -8,7 +8,9 @@
 
 // As such, keep track on the objects.
 
-#include "serverdata.h"
+#include "../commonui/site.h"
+class wxDataObject;
+class wxWindow;
 
 class CDragDropManager final
 {

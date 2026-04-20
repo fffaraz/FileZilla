@@ -1,4 +1,5 @@
 #include "xmlfunctions.h"
+#include "msgbox.h"
 #include "loginmanager.h"
 #include "Options.h"
 
@@ -20,9 +21,4 @@ bool SaveWithErrorDialog(CXmlFile& file, bool updateMetadata)
 		wxMessageBoxEx(msg + _T("\n") + error, _("Error writing xml file"), wxICON_ERROR);
 	}
 	return res;
-}
-
-void SetServer(pugi::xml_node node, Site const& site)
-{
-	SetServer(node, site, CLoginManager::Get(), *COptions::Get());
 }

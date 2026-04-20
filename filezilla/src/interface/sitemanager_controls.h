@@ -1,11 +1,10 @@
 #ifndef FILEZILLA_INTERFACE_SITEMANAGER_CONTROLS_HEADER
 #define FILEZILLA_INTERFACE_SITEMANAGER_CONTROLS_HEADER
 
-#include "serverdata.h"
-
 struct DialogLayout;
 class Site;
 enum class LogonType;
+class wxWindow;
 
 class SiteControls
 {

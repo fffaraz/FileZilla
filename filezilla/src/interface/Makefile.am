@@ -19,6 +19,7 @@ libfzmac_a_CPPFLAGS += $(WX_CPPFLAGS)
 filezilla_DEPENDENCIES += libfzmac.a
 
 libfzmac_a_SOURCES = \
+	dialogex_mac.mm \
 	dropsource_mac.mm \
 	power_management_osx.mm \
 	toolbar.mm
@@ -56,7 +57,6 @@ filezilla_SOURCES = \
 		filter_conditions_dialog.cpp \
 		filteredit.cpp \
 		file_utils.cpp \
-		fzputtygen_interface.cpp \
 		graphics.cpp \
 		import.cpp \
 		infotext.cpp \
@@ -92,7 +92,6 @@ filezilla_SOURCES = \
 		RemoteTreeView.cpp \
 		renderer.cpp \
 		search.cpp \
-		serverdata.cpp \
 		settings/optionspage.cpp \
 		settings/optionspage_connection.cpp \
 		settings/optionspage_dateformatting.cpp \
@@ -174,7 +173,6 @@ noinst_HEADERS = \
 		filter_conditions_dialog.h \
 		filteredit.h \
 		file_utils.h \
-		fzputtygen_interface.h \
 		graphics.h \
 		import.h \
 		infotext.h \
@@ -210,7 +208,6 @@ noinst_HEADERS = \
 		RemoteTreeView.h \
 		renderer.h \
 		search.h \
-		serverdata.h \
 		settings/optionspage.h \
 		settings/optionspage_connection.h \
 		settings/optionspage_dateformatting.h \
@@ -302,11 +299,12 @@ filezilla_DEPENDENCIES += ../commonui/libfzclient-commonui-private.la ../engine/
 
 filezilla_CPPFLAGS = -I$(top_builddir)/config
 filezilla_CPPFLAGS += $(LIBFILEZILLA_CFLAGS)
+filezilla_CPPFLAGS += $(LIBFZSSH_CFLAGS)
 filezilla_CPPFLAGS += $(WX_CPPFLAGS)
 filezilla_CXXFLAGS = $(WX_CXXFLAGS_ONLY)
 filezilla_CFLAGS = $(WX_CFLAGS_ONLY)
 
-filezilla_LDFLAGS = ../commonui/libfzclient-commonui-private.la ../engine/libfzclient-private.la $(LIBFILEZILLA_LIBS)
+filezilla_LDFLAGS = ../commonui/libfzclient-commonui-private.la ../engine/libfzclient-private.la $(LIBFZSSH_LIBS) $(LIBFILEZILLA_LIBS)
 
 filezilla_LDFLAGS += $(PUGIXML_LIBS)
 
@@ -337,8 +335,6 @@ if HAVE_LIBPUGIXML
 else
 filezilla_DEPENDENCIES += $(PUGIXML_LIBS)
 endif
-
-dist_noinst_DATA = interface.vcxproj
 
 if MACAPPBUNDLE
 noinst_DATA = $(top_builddir)/FileZilla.app/Contents/MacOS/filezilla$(EXEEXT)

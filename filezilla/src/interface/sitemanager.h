@@ -22,7 +22,7 @@ public:
 
 	static std::pair<std::unique_ptr<Site>, Bookmark> GetSiteByPath(COptionsBase & options, std::wstring const& sitePath, bool printErrors = true);
 
-	static std::wstring AddServer(Site site);
+	static std::wstring AddServer(Site site, COptionsBase & options, login_manager& lim);
 	static bool AddBookmark(std::wstring sitePath, wxString const& name, wxString const& local_dir, CServerPath const& remote_dir, bool sync, bool comparison);
 	static bool ClearBookmarks(std::wstring sitePath);
 
@@ -33,10 +33,10 @@ public:
 	static int GetColourIndex(site_colour const& c);
 	static wxString GetColourName(int i);
 
-	static bool ImportSites(pugi::xml_node sites);
+	static bool ImportSites(pugi::xml_node sites, COptionsBase & options, login_manager& lim);
 
 protected:
-	static bool ImportSites(pugi::xml_node sitesToImport, pugi::xml_node existingSites, int64_t version);
+	static bool ImportSites(pugi::xml_node sitesToImport, pugi::xml_node existingSites, int64_t version, COptionsBase & options, login_manager& lim);
 
 	static void Rewrite(CLoginManager & loginManager, COptionsBase& options, pugi::xml_node element, bool on_failure_set_to_ask, int64_t version);
 

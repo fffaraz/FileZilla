@@ -105,6 +105,19 @@ CDeleteCommand::CDeleteCommand(const CServerPath& path, std::vector<std::wstring
 {
 }
 
+bool CDeleteCommand::valid() const
+{
+	if (GetPath().empty() || GetFiles().empty()) {
+		return false;
+	}
+	for (auto const& f : files_) {
+		if (f.empty()) {
+			return false;
+		}
+	}
+	return true;
+}
+
 CRemoveDirCommand::CRemoveDirCommand(const CServerPath& path, std::wstring const& subDir)
 	: m_path(path), m_subDir(subDir)
 {

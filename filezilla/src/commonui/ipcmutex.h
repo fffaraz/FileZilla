@@ -31,7 +31,9 @@ enum t_ipcMutexType
 	MUTEX_GLOBALBOOKMARKS = 9,
 	MUTEX_SEARCHCONDITIONS = 10,
 	MUTEX_MAC_SANDBOX_USERDIRS = 11, // Only used if configured with --enable-mac-sandbox
-	MUTEX_TOKENSTORE = 12
+	MUTEX_TOKENSTORE = 12,
+	MUTEX_URLHANDLER = 13,
+	MUTEX_TRUSTEDHOSTKEYS = 14,
 };
 
 // this sets the path where the lock file is located in non-windows systems

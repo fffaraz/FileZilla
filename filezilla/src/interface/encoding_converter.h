@@ -14,6 +14,8 @@ public:
 	virtual std::wstring toLocal(std::wstring const& encoding, char const* buffer, size_t len) const override;
 	virtual std::string toServer(std::wstring const& encoding, wchar_t const* buffer, size_t len) const override;
 
+	static bool isValidEncoding(std::wstring const& encoding);
+
 private:
 	CustomEncodingConverter() = default;
 };

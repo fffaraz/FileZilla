@@ -38,11 +38,14 @@ protected:
 	std::vector<std::string> files_;
 };
 
+class login_manager;
+class COptionsBase;
+
 class CRemoteDataObject final : public wxDataObjectSimple
 {
 public:
-	CRemoteDataObject(Site const& site, const CServerPath& path);
-	CRemoteDataObject();
+	CRemoteDataObject(login_manager & lim, COptionsBase & options, Site const& site, const CServerPath& path);
+	CRemoteDataObject(login_manager & lim, COptionsBase & options);
 
 	virtual size_t GetDataSize() const;
 	virtual bool GetDataHere(void *buf ) const;
@@ -72,6 +75,9 @@ public:
 	void AddFile(std::wstring const& name, bool dir, int64_t size, bool link);
 
 protected:
+	login_manager & lim_;
+	COptionsBase & options_;
+
 	Site site_;
 	CServerPath m_path;
 
@@ -121,7 +127,7 @@ protected:
 class FileDropTargetBase : public wxDropTarget
 {
 public:
-        FileDropTargetBase();
+	FileDropTargetBase(COptionsBase& options, login_manager& lim);
 
 	CLocalDataObject* GetLocalDataObject();
 	CRemoteDataObject* GetRemoteDataObject();
@@ -137,10 +143,10 @@ private:
 };
 
 template<typename Control>
-class CFileDropTarget : public CScrollableDropTarget<Control, FileDropTargetBase>
+class CFileDropTarget : public CScrollableDropTarget<Control, FileDropTargetBase, COptionsBase&, login_manager&>
 {
 public:
-       CFileDropTarget(Control* ctrl);
+	CFileDropTarget(Control* ctrl, COptionsBase& options, login_manager& lim);
 };
 
 #endif

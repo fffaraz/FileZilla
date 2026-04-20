@@ -3,50 +3,70 @@
 #include "chmod.h"
 #include "../directorycache.h"
 
+#include "../../include/posix_chmod.h"
+
 namespace {
-enum chmodStates
-{
-	chmod_init,
-	chmod_waitcwd,
-	chmod_chmod
+enum state {
+	getstat,
+	setstat
 };
 }
 
 int CSftpChmodOpData::Send()
 {
-	if (opState == chmod_init) {
-		log(logmsg::status, _("Setting permissions of '%s' to '%s'"), command_.GetPath().FormatFilename(command_.GetFile()), command_.GetPermission());
-		controlSocket_.ChangeDir(command_.GetPath());
-		opState = chmod_waitcwd;
-		return FZ_REPLY_CONTINUE;
-	}
-	else if (opState == chmod_chmod) {
-		engine_.GetDirectoryCache().UpdateFile(currentServer_, command_.GetPath(), command_.GetFile(), false, CDirectoryCache::unknown);
-
-		std::wstring quotedFilename = controlSocket_.QuoteFilename(command_.GetPath().FormatFilename(command_.GetFile(), !useAbsolute_));
-
-		return controlSocket_.SendCommand(L"chmod " + command_.GetPermission() + L" " + quotedFilename);
+	if (!sftp_) {
+		return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
 	}
 
-	return FZ_REPLY_INTERNALERROR;
+	log(logmsg::status, _("Setting permissions of '%s' to '%s'"), command_.GetPath().FormatFilename(command_.GetFile()), command_.GetPermission());
+
+	engine_.GetDirectoryCache().UpdateFile(currentServer_, command_.GetPath(), command_.GetFile(), false, CDirectoryCache::unknown);
+
+	sftp_->stat(this, controlSocket_.ConvToServer(command_.GetPath().FormatFilename(command_.GetFile())));
+
+	return FZ_REPLY_WOULDBLOCK;
 }
 
-int CSftpChmodOpData::ParseResponse()
+CSftpOpData::continuation CSftpChmodOpData::do_process_status(fz::ssh::sftp::status_code code, std::wstring_view msg)
 {
-	return controlSocket_.result_;
-}
-
-int CSftpChmodOpData::SubcommandResult(int prevResult, COpData const&)
-{
-	if (opState == chmod_waitcwd) {
-		if (prevResult != FZ_REPLY_OK) {
-			useAbsolute_ = true;
-		}
-
-		opState = chmod_chmod;
-		return FZ_REPLY_CONTINUE;
+	if (opState == getstat) {
+		log(logmsg::error, _("Could not get file attributes: %s"), msg);
+		trigger_reset(FZ_REPLY_CRITICALERROR);
 	}
 	else {
-		return FZ_REPLY_INTERNALERROR;
+		if (code == fz::ssh::sftp::status_code::SSH_FX_OK) {
+			trigger_reset(FZ_REPLY_OK);
+		}
+		else {
+			log(logmsg::error, _("Could not set file attributes: %s"), msg);
+			trigger_reset(FZ_REPLY_CRITICALERROR);
+		}
 	}
+	return continuation::next;
+}
+
+CSftpOpData::continuation CSftpChmodOpData::process_attributes(fz::ssh::sftp::attributes & attrs)
+{
+	if (!attrs.perms_) {
+		log(logmsg::error, _("Server did not return old permissions to update"));
+		trigger_reset(FZ_REPLY_CRITICALERROR);
+		return continuation::next;
+	}
+
+	fz::ssh::sftp::attributes newAttrs;
+	newAttrs.perms_ = *attrs.perms_ & ~07777;
+
+	auto perms = parse_permissions(fz::to_utf8(command_.GetPermission()));
+	if (!perms) {
+		log(logmsg::error, _("Could not parse new permissions"));
+		trigger_reset(FZ_REPLY_SYNTAXERROR);
+		return continuation::next;
+	}
+
+	*newAttrs.perms_ |= static_cast<std::underlying_type_t<posix_permissions>>(*perms);
+	sftp_->setstat(this, controlSocket_.ConvToServer(command_.GetPath().FormatFilename(command_.GetFile())), newAttrs);
+
+	opState = setstat;
+
+	return continuation::next;
 }
