@@ -10,6 +10,7 @@ class EventloopTest final : public CppUnit::TestFixture
 	CPPUNIT_TEST(testFilter);
 	CPPUNIT_TEST(testCondition);
 	CPPUNIT_TEST(testTimer);
+	CPPUNIT_TEST(testSelfremove);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -20,6 +21,7 @@ public:
 	void testFilter();
 	void testCondition();
 	void testTimer();
+	void testSelfremove();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EventloopTest);
@@ -253,4 +255,68 @@ void EventloopTest::testTimer()
 	handler.id_ = handler.add_timer(fz::duration::from_milliseconds(1), true);
 
 	CPPUNIT_ASSERT(handler.cond_.wait(l, fz::duration::from_seconds(1)));
+}
+
+namespace {
+struct selfremove_event_type;
+typedef fz::simple_event<selfremove_event_type, bool> selfremove_event;
+
+class parent_handler final : public fz::event_handler
+{
+public:
+	parent_handler(fz::event_loop & l)
+		: fz::event_handler(l)
+	{}
+
+	virtual ~parent_handler()
+	{
+		remove_handler();
+	}
+
+	virtual void operator()(fz::event_base const&) override {}
+};
+
+class selfremove_handler final : public fz::event_handler
+{
+public:
+	selfremove_handler(event_handler& parent)
+		: fz::event_handler(parent)//, fz::child_event_handler)
+		, parent_(parent)
+	{}
+
+	virtual ~selfremove_handler()
+	{
+		remove_handler();
+	}
+
+	virtual void operator()(fz::event_base const& ev) override
+	{
+
+		auto &p = parent_;
+		delete this;
+		p.resend_current_event();
+		bool stop = std::get<0>(static_cast<selfremove_event const&>(ev).v_);
+		if (stop) {
+			p.remove_handler();
+			p.event_loop_.stop();
+		}
+	}
+
+	event_handler& parent_;
+};
+}
+
+void EventloopTest::testSelfremove()
+{
+	// Valgrind must not report problems.
+	fz::event_loop loop(fz::event_loop::threadless);
+
+	parent_handler p(loop);
+	auto h1 = new selfremove_handler(p);
+	auto h2 = new selfremove_handler(p);
+
+	h1->send_event<selfremove_event>(false);
+	h2->send_event<selfremove_event>(true);
+
+	loop.run();
 }

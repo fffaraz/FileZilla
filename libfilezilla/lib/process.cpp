@@ -954,12 +954,12 @@ bool process::stop(duration const& timeout)
 
 rwresult process::read(void* buffer, size_t len)
 {
-	return impl_ ? impl_->read(buffer, len) : rwresult{rwresult::invalid};
+	return impl_ ? impl_->read(buffer, len) : rwresult{rwresult::invalid, 0};
 }
 
 rwresult process::write(void const* buffer, size_t len)
 {
-	return impl_ ? impl_->write(buffer, len) : rwresult{rwresult::invalid};
+	return impl_ ? impl_->write(buffer, len) : rwresult{rwresult::invalid, 0};
 }
 
 #if FZ_WINDOWS

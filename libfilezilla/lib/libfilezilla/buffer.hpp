@@ -98,6 +98,8 @@ public:
 	 */
 	void clear();
 
+	void clear_and_free();
+
 	/** \brief Appends the passed data to the buffer.
 	 *
 	 * The number of reallocations as result to repeated append are amortized O(1)

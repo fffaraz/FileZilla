@@ -309,6 +309,13 @@ int do_set_flags(socket::socket_t fd, int flags, int flags_mask, duration const&
 #endif
 #endif
 	}
+	if (flags_mask & socket::flag_oobinline) {
+		const int value = (flags & socket::flag_oobinline) ? 1 : 0;;
+		int res = setsockopt(fd, SOL_SOCKET, SO_OOBINLINE, (const char*)&value, sizeof(value));
+		if (res != 0) {
+			return last_socket_error();
+		}
+	}
 
 	return 0;
 }

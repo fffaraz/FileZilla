@@ -1,3 +1,26 @@
+0.55.4 (2026-04-16)
+
+- Fixed a crash if a nested event handler gets deleted
+
+0.55.3 (2026-04-13)
+
+- Fix initialization of sha2-384
+
+0.55.2 (2026-03-23)
+
++ Added fz::buffer::clear_and_free
++ Added fz::event_handler::remove_events<T>() to remove all events of a given type.
+
+0.55.1 (2026-03-18)
+
++ Added fz::socket::flag_oobinline
+
+0.55.0 (2026-03-16)
+
++ MSW: Added functionality to iterate over registry values
++ Added SHA3 support for fz::hash_accumulator
+- Fix handling of certificates without subject due to gnutls_x509_get_dn3 returning an error instead of an empty DN
+
 0.54.1 (2026-02-10)
 
 + Added file_reader::mtime()

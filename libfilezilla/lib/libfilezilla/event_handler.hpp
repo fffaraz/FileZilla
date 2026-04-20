@@ -185,8 +185,16 @@ public:
 
 	void remove_events(event_source const* const source);
 
+	template<typename T>
+	void remove_events() {
+		remove_events_of_type(T::type());
+	}
+
 	event_loop & event_loop_;
+
 private:
+	void remove_events_of_type(size_t t);
+
 	friend class event_loop;
 	bool removing_{};
 

@@ -8,6 +8,7 @@
 #include <nettle/md5.h>
 #include <nettle/memops.h>
 #include <nettle/pbkdf2.h>
+#include <nettle/sha3.h>
 
 // Undo Nettle's horrible namespace mangling fuckery
 #ifdef pbkdf2_hmac_sha256
@@ -34,10 +35,13 @@ size_t get_digest_size(hash_algorithm alg)
 		case hash_algorithm::sha1:
 			return 160/8;
 		case hash_algorithm::sha256:
+		case hash_algorithm::sha3_256:
 			return 256/8;
 		case hash_algorithm::sha384:
+		case hash_algorithm::sha3_384:
 			return 384/8;
 		case hash_algorithm::sha512:
+		case hash_algorithm::sha3_512:
 			return 512/8;
 	}
 	return {};
@@ -261,7 +265,7 @@ private:
 	sha256_ctx ctx_;
 };
 
-class hash_accumulator_sha512 : public hash_accumulator::impl
+class hash_accumulator_sha512 final : public hash_accumulator::impl
 {
 public:
 	hash_accumulator_sha512()
@@ -281,7 +285,7 @@ public:
 		nettle_sha512_init(&ctx_);
 	}
 
-	virtual void digest(uint8_t* out) override
+	virtual void digest(uint8_t* out) override final
 	{
 		nettle_sha512_digest(&ctx_, SHA512_DIGEST_SIZE, out);
 	}
@@ -290,17 +294,124 @@ protected:
 	sha512_ctx ctx_;
 };
 
-class hash_accumulator_sha384 final : public hash_accumulator_sha512
+class hash_accumulator_sha384 final : public hash_accumulator::impl
 {
 public:
+	hash_accumulator_sha384()
+	{
+		reinit();
+	}
+
 	virtual size_t digest_size() const override { return SHA384_DIGEST_SIZE; }
 
+	virtual void update(uint8_t const* data, size_t size) override final
+	{
+		sha384_update(&ctx_, size, data);
+	}
+
+	virtual void reinit() override final
+	{
+		nettle_sha384_init(&ctx_);
+	}
 
 	virtual void digest(uint8_t* out) override
 	{
-		nettle_sha512_digest(&ctx_, SHA384_DIGEST_SIZE, out);
+		nettle_sha384_digest(&ctx_, SHA384_DIGEST_SIZE, out);
 	}
+
+protected:
+	sha384_ctx ctx_;
 };
+
+class hash_accumulator_sha3_256 : public hash_accumulator::impl
+{
+public:
+	hash_accumulator_sha3_256()
+	{
+		reinit();
+	}
+
+	virtual size_t digest_size() const override { return SHA3_256_DIGEST_SIZE; }
+
+	virtual void update(uint8_t const* data, size_t size) override final
+	{
+		nettle_sha3_256_update(&ctx_, size, data);
+	}
+
+	virtual void reinit() override final
+	{
+		nettle_sha3_256_init(&ctx_);
+	}
+
+	virtual void digest(uint8_t* out) override
+	{
+		nettle_sha3_256_digest(&ctx_, SHA3_256_DIGEST_SIZE, out);
+	}
+
+protected:
+	sha3_256_ctx ctx_;
+};
+
+
+class hash_accumulator_sha3_384 : public hash_accumulator::impl
+{
+public:
+	hash_accumulator_sha3_384()
+	{
+		reinit();
+	}
+
+	virtual size_t digest_size() const override { return SHA3_384_DIGEST_SIZE; }
+
+	virtual void update(uint8_t const* data, size_t size) override final
+	{
+		nettle_sha3_384_update(&ctx_, size, data);
+	}
+
+	virtual void reinit() override final
+	{
+		nettle_sha3_384_init(&ctx_);
+	}
+
+	virtual void digest(uint8_t* out) override
+	{
+		nettle_sha3_384_digest(&ctx_, SHA3_384_DIGEST_SIZE, out);
+	}
+
+protected:
+	sha3_384_ctx ctx_;
+};
+
+
+class hash_accumulator_sha3_512 : public hash_accumulator::impl
+{
+public:
+	hash_accumulator_sha3_512()
+	{
+		reinit();
+	}
+
+	virtual size_t digest_size() const override { return SHA3_512_DIGEST_SIZE; }
+
+	virtual void update(uint8_t const* data, size_t size) override final
+	{
+		nettle_sha3_512_update(&ctx_, size, data);
+	}
+
+	virtual void reinit() override final
+	{
+		nettle_sha3_512_init(&ctx_);
+	}
+
+	virtual void digest(uint8_t* out) override
+	{
+		nettle_sha3_512_digest(&ctx_, SHA3_512_DIGEST_SIZE, out);
+	}
+
+protected:
+	sha3_512_ctx ctx_;
+};
+
 
 class hash_accumulator_hmac_sha256 final : public hash_accumulator::impl
 {
@@ -409,6 +520,15 @@ hash_accumulator::hash_accumulator(hash_algorithm algorithm)
 		break;
 	case hash_algorithm::sha512:
 		impl_ = new hash_accumulator_sha512;
+		break;
+	case hash_algorithm::sha3_256:
+		impl_ = new hash_accumulator_sha3_256;
+		break;
+	case hash_algorithm::sha3_384:
+		impl_ = new hash_accumulator_sha3_384;
+		break;
+	case hash_algorithm::sha3_512:
+		impl_ = new hash_accumulator_sha3_512;
 		break;
 	}
 }
@@ -604,6 +724,22 @@ std::vector<uint8_t> sha256_impl(DataContainer const& in)
 }
 
 template<typename DataContainer>
+std::vector<uint8_t> sha384_impl(DataContainer const& in)
+{
+	static_assert(sizeof(typename DataContainer::value_type) == 1, "Bad container type");
+
+	hash_accumulator_sha384 acc;
+	if (!in.empty()) {
+		acc.update(reinterpret_cast<uint8_t const*>(in.data()), in.size());
+	}
+	std::vector<uint8_t> ret;
+	ret.resize(SHA384_DIGEST_SIZE);
+	acc.digest(ret.data());
+	return ret;
+
+}
+
+template<typename DataContainer>
 std::vector<uint8_t> sha512_impl(DataContainer const& in)
 {
 	static_assert(sizeof(typename DataContainer::value_type) == 1, "Bad container type");
@@ -690,6 +826,16 @@ std::vector<uint8_t> sha256(std::vector<uint8_t> const& data)
 std::vector<uint8_t> sha256(std::string_view const& data)
 {
 	return sha256_impl(data);
+}
+
+std::vector<uint8_t> sha384(std::vector<uint8_t> const& data)
+{
+	return sha384_impl(data);
+}
+
+std::vector<uint8_t> sha384(std::string_view const& data)
+{
+	return sha384_impl(data);
 }
 
 std::vector<uint8_t> sha512(std::vector<uint8_t> const& data)

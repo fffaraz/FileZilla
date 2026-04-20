@@ -128,6 +128,15 @@ void buffer::clear()
 	pos_ = data_;
 }
 
+void buffer::clear_and_free()
+{
+	size_ = 0;
+	capacity_ = 0;
+	pos_ = nullptr;
+	delete [] data_;
+	data_ = nullptr;
+}
+
 void buffer::append(unsigned char const* data, size_t len)
 {
 	if (!len) {

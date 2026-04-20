@@ -86,6 +86,9 @@ void event_loop::remove_handler(event_handler* handler)
 	auto *cur = handler;
 	do {
 		cur->removing_ = true;
+		if (cur == active_handler_) {
+			active_handler_removed_ = true;
+		}
 		if (cur->child_) {
 			cur = cur->child_;
 		}
@@ -100,7 +103,8 @@ void event_loop::remove_handler(event_handler* handler)
 	}
 	while (cur && cur != handler);
 
-	// Now that no new events/timers can be added for the whole subtree
+	// From here on, no new events/timers can be added for the whole subtree
+
 	pending_events_.erase(
 		std::remove_if(pending_events_.begin(), pending_events_.end(),
 			[&](Events::value_type const& v) {
@@ -126,17 +130,14 @@ void event_loop::remove_handler(event_handler* handler)
 		deadline_ = monotonic_clock();
 	}
 
-	if (is_part_of_group(active_handler_, handler)) {
-		if (thread::own_id() != thread_id_) {
-			while (is_part_of_group(active_handler_, handler)) {
-				l.unlock();
-				yield();
-				l.lock();
-			}
-		}
-		else {
-			resend_ = false;
-		}
+	// We must loop while active_handler_removed_ is true, as it might
+	// have been deleted and the pointer value already reused for handler
+	if ((active_handler_removed_ || is_part_of_group(active_handler_, handler)) && thread::own_id() != thread_id_) {
+		do {
+			l.unlock();
+			yield();
+			l.lock();
+		} while (active_handler_removed_ || handler == active_handler_);
 	}
 
 	// Must remove self from parents here, otherwise event handler destructor would need to lock mutex
@@ -161,6 +162,18 @@ void event_loop::filter_events(std::function<bool(event_handler*& h, event_base&
 		),
 		pending_events_.end()
 	);
+}
+
+void event_loop::remove_events(event_source const* const source)
+{
+	auto event_filter = [&](event_handler*&, event_base& ev) -> bool {
+			auto sev = dynamic_cast<event_with_source_base*>(&ev);
+			if (sev) {
+				return sev->source() == source;
+			}
+			return false;
+		};
+	filter_events(event_filter);
 }
 
 timer_id event_loop::add_timer(event_handler* handler, monotonic_clock const &deadline, duration const& interval)
@@ -288,10 +301,11 @@ bool event_loop::process_event(scoped_lock & l)
 	if (resend_) {
 		resend_ = false;
 		l.lock();
-		if (!std::get<0>(ev)->removing_) {
+		if (!active_handler_removed_) {
 			pending_events_.emplace_back(ev);
 		}
-		else { // Unlikely, but possible to get into this branch branch
+		else {
+			// Unlikely, but possible to get into this branch branch
 			if (std::get<2>(ev)) {
 				delete std::get<1>(ev);
 			}
@@ -305,6 +319,7 @@ bool event_loop::process_event(scoped_lock & l)
 	}
 
 	active_handler_ = nullptr;
+	active_handler_removed_ = false;
 
 	return true;
 }
@@ -448,6 +463,7 @@ bool event_loop::process_timers(scoped_lock & l)
 		l.lock();
 
 		active_handler_ = nullptr;
+		active_handler_removed_ = false;
 
 		return true;
 	}

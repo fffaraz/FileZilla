@@ -1626,7 +1626,7 @@ bool tls_layer_impl::extract_cert(gnutls_x509_crt_t const& cert, x509_certificat
 	if (!res) {
 		subject = raw_subject.to_string_view();
 	}
-	else {
+	else if (res != GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE) {
 		if (logger) {
 			logger->log(logmsg::debug_warning, "gnutls_x509_crt_get_dn3 failed with %d", res);
 			logger->log(logmsg::error, fztranslate("Could not get distinguished name of certificate subject, gnutls_x509_get_dn failed"));

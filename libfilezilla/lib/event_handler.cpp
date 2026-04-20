@@ -105,4 +105,12 @@ void event_handler::remove_events(event_source const* const source)
 	filter_events(event_filter);
 }
 
+void event_handler::remove_events_of_type(size_t t)
+{
+	auto event_filter = [&](event_base& ev) -> bool {
+		return ev.derived_type() == t;
+	};
+	filter_events(event_filter);
+}
+
 }

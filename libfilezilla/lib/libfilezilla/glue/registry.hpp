@@ -67,6 +67,88 @@ public:
 
 	bool delete_value(std::wstring const& name);
 
+	struct iterator final
+	{
+		struct value final
+		{
+			std::wstring name;
+			DWORD type{};
+		};
+
+		iterator() = default;
+
+		iterator &operator++()
+		{
+			if (key_ && key_->key_) {
+				DWORD len{16383};
+				v_.name.resize(len);
+
+				DWORD res = RegEnumValueW(*key_->key_, ++index_, v_.name.data(), &len, nullptr, &v_.type, nullptr, nullptr);
+				if (res != ERROR_SUCCESS || !len) {
+					index_ = DWORD(-1);
+				}
+				else {
+					v_.name.resize(len);
+				}
+			}
+			return *this;
+		}
+
+		bool operator==(iterator const& op) const
+		{
+			return index_ == op.index_;
+		}
+
+		bool operator!=(iterator const& op) const
+		{
+			return !(*this == op);
+		}
+
+		value const& operator*() const
+		{
+			return v_;
+		}
+
+		value const* operator->() const
+		{
+			return &v_;
+		}
+
+	private:
+		friend regkey;
+
+		iterator(regkey const* key)
+			: key_(key)
+		{
+			operator++();
+		}
+
+		regkey const* key_{};
+		DWORD index_{DWORD(-1)};
+		value v_;
+	};
+	using const_iterator = iterator;
+
+	iterator begin() const
+	{
+		return { this };
+	}
+
+	iterator end() const
+	{
+		return {};
+	}
+
+	const_iterator cbegin() const
+	{
+		return { this };
+	}
+
+	const_iterator cend() const
+	{
+		return {};
+	}
+
 private:
 	mutable std::optional<HKEY> key_;
 };

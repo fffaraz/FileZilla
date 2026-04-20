@@ -107,6 +107,7 @@ public:
 	    : error_(e)
 	    , raw_(raw)
 	{}
+	explicit rwresult(error e) = delete;
 
 	explicit rwresult(size_t value)
 	    : value_(value)

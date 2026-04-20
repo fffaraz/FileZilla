@@ -64,6 +64,11 @@ public:
 	 */
 	void filter_events(std::function<bool (event_handler*&, event_base&)> const& filter);
 
+	/** \brief
+	 * Removes all events of event_with_source type with the given source on this loop.
+	 */
+	void remove_events(event_source const* const source);
+
 	/** \brief Stops the loop
 	 *
 	 * Stops the event loop. It is automatically called by the destructor.
@@ -123,6 +128,7 @@ private:
 	condition timer_cond_;
 	bool do_timers_{};
 
+	bool active_handler_removed_{};
 	event_handler * active_handler_{};
 
 	monotonic_clock deadline_;

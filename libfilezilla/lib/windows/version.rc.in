@@ -15,7 +15,7 @@ BEGIN
             VALUE "FileDescription", "libfilezilla"
             VALUE "FileVersion", "@PACKAGE_VERSION_MAJOR@, @PACKAGE_VERSION_MINOR@, @PACKAGE_VERSION_MICRO@, @PACKAGE_VERSION_NANO@"
             VALUE "InternalName", "libfilezilla"
-            VALUE "LegalCopyright", "Copyright (C) 2015-2025 Tim Kosse"
+            VALUE "LegalCopyright", "Copyright (C) 2015-2026 Tim Kosse"
             VALUE "OriginalFilename", "libfilezilla.dll"
             VALUE "ProductName", "libfilezilla"
             VALUE "ProductVersion", "@PACKAGE_VERSION_MAJOR@, @PACKAGE_VERSION_MINOR@, @PACKAGE_VERSION_MICRO@, @PACKAGE_VERSION_NANO@"

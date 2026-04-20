@@ -19,7 +19,10 @@ enum class hash_algorithm
 	sha1, // insecure
 	sha256,
 	sha384,
-	sha512
+	sha512,
+	sha3_256,
+	sha3_384,
+	sha3_512
 };
 
 enum class hmac_algorithm
@@ -99,9 +102,17 @@ private:
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL md5(std::string_view const& data);
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL md5(std::vector<uint8_t> const& data);
 
+/// \brief Standard SHA1
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha1(std::string_view const& data);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha1(std::vector<uint8_t> const& data);
+
 /// \brief Standard SHA256
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha256(std::string_view const& data);
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha256(std::vector<uint8_t> const& data);
+
+/// \brief Standard SHA384
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha384(std::string_view const& data);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha384(std::vector<uint8_t> const& data);
 
 /// \brief Standard SHA512
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL sha512(std::string_view const& data);

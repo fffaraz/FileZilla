@@ -30,7 +30,12 @@ CPPUNIT_TEST_SUITE_REGISTRATION(hash_test);
 
 void hash_test::test_simple()
 {
-	CPPUNIT_ASSERT_EQUAL("9e107d9d372bb6826bd81d3542a419d6"s, fz::hex_encode<std::string>(fz::md5("The quick brown fox jumps over the lazy dog")));
+	auto const foxjump = "The quick brown fox jumps over the lazy dog";
+	CPPUNIT_ASSERT_EQUAL("9e107d9d372bb6826bd81d3542a419d6"s, fz::hex_encode<std::string>(fz::md5(foxjump)));
+	CPPUNIT_ASSERT_EQUAL("2fd4e1c67a2d28fced849ee1bb76e7391b93eb12"s, fz::hex_encode<std::string>(fz::sha1(foxjump)));
+	CPPUNIT_ASSERT_EQUAL("d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592"s, fz::hex_encode<std::string>(fz::sha256(foxjump)));
+	CPPUNIT_ASSERT_EQUAL("ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1"s, fz::hex_encode<std::string>(fz::sha384(foxjump)));
+	CPPUNIT_ASSERT_EQUAL("07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6"s, fz::hex_encode<std::string>(fz::sha512(foxjump)));
 }
 
 void hash_test::test_accumulator()

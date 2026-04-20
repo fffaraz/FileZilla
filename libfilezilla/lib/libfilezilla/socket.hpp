@@ -572,7 +572,10 @@ public:
 		flag_nodelay = 0x01,
 
 		/// flag_keepalive enables TCP keepalive.
-		flag_keepalive = 0x02
+		flag_keepalive = 0x02,
+
+		/// Inline delivery of OOB data
+		flag_oobinline = 0x04
 	};
 
 	int flags() const { return flags_; }
