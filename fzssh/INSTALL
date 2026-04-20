@@ -1,0 +1,13 @@
+Building fzssh requires the following tools and libraries:
+
+meson
+GMP
+Nettle
+libargon2
+
+To build the library, run these commands from the top source directory:
+  meson setup build
+  cd build
+  meson install
+
+

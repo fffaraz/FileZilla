@@ -1,0 +1,32 @@
+#ifndef FZSSH_VERSION_HEADER
+#define FZSSH_VERSION_HEADER
+
+#include "visibility.hpp"
+
+#include <tuple>
+#include <string>
+
+
+/** \file
+ * \brief Macros and functions to get the version of the headers and the library
+ */
+
+/// \brief Version string of the fzssh headers
+#define FZSSH_VERSION "@PACKAGE_VERSION@"
+
+#define FZSSH_VERSION_MAJOR  @PACKAGE_VERSION_MAJOR@
+#define FZSSH_VERSION_MINOR  @PACKAGE_VERSION_MINOR@
+#define FZSSH_VERSION_MICRO  @PACKAGE_VERSION_MICRO@
+#define FZSSH_VERSION_NANO   @PACKAGE_VERSION_NANO@
+
+/// \brief Suffix string, e.g. "rc1"
+#define FZSSH_VERSION_SUFFIX "@PACKAGE_VERSION_SUFFIX@"
+
+namespace fz::ssh {
+/// \brief Get version string of fzssh
+std::string FZSSH_PUBLIC_SYMBOL get_version_string();
+
+/// \brief Get version of fzssh broken down into components major, minor, micro, nano and suffix
+std::tuple<int, int, int, int, std::string> FZSSH_PUBLIC_SYMBOL get_version();
+}
+#endif

@@ -27,3 +27,4 @@ docker rm -f filezilla
 # source code:
 # https://filezilla-project.org/download.php?show_all=1
 # https://lib.filezilla-project.org/download.php
+# https://fzssh.filezilla-project.org/download.php

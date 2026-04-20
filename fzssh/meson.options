@@ -1,0 +1,2 @@
+option('with_server', type: 'boolean', value : false, description: 'Only available under proprietary license')
+
