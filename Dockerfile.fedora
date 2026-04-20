@@ -1,5 +1,5 @@
 FROM fedora:latest
-RUN dnf install -y appstream automake boost-devel curl file gcc gcc-c++ gettext-devel gmp-devel gnutls-devel libtool make nettle-devel patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
+RUN dnf install -y appstream automake boost-devel curl file gcc gcc-c++ gettext-devel gmp-devel gnutls-devel libtool make meson nettle-devel ninja-build patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
 
 RUN \
 	cd /opt && \
@@ -18,6 +18,14 @@ RUN \
 	./configure && \
 	make -j$(nproc) && \
 	make install && \
+	exit 0
+
+ADD ./fzssh /opt/fzssh
+RUN \
+	cd /opt/fzssh && \
+	meson setup build && \
+	cd build && \
+	meson install && \
 	exit 0
 
 ADD ./filezilla /opt/filezilla
