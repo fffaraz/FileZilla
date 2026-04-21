@@ -1,5 +1,5 @@
 FROM ubuntu:24.04
-RUN apt-get update && apt-get install -yq automake g++ gcc gettext libargon2-dev libboost-regex-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
+RUN apt-get update && apt-get install -yq appstream automake g++ gcc gettext libargon2-dev libboost-regex-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
 
 ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
 RUN chmod +x /opt/appimagetool-x86_64.AppImage

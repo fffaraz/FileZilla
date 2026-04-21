@@ -1,11 +1,8 @@
 FROM fedora:43
-RUN dnf install -y appstream automake boost-devel curl file gcc gcc-c++ gettext-devel gmp-devel gnutls-devel libargon2-devel libtool make meson nettle-devel ninja-build patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
+RUN dnf install -y appstream automake boost-devel gcc gcc-c++ gettext-devel gmp-devel gnutls-devel libargon2-devel libtool make meson nettle-devel ninja-build patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
 
-RUN \
-	cd /opt && \
-	curl -L -o ./appimagetool-x86_64.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && \
-	chmod +x ./appimagetool-x86_64.AppImage && \
-	exit 0
+ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
+RUN chmod +x /opt/appimagetool-x86_64.AppImage
 
 ENV CFLAGS="-O3 -march=native -flto"
 ENV CXXFLAGS="-O3 -march=native -flto"
