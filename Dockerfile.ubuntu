@@ -35,7 +35,7 @@ RUN \
 ADD ./fzssh /opt/fzssh
 RUN \
 	cd /opt/fzssh && \
-	meson setup build && \
+	meson setup --libdir=lib build && \
 	cd build && \
 	meson install && \
 	exit 0
