@@ -1,11 +1,8 @@
 FROM ubuntu:24.04
-RUN apt-get update && apt-get install -yq automake cmake curl file g++ gcc gettext libargon2-dev libboost-all-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
+RUN apt-get update && apt-get install -yq automake g++ gcc gettext libargon2-dev libboost-regex-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
 
-RUN \
-	cd /opt && \
-	curl -L -o ./appimagetool-x86_64.AppImage https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage && \
-	chmod +x ./appimagetool-x86_64.AppImage && \
-	exit 0
+ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
+RUN chmod +x /opt/appimagetool-x86_64.AppImage
 
 ENV CFLAGS="-O3 -march=native -flto"
 ENV CXXFLAGS="-O3 -march=native -flto"
