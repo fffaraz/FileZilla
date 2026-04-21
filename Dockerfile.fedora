@@ -10,6 +10,7 @@ RUN \
 ENV CFLAGS="-O3 -march=native -flto"
 ENV CXXFLAGS="-O3 -march=native -flto"
 ENV LDFLAGS="-flto"
+ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
@@ -37,7 +38,7 @@ RUN \
 	mkdir -p ./src/fzshellext/32 && \
 	mkdir -p ./src/fzshellext/64 && \
 	autoreconf -f -i && \
-	PKG_CONFIG_PATH=/usr/local/lib/pkgconfig ./configure && \
+	./configure && \
 	make -j$(nproc) && \
 	make install && \
 	exit 0
