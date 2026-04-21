@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-RUN apt-get update && apt-get install -yq automake cmake curl file g++ gcc gettext libargon2-dev libboost-all-dev libdbus-1-dev libgmp-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
+RUN apt-get update && apt-get install -yq automake cmake curl file g++ gcc gettext libargon2-dev libboost-all-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
 
 RUN \
 	cd /opt && \
@@ -63,11 +63,7 @@ RUN \
 	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
 	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
-	cp /usr/local/bin/fzsftp /opt/approot/opt/filezilla && \
-	cp /usr/local/bin/fzputtygen /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
-	strip -s /opt/approot/opt/filezilla/fzsftp && \
-	strip -s /opt/approot/opt/filezilla/fzputtygen && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun && \
 	exit 0
