@@ -1,5 +1,5 @@
 FROM ubuntu:latest
-RUN apt-get update && apt-get install -yq automake curl file g++ gcc gettext libargon2-dev libboost-all-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson nettle-dev ninja-build patch pkg-config xdg-utils
+RUN apt-get update && apt-get install -yq automake cmake curl file g++ gcc gettext libargon2-dev libboost-all-dev libdbus-1-dev libgmp-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
 
 RUN \
 	cd /opt && \
@@ -11,6 +11,16 @@ ENV CFLAGS="-O3 -march=native -flto"
 ENV CXXFLAGS="-O3 -march=native -flto"
 ENV LDFLAGS="-flto"
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+
+ADD https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz /opt/nettle.tar.gz
+RUN \
+	cd /opt && \
+	tar -xf /opt/nettle.tar.gz && \
+	cd /opt/nettle-3.10.2 && \
+	./configure && \
+	make -j$(nproc) && \
+	make install && \
+	exit 0
 
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
@@ -35,8 +45,6 @@ RUN \
 	cd /opt && \
 	patch -p1 < /opt/transfer-limits.patch && \
 	cd /opt/filezilla && \
-	mkdir -p ./src/fzshellext/32 && \
-	mkdir -p ./src/fzshellext/64 && \
 	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
