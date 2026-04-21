@@ -1,4 +1,4 @@
-FROM fedora:latest
+FROM fedora:43
 RUN dnf install -y appstream automake boost-devel curl file gcc gcc-c++ gettext-devel gmp-devel gnutls-devel libargon2-devel libtool make meson nettle-devel ninja-build patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
 
 RUN \
