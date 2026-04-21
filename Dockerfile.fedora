@@ -35,8 +35,6 @@ RUN \
 	cd /opt && \
 	patch -p1 < /opt/transfer-limits.patch && \
 	cd /opt/filezilla && \
-	mkdir -p ./src/fzshellext/32 && \
-	mkdir -p ./src/fzshellext/64 && \
 	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
