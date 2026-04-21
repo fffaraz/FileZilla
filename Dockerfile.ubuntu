@@ -17,9 +17,10 @@ RUN \
 	cd /opt && \
 	tar -xf /opt/nettle.tar.gz && \
 	cd /opt/nettle-3.10.2 && \
-	./configure && \
+	./configure --libdir=/usr/local/lib && \
 	make -j$(nproc) && \
 	make install && \
+	ldconfig && \
 	exit 0
 
 ADD ./libfilezilla /opt/libfilezilla
