@@ -24,7 +24,7 @@ RUN \
 ADD ./fzssh /opt/fzssh
 RUN \
 	cd /opt/fzssh && \
-	meson setup build && \
+	meson setup --libdir=lib build && \
 	cd build && \
 	meson install && \
 	exit 0
@@ -45,16 +45,15 @@ ADD ./AppRun.sh /opt/approot/AppRun
 ADD ./filezilla.desktop /opt/approot
 RUN \
 	mkdir -p /opt/approot/opt/filezilla && \
+	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/filezilla.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
-	cp -P /usr/local/lib64/libfzssh*.so* /opt/approot/opt/filezilla && \
 	cp -P /lib64/libcrypt.so* /opt/approot/opt/filezilla && \
 	cp -P /lib64/libpugixml.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib64/libwx_*.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib64/libjpeg.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib64/libmspack.so* /opt/approot/opt/filezilla && \
 	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
-	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun && \
