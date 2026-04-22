@@ -1,4 +1,4 @@
-FROM fedora:43
+FROM fedora:41
 RUN dnf install -y appstream automake boost-devel file gcc gcc-c++ gettext-devel glibc-static gmp-devel gnutls-devel libargon2-devel libstdc++-static libtool make meson nettle-devel ninja-build patch pugixml-devel sqlite-devel wxGTK-devel xdg-utils
 
 ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
