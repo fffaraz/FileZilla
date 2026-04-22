@@ -1,5 +1,5 @@
 FROM ubuntu:24.04
-RUN apt-get update && apt-get install -yq appstream automake g++ gcc gettext libargon2-dev libboost-regex-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils
+RUN apt-get update && apt-get install -yq appstream automake g++ gcc gettext libargon2-dev libboost-regex-dev libdbus-1-dev libgmp-dev libgnutls28-dev libgtk-3-dev libpugixml-dev libsqlite3-dev libtool libwxgtk3.2-dev make meson ninja-build patch pkg-config xdg-utils && rm -rf /var/lib/apt/lists/*
 
 ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
 RUN chmod +x /opt/appimagetool-x86_64.AppImage
@@ -12,13 +12,11 @@ ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ADD https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz /opt/nettle.tar.gz
 RUN \
 	cd /opt && \
-	tar -xf /opt/nettle.tar.gz && \
-	cd /opt/nettle-3.10.2 && \
+	tar -xf nettle.tar.gz && \
+	cd nettle-3.10.2 && \
 	./configure --libdir=/usr/local/lib --enable-static --disable-shared && \
 	make -j$(nproc) && \
-	make install && \
-	ldconfig && \
-	exit 0
+	make install
 
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
@@ -26,8 +24,7 @@ RUN \
 	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
-	make install && \
-	exit 0
+	make install
 
 ADD ./fzssh /opt/fzssh
 RUN \
@@ -37,8 +34,7 @@ RUN \
 	sed -i "/^subdir('tests')/d" meson.build && \
 	meson setup --libdir=lib --default-library=static build && \
 	cd build && \
-	meson install && \
-	exit 0
+	meson install
 
 ADD ./filezilla /opt/filezilla
 ADD ./transfer-limits.patch /opt/transfer-limits.patch
@@ -46,13 +42,11 @@ RUN \
 	cd /opt && \
 	patch -p1 < /opt/transfer-limits.patch && \
 	cd /opt/filezilla && \
-	mkdir -p ./src/fzshellext/32 && \
-	mkdir -p ./src/fzshellext/64 && \
+	mkdir -p ./src/fzshellext/{32,64} && \
 	autoreconf -f -i && \
 	./configure --enable-static --disable-shared && \
 	make -j$(nproc) && \
-	make install && \
-	exit 0
+	make install
 
 ADD ./AppRun.sh /opt/approot/AppRun
 RUN \
@@ -65,7 +59,6 @@ RUN \
 	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
-	chmod +x /opt/approot/AppRun && \
-	exit 0
+	chmod +x /opt/approot/AppRun
 
 ENTRYPOINT ["/opt/appimagetool-x86_64.AppImage", "--comp", "zstd", "/opt/approot", "/opt/FileZilla.AppImage"]
