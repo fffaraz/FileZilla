@@ -32,9 +32,11 @@ RUN \
 ADD ./fzssh /opt/fzssh
 RUN \
 	cd /opt/fzssh && \
+	sed -i 's/shared_library(/library(/g' meson.build && \
 	meson setup --libdir=lib --default-library=static build && \
 	cd build && \
-	meson install && \
+	ninja libfzssh-crypt.a libfzssh.a libfzssh-client.a && \
+	meson install --no-rebuild && \
 	exit 0
 
 ADD ./filezilla /opt/filezilla
@@ -58,8 +60,6 @@ RUN \
 	cp /opt/filezilla/data/filezilla.desktop /opt/approot/filezilla.desktop && \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/filezilla.png && \
 	cp -P /usr/local/lib/libf* /opt/approot/opt/filezilla && \
-	cp -P /usr/local/lib/libnettle.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/local/lib/libhogweed.so* /opt/approot/opt/filezilla && \
 	cp -P /lib/x86_64-linux-gnu/libcrypt.so* /opt/approot/opt/filezilla && \
 	cp -P /lib/x86_64-linux-gnu/libpugixml.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
