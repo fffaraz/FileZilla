@@ -5,7 +5,7 @@ ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appima
 RUN chmod +x /opt/appimagetool-x86_64.AppImage
 
 ENV CFLAGS="-O3 -march=native -Wno-error -flto"
-ENV CXXFLAGS="-O3 -march=native -Wno-error-flto"
+ENV CXXFLAGS="-O3 -march=native -Wno-error -flto"
 ENV LDFLAGS="-flto"
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 WORKDIR /opt
