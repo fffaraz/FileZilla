@@ -1,0 +1,23 @@
+ADD https://ftpmirror.gnu.org/libtasn1/libtasn1-4.21.0.tar.gz /opt/libtasn1.tar.gz
+RUN \
+	tar -xf libtasn1.tar.gz && \
+	cd libtasn1-4.21.0 && \
+	./configure --libdir=/usr/local/lib --enable-static --disable-shared && \
+	make -j$(nproc) && \
+	make install
+
+ADD https://ftpmirror.gnu.org/libunistring/libunistring-1.4.2.tar.xz /opt/libunistring.tar.xz
+RUN \
+	tar -xf libunistring.tar.xz && \
+	cd libunistring-1.4.2 && \
+	./configure --libdir=/usr/local/lib --enable-static --disable-shared && \
+	make -j$(nproc) && \
+	make install
+
+ADD https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.12.tar.xz /opt/gnutls.tar.xz
+RUN \
+	tar -xf gnutls.tar.xz && \
+	cd gnutls-3.8.12 && \
+	./configure --libdir=/usr/local/lib --enable-static --disable-shared --without-p11-kit --disable-tools && \
+	make -j$(nproc) && \
+	make install

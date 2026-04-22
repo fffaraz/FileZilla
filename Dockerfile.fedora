@@ -4,41 +4,37 @@ RUN dnf install -y appstream automake boost-devel file gcc gcc-c++ gettext-devel
 ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
 RUN chmod +x /opt/appimagetool-x86_64.AppImage
 
-ENV CFLAGS="-O3 -march=native -flto"
-ENV CXXFLAGS="-O3 -march=native -flto"
+ENV CFLAGS="-O3 -march=native -Wno-error -flto"
+ENV CXXFLAGS="-O3 -march=native -Wno-error-flto"
 ENV LDFLAGS="-flto"
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+WORKDIR /opt
 
 ADD ./libfilezilla /opt/libfilezilla
 RUN \
-	cd /opt/libfilezilla && \
+	cd libfilezilla && \
 	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
-	make install && \
-	exit 0
+	make install
 
 ADD ./fzssh /opt/fzssh
 RUN \
-	cd /opt/fzssh && \
+	cd fzssh && \
 	meson setup --libdir=lib build && \
 	cd build && \
-	meson install && \
-	exit 0
+	meson install
 
 ADD ./filezilla /opt/filezilla
 ADD ./transfer-limits.patch /opt/transfer-limits.patch
 RUN \
-	cd /opt && \
 	patch -p1 < /opt/transfer-limits.patch && \
-	cd /opt/filezilla && \
-	mkdir -p ./src/fzshellext/32 && \
-	mkdir -p ./src/fzshellext/64 && \
+	cd filezilla && \
+	mkdir -p ./src/fzshellext/{32,64} && \
 	autoreconf -f -i && \
 	./configure && \
 	make -j$(nproc) && \
-	make install && \
-	exit 0
+	make install
 
 ADD ./AppRun.sh /opt/approot/AppRun
 RUN \
@@ -55,7 +51,6 @@ RUN \
 	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
-	chmod +x /opt/approot/AppRun && \
-	exit 0
+	chmod +x /opt/approot/AppRun
 
 ENTRYPOINT ["/opt/appimagetool-x86_64.AppImage", "--comp", "zstd", "/opt/approot", "/opt/FileZilla.AppImage"]

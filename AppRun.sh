@@ -12,4 +12,6 @@ export FZ_DATADIR="${HERE}/opt/filezilla/share"
 export FZ_FZSFTP="${HERE}/opt/filezilla/fzsftp"
 export FZ_FZPUTTYGEN="${HERE}/opt/filezilla/fzputtygen"
 
+# ldd "${HERE}/opt/filezilla/filezilla"
+
 exec "${HERE}/opt/filezilla/filezilla" "$@"
