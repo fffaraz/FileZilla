@@ -33,10 +33,11 @@ ADD ./fzssh /opt/fzssh
 RUN \
 	cd /opt/fzssh && \
 	sed -i 's/shared_library(/library(/g' meson.build && \
+	sed -i '/^executable(/,/^)$/d' meson.build && \
+	sed -i "/^subdir('tests')/d" meson.build && \
 	meson setup --libdir=lib --default-library=static build && \
 	cd build && \
-	ninja libfzssh-crypt.a libfzssh.a libfzssh-client.a && \
-	meson install --no-rebuild && \
+	meson install && \
 	exit 0
 
 ADD ./filezilla /opt/filezilla
