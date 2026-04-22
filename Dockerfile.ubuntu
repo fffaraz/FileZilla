@@ -4,9 +4,9 @@ RUN apt-get update && apt-get install -yq appstream automake g++ gcc gettext lib
 ADD https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage /opt/appimagetool-x86_64.AppImage
 RUN chmod +x /opt/appimagetool-x86_64.AppImage
 
-ENV CFLAGS="-O3 -march=native -flto"
-ENV CXXFLAGS="-O3 -march=native -flto"
-ENV LDFLAGS="-flto"
+ENV CFLAGS="-O3 -march=native -flto -static"
+ENV CXXFLAGS="-O3 -march=native -flto -static"
+ENV LDFLAGS="-flto -static"
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 
 ADD https://ftp.gnu.org/gnu/nettle/nettle-3.10.2.tar.gz /opt/nettle.tar.gz
@@ -14,7 +14,7 @@ RUN \
 	cd /opt && \
 	tar -xf /opt/nettle.tar.gz && \
 	cd /opt/nettle-3.10.2 && \
-	./configure --libdir=/usr/local/lib && \
+	./configure --libdir=/usr/local/lib --enable-static --disable-shared && \
 	make -j$(nproc) && \
 	make install && \
 	ldconfig && \
@@ -32,7 +32,7 @@ RUN \
 ADD ./fzssh /opt/fzssh
 RUN \
 	cd /opt/fzssh && \
-	meson setup --libdir=lib build && \
+	meson setup --libdir=lib --default-library=static build && \
 	cd build && \
 	meson install && \
 	exit 0
@@ -46,7 +46,7 @@ RUN \
 	mkdir -p ./src/fzshellext/32 && \
 	mkdir -p ./src/fzshellext/64 && \
 	autoreconf -f -i && \
-	./configure && \
+	./configure --enable-static --disable-shared && \
 	make -j$(nproc) && \
 	make install && \
 	exit 0
