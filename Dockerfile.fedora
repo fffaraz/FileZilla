@@ -33,7 +33,7 @@ ADD ./transfer-limits.patch /opt/transfer-limits.patch
 RUN \
 	patch -p1 < /opt/transfer-limits.patch && \
 	cd filezilla && \
-	mkdir -p ./src/fzshellext/{32,64} && \
+	mkdir -p ./src/fzshellext/32 ./src/fzshellext/64 && \
 	autoreconf -f -i && \
 	./configure --with-pugixml=builtin --enable-static --disable-shared && \
 	make -j$(nproc) && \
