@@ -1,3 +1,21 @@
+0.56.1 (2026-06-04)
+
+- macOS: Fix fz::socket::connect() failing after bind()
+- Creation flag validation and normalization for fz::file
+
+0.56.0 (2026-05-27)
+
++ event_loop timers are now processed in a round-robin fashion if there are multiple expired timers
++ Added shared_value::use_count
+- HTTP client: Fixed handling of 1yz responses
+- fz::socket::connect now returns early on bind failure
+- Minor fixes to socket classes
+
+0.55.5 (2026-05-05)
+
++ Added %o support to fz::sprintf
+- Support building with Nettle version 4
+
 0.55.4 (2026-04-16)
 
 - Fixed a crash if a nested event handler gets deleted

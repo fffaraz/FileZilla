@@ -1,5 +1,6 @@
 #include "libfilezilla/buffer.hpp"
 #include "libfilezilla/encode.hpp"
+#include "libfilezilla/format.hpp"
 #include "libfilezilla/json.hpp"
 
 #include "string.h"
@@ -166,8 +167,15 @@ void json_append_escaped(std::string & out, std::string const& s)
 		case '\f':
 			out += "\\f"sv;
 			break;
-		default:
-			out += c;
+		default: {
+				auto const uc = static_cast<unsigned char>(c);
+				if (uc < 0x20) {
+					out += sprintf("\\u00%02x"sv, uc);
+				}
+				else {
+					out += c;
+				}
+			}
 		}
 	}
 }
@@ -412,7 +420,7 @@ std::pair<std::string, bool> json_unescape_string(char const*& p, char const* en
 		else if (c == '\\') {
 			in_escape = true;
 		}
-		else if (!c && !allow_null) {
+		else if (static_cast<unsigned char>(c) < 0x20) {
 			return {};
 		}
 		else {

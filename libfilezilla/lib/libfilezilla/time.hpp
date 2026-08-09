@@ -134,6 +134,7 @@ public:
 	 *
 	 * Adding or subtracting a \ref duration interval is accuracy-aware, e.g. adding a single second to a datetime with
 	 * minute-accuracy does not change the timestamp.
+	 * \{
 	 */
 	datetime& operator+=(duration const& op);
 	datetime operator+(duration const& op) const { datetime t(*this); t += op; return t; }
@@ -207,7 +208,13 @@ public:
 	static bool verify_format(std::wstring const& fmt);
 
 	/// Get millisecond part of timestamp
-	int get_milliseconds() const { return t_ % 1000; }
+	int get_milliseconds() const {
+		int ms = static_cast<int>(t_ % 1000);
+		if (ms < 0) {
+			ms += 1000;
+		}
+		return ms;
+	}
 
 	/// Get timestamp as time_t, seconds since 1970-01-01 00:00:00
 	time_t get_time_t() const;
@@ -215,7 +222,7 @@ public:
 	/** \brief Get timestamp as struct tm
 	 *
 	 * Undefined if datetime is empty.
-	 * 
+	 *
 	 * Note: On Windows the tm_yday and tm_isdst fields are undefined.
 	 */
 	tm get_tm(zone z) const;
@@ -284,7 +291,7 @@ private:
  * have the time unit as part of the function name.
  *
  * In contract to \ref datetime, \c duration does not track accuracy.
- * 
+ *
  * \note Arithmetic operations on duration do not check for integer over/underflow
  */
 class FZ_PUBLIC_SYMBOL duration final
@@ -303,6 +310,9 @@ public:
 	int64_t get_milliseconds() const { return ms_; }
 	/// \}
 
+	/** \name Setters
+	 * \{
+	 */
 	static duration from_days(int64_t m) {
 		return duration(m * 1000 * 60 * 60 * 24);
 	}
@@ -320,6 +330,7 @@ public:
 	}
 	/// \}
 
+	/// \{
 	duration& operator+=(duration const& op) {
 		ms_ += op.ms_;
 		return *this;
@@ -347,6 +358,7 @@ public:
 		ms_ *= op;
 		return *this;
 	}
+	/// \}
 
 	duration absolute() const {
 		return (ms_ < 0) ? duration(-ms_) : *this;
@@ -382,7 +394,6 @@ inline duration operator/(duration const& a, int64_t b)
 }
 
 /** \relates datetime
- * \relatesalso duration
  * \brief Gets the difference between two timestamps as \ref duration
  *
  * This function ignores accuracy, it treats both timestamps as if they had millisecond-accuracy.
@@ -419,7 +430,7 @@ public:
 	}
 	monotonic_clock const operator-(duration const& d) const
 	{
-		return monotonic_clock(*this) += d;
+		return monotonic_clock(*this) -= d;
 	}
 
 private:
@@ -464,7 +475,6 @@ private:
 };
 
 /** \relates monotonic_clock
- * \relatesalso duration
  * Gets the difference between two clocks as \ref duration
  */
 inline duration operator-(monotonic_clock const& a, monotonic_clock const& b)

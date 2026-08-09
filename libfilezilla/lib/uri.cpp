@@ -161,8 +161,8 @@ std::string uri::to_string(bool with_query) const
 
 std::string uri::get_request(bool with_query) const
 {
-	std::string ret = percent_encode(path_, true);
-	if (!ret.empty() && !query_.empty() && with_query) {
+	std::string ret = path_.empty() ? "/" : percent_encode(path_, true);
+	if (!query_.empty() && with_query) {
 		ret += "?";
 		ret += query_;
 	}

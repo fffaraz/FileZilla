@@ -24,13 +24,13 @@ public:
 	unsigned int code_{};
 	std::string reason_;
 
-	enum flags {
+	enum flags : unsigned {
 		flag_got_code = 0x01,
 		flag_got_header = 0x02,
 		flag_got_body = 0x04,
 		flag_no_body = 0x08, // e.g. on HEAD requests, or 204/304 responses
 	};
-	int flags_{};
+	unsigned int flags_{};
 
 	bool got_code() const { return flags_ & flag_got_code; }
 	bool got_header() const { return flags_ & flag_got_header; }

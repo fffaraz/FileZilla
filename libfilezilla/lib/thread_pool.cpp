@@ -21,7 +21,7 @@ public:
 		, pool_(pool)
 	{}
 
-	virtual ~pooled_thread_impl()
+	~pooled_thread_impl()
 	{
 		thread_.join();
 	}
@@ -31,7 +31,7 @@ public:
 		return thread_.run([this] { entry(); });
 	}
 
-	virtual void entry() {
+	void entry() {
 		scoped_lock l(m_);
 		while (!quit_) {
 			thread_cond_.wait(l);

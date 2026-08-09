@@ -22,6 +22,13 @@
 	#endif
 #endif
 
+#if FZ_MAC
+	#include <TargetConditionals.h>
+	#if TARGET_OS_IPHONE
+		#define FZ_IOS 1
+	#endif
+#endif
+
 #if defined(BUILDING_LIBFILEZILLA) && defined(HAVE_CONFIG_H)
 #include "config.hpp"
 #endif

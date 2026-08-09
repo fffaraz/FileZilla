@@ -3,6 +3,8 @@
 
 #include "event_loop.hpp"
 
+#include <tuple>
+
 /** \file
  * \brief Declares the \ref fz::event_handler "event_handler" class.
  */
@@ -48,7 +50,7 @@ Usage example:
 
 	fz::event_loop loop;
 	my_handler h(loop);
-	h.SendEvent<foo_event>(42, "Don't Panic");
+	h.send_event<foo_event>(42, "Don't Panic");
 \endcode
 */
 
@@ -72,7 +74,11 @@ public:
 
 	/** \brief Deactivates handler, removes all pending events and stops all timers for this handler.
 	 *
-	 * When function returns, handler is not in its callback anymore.
+	 * remove_handler implicitly removes all nested child event handlers as well.
+	 *
+	 * When this function returns, neither handler nor nested child event handlers are in their callback
+	 * anymore, with the exception being handlers that self-remove inside their own or nested child
+	 * handler callbacks.
 	 *
 	 * \warning You _MUST_ call remove_handler no later than inside the destructor of the most derived class.
 	 */
@@ -119,12 +125,10 @@ public:
 	 * For periodic timers, the next event is scheduled right before the callback is called. If multiple
 	 * intervals expire before the timer fires, e.g. under heavy load, only one event is sent.
 	 *
-	 * If multiple different timers have expired, the order in which the callbacks are executed is unspecified,
-	 * there is no fairness guarantee.
+	 * If multiple different timers have expired, the order in which the callbacks are executed is unspecified, but
+	 * they will get provessed eventually, high-frequency timers with slow handlers cannot completely starve other timers.
 	 *
-	 * Timers take precedence over other queued events.
-	 *
-	 * \note High-frequency timers doing heavy processing can starve other timers and queued events.
+	 * Timers and other queued events are interleaved.
 	 */
 	timer_id add_timer(monotonic_clock const &deadline, duration const& interval = {});
 
@@ -137,12 +141,10 @@ public:
 	 * For periodic timers, the next event is scheduled right before the callback is called. If multiple
 	 * intervals expire before the timer fires, e.g. under heavy load, only one event is sent.
 	 *
-	 * If multiple different timers have expired, the order in which the callbacks are executed is unspecified,
-	 * there is no fairness guarantee.
+	 * If multiple different timers have expired, the order in which the callbacks are executed is unspecified, but
+	 * they will get provessed eventually, high-frequency timers with slow handlers cannot completely starve other timers.
 	 *
-	 * Timers take precedence over other queued events.
-	 *
-	 * \note High-frequency timers doing heavy processing can starve other timers and queued events.
+	 * Timers and other queued events are interleaved.
 	 */
 	timer_id add_timer(duration const& interval, bool one_shot);
 
@@ -179,6 +181,11 @@ public:
 		});
 	}
 
+	/**
+	 * This must only be called inside the handler's operator()(event_base const&), calling it
+	 * at other times or different threads is undefined behaviour.
+	 * Must not be called with timer events.
+	 */
 	void resend_current_event() {
 		event_loop_.resend_current_event();
 	}

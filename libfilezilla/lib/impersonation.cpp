@@ -175,7 +175,9 @@ namespace {
 std::vector<gid_t> get_supplementary(std::string const& username, gid_t primary)
 {
 	std::vector<gid_t> ret;
-
+#if FZ_IOS
+	// Not supported
+#else
 	int size = 100;
 	while (true) {
 		ret.resize(size);
@@ -198,6 +200,7 @@ std::vector<gid_t> get_supplementary(std::string const& username, gid_t primary)
 			break;
 		}
 	}
+#endif
 	return ret;
 }
 
@@ -212,7 +215,7 @@ bool check_auth(native_string const& username, native_string const& password)
 			return true;
 		}
 	}
-#elif FZ_MAC
+#elif FZ_MAC && !FZ_IOS
 	bool ret{};
 
 	CFStringRef cfu = CFStringCreateWithCString(NULL, username.c_str(), kCFStringEncodingUTF8);

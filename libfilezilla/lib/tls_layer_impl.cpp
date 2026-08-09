@@ -599,11 +599,12 @@ bool tls_layer_impl::set_key_and_certs(cert_context &ctx, const_tls_param_ref ke
 
 bool tls_layer_impl::set_key_and_certs(const_tls_param_ref key, const_tls_param_ref certs, native_string const& password, tls_data_format format)
 {
-	if (init()) {
-		if (!set_key_and_certs(cert_context_, key, certs, password, format)) {
-			deinit();
-			return false;
-		}
+	if (!init()) {
+		return false;
+	}
+	if (!set_key_and_certs(cert_context_, key, certs, password, format)) {
+		deinit();
+		return false;
 	}
 
 	return true;
@@ -1105,7 +1106,12 @@ bool tls_layer_impl::client_handshake(std::vector<uint8_t> const& session_to_res
 			in.size = required_certificate.size();
 
 			datum_holder der;
-			gnutls_pem_base64_decode2(nullptr, &in, &der);
+			int res = gnutls_pem_base64_decode2(nullptr, &in, &der);
+			if (res != 0) {
+				logger_.log(logmsg::debug_info, L"gnutls_pem_base64_decode2 failed: %d.", res);
+				state_ = socket_state::failed;
+				return false;
+			}
 
 			required_certificate_.assign(der.data, der.data + der.size);
 		}
@@ -1123,6 +1129,7 @@ bool tls_layer_impl::client_handshake(std::vector<uint8_t> const& session_to_res
 			logger_.log(logmsg::debug_info, L"gnutls_session_set_data failed: %d. Going to reinitialize session.", res);
 			deinit_session();
 			if (!init_session(true, extra_flags)) {
+				state_ = socket_state::failed;
 				return false;
 			}
 		}
@@ -1148,6 +1155,7 @@ bool tls_layer_impl::client_handshake(std::vector<uint8_t> const& session_to_res
 	}
 	else if (tls_layer_.next_layer_.get_state() != socket_state::connected) {
 		// We're too late
+		state_ = socket_state::failed;
 		return false;
 	}
 
@@ -1227,6 +1235,7 @@ bool tls_layer_impl::server_handshake(std::vector<uint8_t> const& session_to_res
 	}
 	else if (tls_layer_.next_layer_.get_state() != socket_state::connected) {
 		// We're too late
+		state_ = socket_state::failed;
 		return false;
 	}
 
@@ -1529,7 +1538,7 @@ void tls_layer_impl::set_verification_result(bool trusted)
 {
 	logger_.log(logmsg::debug_verbose, L"set_verification_result(%s)", trusted ? "true"sv : "false"sv);
 
-	if (state_ != socket_state::connecting && !handshake_successful_) {
+	if (state_ != socket_state::connecting || !handshake_successful_) {
 		logger_.log(logmsg::debug_warning, L"set_verification_result called at wrong time.");
 		return;
 	}
@@ -3082,7 +3091,7 @@ std::string tls_layer_impl::generate_csr(cert_context &ctx, unique_gnutls_privke
 			}
 		}
 
-		res = gnutls_x509_crq_set_basic_constraints(crq, 0, -1);
+		res = gnutls_x509_crq_set_basic_constraints(crq, (type == tls_layer::cert_type::ca) ? 1 : 0, -1);
 		if (res) {
 			ctx.log_gnutls_error(res, L"gnutls_x509_crq_set_basic_constraints");
 			return {};

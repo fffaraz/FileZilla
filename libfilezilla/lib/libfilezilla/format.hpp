@@ -192,6 +192,36 @@ String integral_to_hex_string(Arg && arg) noexcept
 	}
 }
 
+// Converts integral type to hex string with desired string type
+template<typename String, typename Arg>
+String integral_to_octal_string(Arg && arg) noexcept
+{
+	if constexpr (std::is_enum_v<std::decay_t<Arg>>) {
+		// Special handling for enum, cast to underlying type
+		return integral_to_octal_string<String>(static_cast<std::underlying_type_t<std::decay_t<Arg>>>(arg));
+	}
+	else if constexpr (std::is_signed_v<std::decay_t<Arg>>) {
+		return integral_to_octal_string<String>(static_cast<std::make_unsigned_t<std::decay_t<Arg>>>(arg));
+	}
+	else if constexpr (std::is_integral_v<std::decay_t<Arg>>) {
+		std::decay_t<Arg> v = arg;
+		typename String::value_type buf[sizeof(v) * 3];
+		auto* const end = buf + sizeof(v) * 3;
+		auto* p = end;
+
+		do {
+			*(--p) = (v & 07) + '0';
+			v >>= 3;
+		} while (v);
+
+		return String(p, end);
+	}
+	else {
+		format_assert(0);
+		return String();
+	}
+}
+
 // Converts pointer to hex string
 template<typename String, typename Arg>
 String pointer_to_string(Arg&& arg) noexcept
@@ -262,6 +292,10 @@ String format_arg(field const& f, Arg&& arg)
 	}
 	else if (f.type == 'X') {
 		ret = integral_to_hex_string<String, false>(std::forward<Arg>(arg));
+		pad_arg(ret, f);
+	}
+	else if (f.type == 'o') {
+		ret = integral_to_octal_string<String>(std::forward<Arg>(arg));
 		pad_arg(ret, f);
 	}
 	else if (f.type == 'p') {
@@ -442,7 +476,7 @@ OutString do_sprintf(InString const& fmt, Args&&... args)
 * \li Supported flags: 0, ' ', -, +
 * \li Field widths are supported as decimal integers not exceeding 10k, longer widths are truncated
 * \li precision is ignored
-* \li Supported types: d, i, u, s, x, X, p
+* \li Supported types: d, i, u, s, x, X, o, p
 *
 * For string arguments, mixing char*, wchar_t*, std::string and std::wstring is allowed. Converstion
 * to/from narrow strings is using the locale's encoding.

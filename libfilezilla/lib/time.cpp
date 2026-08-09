@@ -100,6 +100,7 @@ bool do_set(datetime& dt, String const& str, datetime::zone z)
 	return dt.set(st, a, z);
 #else
 	tm t{};
+	t.tm_isdst = -1;
 	if (!parse(it, end, 4, t.tm_year, -1900) ||
 		!parse(it, end, 2, t.tm_mon, -1) ||
 		!parse(it, end, 2, t.tm_mday, 0))
@@ -700,7 +701,11 @@ std::wstring datetime::format(std::wstring const& fmt, zone z) const
 
 time_t datetime::get_time_t() const
 {
-	return t_ / 1000;
+	int64_t seconds = t_ / 1000;
+	if (t_ % 1000 < 0) {
+		--seconds;
+	}
+	return seconds;
 }
 
 tm datetime::get_tm(zone z) const
@@ -708,7 +713,7 @@ tm datetime::get_tm(zone z) const
 	tm ret{};
 #ifdef FZ_WINDOWS
 	// gmtime_s/localtime_s don't work with negative times
-	auto constexpr y2k38_limit = ((int64_t(2) << 31) - 86400) * 1000;
+	auto constexpr y2k38_limit = ((int64_t(1) << 31) - 86400) * 1000;
 	if (t_ < 86400000 || (sizeof(time_t) == 4 && t_ >= y2k38_limit)) {
 		FILETIME ft = get_filetime();
 		SYSTEMTIME st;
@@ -852,7 +857,7 @@ bool do_set_rfc822(datetime& dt, String const& str)
 		if (set && tokens.size() >= 8) {
 			int minutes{};
 			if (tokens[7].size() == 5 && tokens[7][0] == '+') {
-				minutes = -fz::to_integral<int>(tokens[7].substr(1, 2), -10000) * 60 + fz::to_integral<int>(tokens[7].substr(3), -10000);
+				minutes = -fz::to_integral<int>(tokens[7].substr(1, 2), -10000) * 60 - fz::to_integral<int>(tokens[7].substr(3), -10000);
 			}
 			else if (tokens[7].size() == 4) {
 				minutes = fz::to_integral<int>(tokens[7].substr(0, 2), 10000) * 60 + fz::to_integral<int>(tokens[7].substr(2), 10000);
@@ -941,20 +946,27 @@ bool do_set_rfc3339(fz::datetime& dt, String str)
 			set = dt.set(fz::datetime::utc, year, month, day, hour, minute, second);
 		}
 
-		if (set && offset_pos != String::npos && str[offset_pos] != 'Z') {
-			auto const offset_tokens = fz::strtok_view(str.substr(offset_pos + 1), ':');
-			if (offset_tokens.size() != 2) {
+		if (set && offset_pos != String::npos && (str[offset_pos] == '+' || str[offset_pos] == '-')) {
+			auto const ofs = str.substr(offset_pos + 1);
+
+			auto isnum = [](char c) { return c >= '0' && c <= '9'; };
+			if (ofs.size() != 5 || ofs[2] != ':' || !isnum(ofs[0]) || !isnum(ofs[1]) || !isnum(ofs[3]) || !isnum(ofs[4])) {
 				dt.clear();
 				return false;
 			}
 
-			int minutes = fz::to_integral<int>(offset_tokens[0], 10009) * 60 + fz::to_integral<int>(offset_tokens[1], 10000);
-			if (minutes < 10000) {
-				if (str[offset_pos] == '+') {
-					minutes = -minutes;
-				}
-				dt += fz::duration::from_minutes(minutes);
+			int hours = (ofs[0] - '0') * 10 + ofs[1] - '0';
+			int minutes = (ofs[3] - '0') * 10 + ofs[4] - '0';
+			if (hours > 23 || minutes > 59) {
+				dt.clear();
+				return false;
 			}
+
+			auto offset = hours * 60 + minutes;
+			if (str[offset_pos] == '+') {
+				offset = -offset;
+			}
+			dt += fz::duration::from_minutes(offset);
 		}
 
 		return set;

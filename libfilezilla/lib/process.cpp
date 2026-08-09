@@ -417,7 +417,7 @@ private:
 #include <memory>
 #include <vector>
 
-#if FZ_MAC
+#if FZ_MAC && !FZ_IOS
 #include "libfilezilla/local_filesys.hpp"
 
 #include <CoreFoundation/CFArray.h>
@@ -969,7 +969,7 @@ HANDLE process::handle() const
 }
 #endif
 
-#if FZ_MAC
+#if FZ_MAC && !FZ_IOS
 namespace {
 template<typename T>
 class cfref final
@@ -1141,7 +1141,7 @@ bool spawn_detached_process(std::vector<native_string> const& cmd_with_args)
 		return false;
 	}
 
-#if FZ_MAC
+#if FZ_MAC && !FZ_IOS
 	// Special handling for application bundles if passed a single file name
 	int res = try_launch_bundle(cmd_with_args);
 	if (res != -1) {

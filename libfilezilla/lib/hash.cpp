@@ -9,6 +9,7 @@
 #include <nettle/memops.h>
 #include <nettle/pbkdf2.h>
 #include <nettle/sha3.h>
+#include <nettle/version.h>
 
 // Undo Nettle's horrible namespace mangling fuckery
 #ifdef pbkdf2_hmac_sha256
@@ -95,7 +96,11 @@ public:
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_md5_digest(&ctx_, out);
+#else
 		nettle_md5_digest(&ctx_, MD5_DIGEST_SIZE, out);
+#endif
 	}
 
 private:
@@ -228,7 +233,11 @@ public:
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha1_digest(&ctx_, out);
+#else
 		nettle_sha1_digest(&ctx_, SHA1_DIGEST_SIZE, out);
+#endif
 	}
 
 private:
@@ -257,7 +266,11 @@ public:
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha256_digest(&ctx_, out);
+#else
 		nettle_sha256_digest(&ctx_, SHA256_DIGEST_SIZE, out);
+#endif
 	}
 
 
@@ -287,7 +300,11 @@ public:
 
 	virtual void digest(uint8_t* out) override final
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha512_digest(&ctx_, out);
+#else
 		nettle_sha512_digest(&ctx_, SHA512_DIGEST_SIZE, out);
+#endif
 	}
 
 protected:
@@ -316,7 +333,11 @@ public:
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha384_digest(&ctx_, out);
+#else
 		nettle_sha384_digest(&ctx_, SHA384_DIGEST_SIZE, out);
+#endif
 	}
 
 protected:
@@ -340,12 +361,20 @@ public:
 
 	virtual void reinit() override final
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_init(&ctx_);
+#else
 		nettle_sha3_256_init(&ctx_);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_256_digest(&ctx_, out);
+#else
 		nettle_sha3_256_digest(&ctx_, SHA3_256_DIGEST_SIZE, out);
+#endif
 	}
 
 protected:
@@ -370,12 +399,20 @@ public:
 
 	virtual void reinit() override final
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_init(&ctx_);
+#else
 		nettle_sha3_384_init(&ctx_);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_384_digest(&ctx_, out);
+#else
 		nettle_sha3_384_digest(&ctx_, SHA3_384_DIGEST_SIZE, out);
+#endif
 	}
 
 protected:
@@ -400,12 +437,20 @@ public:
 
 	virtual void reinit() override final
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_init(&ctx_);
+#else
 		nettle_sha3_512_init(&ctx_);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_sha3_512_digest(&ctx_, out);
+#else
 		nettle_sha3_512_digest(&ctx_, SHA3_512_DIGEST_SIZE, out);
+#endif
 	}
 
 protected:
@@ -431,12 +476,20 @@ public:
 	virtual void reinit() override
 	{
 		uint8_t buf[SHA256_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha256_digest(&ctx_, buf);
+#else
 		nettle_hmac_sha256_digest(&ctx_, SHA256_DIGEST_SIZE, buf);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha256_digest(&ctx_, out);
+#else
 		nettle_hmac_sha256_digest(&ctx_, SHA256_DIGEST_SIZE, out);
+#endif
 	}
 
 private:
@@ -461,12 +514,20 @@ public:
 	virtual void reinit() override
 	{
 		uint8_t buf[SHA512_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha512_digest(&ctx_, buf);
+#else
 		nettle_hmac_sha512_digest(&ctx_, SHA512_DIGEST_SIZE, buf);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha512_digest(&ctx_, out);
+#else
 		nettle_hmac_sha512_digest(&ctx_, SHA512_DIGEST_SIZE, out);
+#endif
 	}
 
 private:
@@ -491,12 +552,20 @@ public:
 	virtual void reinit() override
 	{
 		uint8_t buf[SHA1_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha1_digest(&ctx_, buf);
+#else
 		nettle_hmac_sha1_digest(&ctx_, SHA1_DIGEST_SIZE, buf);
+#endif
 	}
 
 	virtual void digest(uint8_t* out) override
 	{
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_hmac_sha1_digest(&ctx_, out);
+#else
 		nettle_hmac_sha1_digest(&ctx_, SHA1_DIGEST_SIZE, out);
+#endif
 	}
 
 private:
@@ -771,7 +840,11 @@ std::vector<uint8_t> hmac_sha1_impl(KeyContainer const& key, DataContainer const
 	}
 
 	ret.resize(SHA1_DIGEST_SIZE);
+#if NETTLE_VERSION_MAJOR >= 4
+	nettle_hmac_sha1_digest(&ctx, ret.data());
+#else
 	nettle_hmac_sha1_digest(&ctx, ret.size(), ret.data());
+#endif
 
 	return ret;
 }
@@ -792,7 +865,11 @@ std::vector<uint8_t> hmac_sha256_impl(KeyContainer const& key, DataContainer con
 	}
 
 	ret.resize(SHA256_DIGEST_SIZE);
+#if NETTLE_VERSION_MAJOR >= 4
+	nettle_hmac_sha256_digest(&ctx, ret.data());
+#else
 	nettle_hmac_sha256_digest(&ctx, ret.size(), ret.data());
+#endif
 
 	return ret;
 }

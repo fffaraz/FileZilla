@@ -85,6 +85,20 @@ void TimeTest::testPreEpoch()
 	CPPUNIT_ASSERT_EQUAL(23, tm2.tm_hour);
 	CPPUNIT_ASSERT_EQUAL(59, tm2.tm_min);
 	CPPUNIT_ASSERT_EQUAL(59, tm2.tm_sec);
+
+	fz::datetime t3(fz::datetime::utc, 1960, 10, 20, 12, 34, 22, 7);
+
+	CPPUNIT_ASSERT(!t3.empty());
+	CPPUNIT_ASSERT_EQUAL(7, t3.get_milliseconds());
+
+	t3 = fz::datetime(t3.get_time_t(), fz::datetime::seconds);
+	auto const tm3 = t3.get_tm(fz::datetime::utc);
+	CPPUNIT_ASSERT_EQUAL(60, tm3.tm_year);
+	CPPUNIT_ASSERT_EQUAL(9, tm3.tm_mon);
+	CPPUNIT_ASSERT_EQUAL(20, tm3.tm_mday);
+	CPPUNIT_ASSERT_EQUAL(12, tm3.tm_hour);
+	CPPUNIT_ASSERT_EQUAL(34, tm3.tm_min);
+	CPPUNIT_ASSERT_EQUAL(22, tm3.tm_sec);
 }
 
 void TimeTest::testAlternateMidnight()
@@ -122,10 +136,16 @@ void TimeTest::testRFC822()
 
 	std::string const offset1 = "Mon, 02 Mar 2020 13:35:00 +0100";
 	std::string const offset2 = "Mon, 02 Mar 2020 07:35:00 -0500";
+	std::string const offset3 = "Mon, 02 Mar 2020 14:05:00 +0130";
+	std::string const offset4 = "Mon, 02 Mar 2020 07:05:00 -0530";
 
 	CPPUNIT_ASSERT(t.set_rfc822(offset1));
 	CPPUNIT_ASSERT(t == t1);
 	CPPUNIT_ASSERT(t.set_rfc822(offset2));
+	CPPUNIT_ASSERT(t == t1);
+	CPPUNIT_ASSERT(t.set_rfc822(offset3));
+	CPPUNIT_ASSERT(t == t1);
+	CPPUNIT_ASSERT(t.set_rfc822(offset4));
 	CPPUNIT_ASSERT(t == t1);
 }
 

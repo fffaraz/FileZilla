@@ -68,6 +68,9 @@ public:
 	explicit operator bool() const { return static_cast<bool>(data_); }
 
 	bool empty() const { return !data_; }
+
+	long use_count() const { return data_.use_count(); }
+
 private:
 	std::shared_ptr<T> data_;
 };

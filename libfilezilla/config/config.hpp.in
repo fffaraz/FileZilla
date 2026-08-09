@@ -40,26 +40,11 @@
 /* getrandom can be used */
 #undef HAVE_GETRANDOM
 
-/* Define to 1 if you have the 'gmtime_r' function. */
-#undef HAVE_GMTIME_R
-
-/* gmtime_s can be used */
-#undef HAVE_GMTIME_S
-
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the 'localtime_r' function. */
-#undef HAVE_LOCALTIME_R
-
-/* localtime_s can be used */
-#undef HAVE_LOCALTIME_S
-
 /* Define if MEMFD_CREATE is supported */
 #undef HAVE_MEMFD_CREATE
-
-/* Define if thread_local isn't supported */
-#undef HAVE_NO_THREAD_LOCAL
 
 /* Define to 1 if you have the 'pipe2' function. */
 #undef HAVE_PIPE2

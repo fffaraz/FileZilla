@@ -1,4 +1,4 @@
-﻿AC_INIT([libfilezilla],[0.55.4],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
+﻿AC_INIT([libfilezilla],[0.56.1],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
 
 # Update the version information only immediately before a public release of your software
 # If the library source code has changed at all since the last update, then increment revision (‘c:r:a’ becomes ‘c:r+1:a’).
@@ -6,7 +6,7 @@
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-LIBRARY_VERSION=57:0:0
+LIBRARY_VERSION=58:1:0
 
 AH_TOP([
 #ifndef LIBFILEZILLA_CONFIG_HEADER
@@ -101,9 +101,6 @@ AC_SYS_LARGEFILE
 # libstdc++ as shipped with GCC 4.7 has a steady clock that isn't steady (who implements such crap?)
 CHECK_STEADY_CLOCK
 
-# No thread_local in GCC 4.7 and it for some reason isn't supported on OS X either
-CHECK_THREAD_LOCAL
-
 AC_CHECK_DECLS([CLOCK_MONOTONIC], [], [], [[#include <time.h>]])
 
 if test "$windows" = "0"; then
@@ -119,8 +116,6 @@ fi
 # Some platforms have no d_type entry in their dirent structure
 gl_CHECK_TYPE_STRUCT_DIRENT_D_TYPE
 
-CHECK_THREADSAFE_LOCALTIME
-CHECK_THREADSAFE_GMTIME
 CHECK_INVERSE_GMTIME
 
 CHECK_CLOCK_GETTIME
@@ -142,6 +137,8 @@ else
 
   CHECK_RANDOM
   CHECK_LDL_FOR_DLSYM
+
+  CHECK_ATOMIC
 fi
 
 if test "$windows" = "0" && test "$mac" = "0"; then

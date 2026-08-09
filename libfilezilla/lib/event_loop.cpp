@@ -208,7 +208,9 @@ void event_loop::stop_timer(timer_id id)
 
 				if (timers_.empty()) {
 					deadline_ = monotonic_clock();
+					do_timers_ = false;
 				}
+				// else: Updating deadline_ is done lazily in process_timers
 				break;
 			}
 		}
@@ -217,6 +219,11 @@ void event_loop::stop_timer(timer_id id)
 
 timer_id event_loop::stop_add_timer(timer_id id, event_handler* handler, monotonic_clock const &deadline, duration const& interval)
 {
+	if (!deadline) {
+		stop_timer(id);
+		return 0;
+	}
+
 	scoped_lock lock(sync_);
 
 	if (id) {
@@ -250,7 +257,7 @@ timer_id event_loop::setup_timer(scoped_lock &l, timer_data &d, event_handler* h
 	d.id_ = ++next_timer_id_; // 64bit, can this really ever overflow?
 
 	if (!deadline_ || d.deadline_ < deadline_) {
-		// Our new time is the next timer to trigger
+		// Our new timer is the next timer to trigger
 		deadline_ = d.deadline_;
 
 		switch (mode_) {
@@ -413,27 +420,45 @@ bool event_loop::process_timers(scoped_lock & l)
 		return false;
 	}
 
-	// Update deadline_, stop at first expired timer
+	// Find first expired timer (if any)
+	// and update deadline_ with the earliest expiration, excluding the first expired timer
+
+	// We guarantee fairness between expired timers by starting
+	// from deadline_index_, increasing it every time process_timers
+	// is called.
 	deadline_ = monotonic_clock();
-	auto it = timers_.begin();
-	for (; it != timers_.end(); ++it) {
-		if (!deadline_ || it->deadline_ < deadline_) {
-			if (it->deadline_ <= now) {
-				break;
-			}
-			deadline_ = it->deadline_;
+	auto it = [&](){
+		Timers::iterator expired = timers_.end();
+
+		if (++deadline_index_ >= timers_.size()) {
+			deadline_index_ = 0;
 		}
-	}
+		auto pivot = timers_.begin() + deadline_index_;
+		for (auto it = pivot; it < timers_.end(); ++it) {
+			if (!deadline_ || it->deadline_ < deadline_) {
+				if (it->deadline_ <= now && expired == timers_.end()) {
+					expired = it;
+				}
+				else {
+					deadline_ = it->deadline_;
+				}
+			}
+		}
+		for (auto it = timers_.begin(); it < pivot; ++it) {
+			if (!deadline_ || it->deadline_ < deadline_) {
+				if (it->deadline_ <= now && expired == timers_.end()) {
+					expired = it;
+				}
+				else {
+					deadline_ = it->deadline_;
+				}
+			}
+		}
+		return expired;
+	}();
 
 	if (it != timers_.end()) {
-		// 'it' is now expired
-		// deadline_ has been updated with prior timers
-		// go through remaining elements to update deadline_
-		for (auto it2 = std::next(it); it2 != timers_.end(); ++it2) {
-			if (!deadline_ || it2->deadline_ < deadline_) {
-				deadline_ = it2->deadline_;
-			}
-		}
+		// 'it' has already expired
 
 		event_handler *const handler = it->handler_;
 		auto const id = it->id_;
@@ -453,6 +478,11 @@ bool event_loop::process_timers(scoped_lock & l)
 			}
 		}
 
+		if (deadline_ && !threadless_ && deadline_ > now) {
+			do_timers_ = false;
+			timer_cond_.signal(l);
+		}
+
 		// Call event handler
 		event_assert(!handler->removing_);
 
@@ -461,16 +491,18 @@ bool event_loop::process_timers(scoped_lock & l)
 		l.unlock();
 		(*handler)(timer_event(id));
 		l.lock();
+		event_assert(!resend_);
 
 		active_handler_ = nullptr;
 		active_handler_removed_ = false;
 
 		return true;
 	}
-
-	if (deadline_ && !threadless_) {
-		do_timers_ = false;
-		timer_cond_.signal(l);
+	else {
+		if (deadline_ && !threadless_) {
+			do_timers_ = false;
+			timer_cond_.signal(l);
+		}
 	}
 
 	return false;
@@ -502,6 +534,12 @@ void event_loop::stop(bool join)
 		timers_.clear();
 		deadline_ = monotonic_clock();
 	}
+}
+
+void event_loop::resend_current_event()
+{
+	event_assert(thread::own_id() == thread_id_);
+	resend_ = true;
 }
 
 }

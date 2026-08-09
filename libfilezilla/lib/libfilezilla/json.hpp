@@ -52,7 +52,13 @@ public:
 	}
 
 
-	/// Returns number and string values as the passed integer type
+	/**
+	 * \brief Returns number and string values as the passed integer type
+	 *
+	 * Returns errorval on failure.
+	 *
+	 * Fractional values are rounded.
+	 */
 	template<typename T, std::enable_if_t<std::is_integral_v<typename std::decay_t<T>>, int> = 0>
 	T number_value(T errorval = {}) const {
 		auto v = number_value_o<T>();
@@ -62,6 +68,11 @@ public:
 		return errorval;
 	}
 
+	/**
+	 * \brief Returns values as passed integer type if it can be converted, nullopt otherwise.
+	 *
+	 * Fractional values are rounded.
+	 */
 	template<typename T, std::enable_if_t<std::is_integral_v<typename std::decay_t<T>>, int> = 0>
 	std::optional<T> number_value_o() const {
 		bool constexpr is_signed = std::is_signed_v<typename std::decay_t<T>>;

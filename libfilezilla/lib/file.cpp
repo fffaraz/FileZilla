@@ -32,6 +32,26 @@ file::~file()
 	close();
 }
 
+namespace {
+bool check_flags(file::creation_flags & d)
+{
+	if (d & file::existing) {
+		if (d & file::empty) {
+			return false;
+		}
+	}
+	else if (!(d & file::empty)) {
+		d |= (d & file::fresh) ? file::empty : file::existing;
+	}
+
+	if (d & file::fresh && d & file::nocreate) {
+		return false;
+	}
+
+	return true;
+}
+}
+
 #ifdef FZ_WINDOWS
 file::file(file && op) noexcept
 	: fd_{op.fd_}
@@ -74,13 +94,18 @@ result file::open(native_string const& f, mode m, creation_flags d)
 		return {result::invalid};
 	}
 
+
 	DWORD dispositionFlags;
 	if (m == writing || m == readwrite || m == appending) {
-		if (d & empty) {
-			dispositionFlags = (d & nocreate) ? TRUNCATE_EXISTING : CREATE_ALWAYS;
+		if (!check_flags(d)) {
+			return {result::invalid};
 		}
-		else if (d & fresh) {
+
+		if (d & fresh) {
 			dispositionFlags = CREATE_NEW;
+		}
+		else if (d & empty) {
+			dispositionFlags = (d & nocreate) ? TRUNCATE_EXISTING : CREATE_ALWAYS;
 		}
 		else if (d & nocreate) {
 			dispositionFlags = OPEN_EXISTING;
@@ -305,11 +330,16 @@ result file::open(native_string const& f, mode m, creation_flags d)
 		return {result::invalid};
 	}
 
+
 	int flags = O_CLOEXEC;
 	if (m == reading) {
 		flags |= O_RDONLY;
 	}
 	else {
+		if (!check_flags(d)) {
+			return {result::invalid};
+		}
+
 		flags |= (m == readwrite) ? O_RDWR : O_WRONLY;
 		if (m == appending) {
 			flags |= O_APPEND;
@@ -319,11 +349,11 @@ result file::open(native_string const& f, mode m, creation_flags d)
 			flags |= O_CREAT;
 		}
 
-		if (d & empty) {
-			flags |= O_TRUNC;
-		}
-		else if (d & fresh) {
+		if (d & fresh) {
 			flags |= O_EXCL;
+		}
+		else if (d & empty) {
+			flags |= O_TRUNC;
 		}
 	}
 	int mode = S_IRUSR | S_IWUSR;

@@ -221,7 +221,9 @@ std::string build_digest_authorization(auth_params const& params, unsigned int &
 	if (!opaque.empty()) {
 		auth += ", opaque=" + quote(opaque);
 	}
-	auth += ", uri=" + quote(uri.to_string());
+
+	auto const digest_uri = uri.get_request();
+	auth += ", uri=" + quote(digest_uri);
 
 	std::string full_algorithm = get(params, "algorithm");
 	if (full_algorithm.empty()) {
@@ -267,7 +269,7 @@ std::string build_digest_authorization(auth_params const& params, unsigned int &
 	auth += ", cnonce=" + quote(cnonce);
 
 	std::string a1 = hex_encode<std::string>(h(user + ":" + realm + ":" + password));
-	std::string ha2 = hex_encode<std::string>(h(verb + ":" + uri.to_string()));
+	std::string ha2 = hex_encode<std::string>(h(verb + ":" + digest_uri));
 
 	std::string response;
 	if (sess) {

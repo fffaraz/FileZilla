@@ -33,7 +33,6 @@ std::vector<mutex*>& lock_stack()
 		return mainthread_lock_stack;
 	}
 	else {
-
 		return workerthread_lock_stack;
 	}
 }
@@ -82,7 +81,8 @@ void check_inversion(lock_order const& order, std::vector<mutex*> & stack)
 		// We're still to the left of the pivot.
 
 		// Check if this a common guard mutex also on the lock stack. If that's the case, no deadlock due to inversion is possible
-		if (std::find(stack.begin(), stack.begin() + stack.size() - 1, order.mutexes_[i]) != stack.end()) {
+		auto end = stack.begin() + stack.size() - 1;
+		if (std::find(stack.begin(), end, order.mutexes_[i]) != end) {
 			return;
 		}
 	}
@@ -223,7 +223,7 @@ void unlock(mutex* m)
 				}
 				// This may establish a new order
 				stack.pop_back();
-				record_order(*m, true);
+				record_order(*stack[0], true);
 			}
 			else {
 				stack.pop_back();

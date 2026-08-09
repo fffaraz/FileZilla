@@ -15,6 +15,7 @@ using namespace std::literals;
 class socket_test final : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(socket_test);
+	CPPUNIT_TEST(test_bound_connect);
 	CPPUNIT_TEST(test_duplex);
 	CPPUNIT_TEST(test_duplex_tls);
 	CPPUNIT_TEST(test_tls_resumption);
@@ -24,23 +25,21 @@ public:
 	void setUp() {}
 	void tearDown() {}
 
+	void test_bound_connect();
+	void do_test_bound_connect(std::string const& address, fz::address_type family);
+
 	void test_duplex();
 	void test_duplex_tls();
 
+	void test_tls_resumption();
 	void do_test_tls_resumption(std::optional<fz::tls_ver> ver, bool server_no_ticket, bool client_no_ticket, bool use_hostname);
 	void do_test_tls_resumption(std::optional<fz::tls_ver> ver, bool server_no_ticket, bool client_no_ticket);
-	void test_tls_resumption();
+
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(socket_test);
 
 namespace {
-struct logger : public fz::logger_interface
-{
-	virtual void do_log(fz::logmsg::type, std::wstring &&) {
-	}
-};
-
 auto const& get_key_and_cert()
 {
 	static auto key_and_cert = fz::tls_layer::generate_selfsigned_certificate(fz::native_string(), "CN=libfilezilla test", {});
@@ -175,8 +174,6 @@ struct base : public fz::event_handler
 	fz::hash_accumulator sent_hash_{fz::hash_algorithm::md5};
 	fz::hash_accumulator received_hash_{fz::hash_algorithm::md5};
 
-	logger logger_;
-
 	fz::mutex m_;
 	fz::condition cond_;
 
@@ -204,7 +201,8 @@ struct client final : public base
 	{
 		s_ = std::make_unique<fz::socket>(pool_, this);
 		if (tls) {
-			tls_ = std::make_unique<fz::tls_layer>(loop, this, *s_, nullptr, logger_);
+			auto & logger = fz::get_null_logger();
+			tls_ = std::make_unique<fz::tls_layer>(loop, this, *s_, nullptr, logger);
 			if (tls_ver_) {
 				tls_->set_min_tls_ver(*tls_ver_);
 				tls_->set_max_tls_ver(*tls_ver_);
@@ -276,7 +274,8 @@ struct server final : public base
 					fail(__LINE__, error);
 				}
 				if (use_tls_) {
-					tls_ = std::make_unique<fz::tls_layer>(event_loop_, this, *s_, nullptr, logger_);
+					auto & logger = fz::get_null_logger();
+					tls_ = std::make_unique<fz::tls_layer>(event_loop_, this, *s_, nullptr, logger);
 					if (tls_ver_) {
 						tls_->set_min_tls_ver(*tls_ver_);
 						tls_->set_max_tls_ver(*tls_ver_);
@@ -305,6 +304,133 @@ struct server final : public base
 	fz::listen_socket l_{pool_, this};
 	bool use_tls_{};
 	bool no_tickets_{};
+};
+
+struct bound_connect final : fz::event_handler
+{
+	explicit bound_connect(fz::event_loop & loop)
+		: fz::event_handler(loop)
+	{
+	}
+
+	virtual ~bound_connect()
+	{
+		remove_handler();
+	}
+
+	bool start(std::string const& address, fz::address_type family, int& error)
+	{
+		if (!l_.bind(address)) {
+			error = EINVAL;
+			return false;
+		}
+
+		error = l_.listen(family);
+		if (error) {
+			return false;
+		}
+
+		int port_error{};
+		port_ = l_.local_port(port_error);
+		if (port_ == -1) {
+			error = port_error;
+			return false;
+		}
+
+		if (!s_.bind(address)) {
+			error = EINVAL;
+			return false;
+		}
+
+		error = s_.connect(fz::to_native(address), port_, family);
+		return !error;
+	}
+
+	bool wait(fz::duration const& timeout)
+	{
+		fz::scoped_lock l(m_);
+		while (failed_.empty() && (!accepted_ || !connected_)) {
+			if (!cond_.wait(l, timeout)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
+	virtual void operator()(fz::event_base const& ev) override
+	{
+		fz::dispatch<fz::socket_event>(ev, this, &bound_connect::on_socket_event);
+	}
+
+	void on_socket_event(fz::socket_event_source * source, fz::socket_event_flag type, int error)
+	{
+		if (error) {
+			fail(__LINE__, error);
+			return;
+		}
+
+		if (type != fz::socket_event_flag::connection) {
+			fail(__LINE__);
+			return;
+		}
+
+		if (source == &l_) {
+			int accept_error{};
+			auto accepted = l_.accept(accept_error);
+			if (!accepted) {
+				fail(__LINE__, accept_error);
+				return;
+			}
+
+			fz::scoped_lock l(m_);
+			accepted_ = std::move(accepted);
+			signal_if_done(l);
+		}
+		else if (source == &s_) {
+			fz::scoped_lock l(m_);
+			connected_ = true;
+			signal_if_done(l);
+		}
+		else {
+			fail(__LINE__);
+		}
+	}
+
+	void fail(int line, int error = 0)
+	{
+		fz::scoped_lock l(m_);
+		if (failed_.empty()) {
+			failed_ = fz::sprintf("error in line %d"sv, line);
+			if (error) {
+				failed_ += fz::sprintf(", error code %d"sv, error);
+			}
+		}
+		cond_.signal(l);
+	}
+
+	void signal_if_done(fz::scoped_lock& l)
+	{
+		if (accepted_ && connected_) {
+			cond_.signal(l);
+		}
+	}
+
+	std::string failure() const
+	{
+		fz::scoped_lock l(m_);
+		return failed_;
+	}
+
+	fz::thread_pool pool_;
+	fz::listen_socket l_{pool_, this};
+	fz::socket s_{pool_, this};
+
+	mutable fz::mutex m_;
+	fz::condition cond_;
+	std::unique_ptr<fz::socket> accepted_;
+	std::string failed_;
+	bool connected_{};
+	int port_{};
 };
 }
 
@@ -340,6 +466,25 @@ void socket_test::test_duplex()
 
 	CPPUNIT_ASSERT(c.sent_hash_.digest() == s.received_hash_.digest());
 	CPPUNIT_ASSERT(s.sent_hash_.digest() == c.received_hash_.digest());
+}
+
+void socket_test::do_test_bound_connect(std::string const& address, fz::address_type family)
+{
+	fz::event_loop loop;
+	bound_connect c(loop);
+
+	int error{};
+	bool const started = c.start(address, family, error);
+	CPPUNIT_ASSERT_MESSAGE(fz::sprintf("Could not start bound connection test for %s, error code %d"sv, address, error), started);
+
+	CPPUNIT_ASSERT_MESSAGE(fz::sprintf("Timed out waiting for bound connection test for %s"sv, address), c.wait(fz::duration::from_minutes(1)));
+	ASSERT_EQUAL(std::string(), c.failure());
+}
+
+void socket_test::test_bound_connect()
+{
+	do_test_bound_connect("127.0.0.1", fz::address_type::ipv4);
+	do_test_bound_connect("::1", fz::address_type::ipv6);
 }
 
 void socket_test::test_duplex_tls()

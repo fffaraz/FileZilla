@@ -24,9 +24,10 @@ class thread_pool;
 
 /** \brief A threaded event loop that supports sending events and timers
  *
- * Timers abd queued events are treated fairly, neither can starve the other by being too frequent.
+ * Timers and queued events are treated fairly, neither can starve the other by being too frequent.
  *
- * If the deadlines of multiple timers have expired, they get processed in an unspecified order.
+ * If the deadlines of multiple timers have expired, they get processed in an unspecified order, but
+ * eventually they will get processed.
  *
  * \sa event_handler for a complete usage example.
  */
@@ -82,9 +83,12 @@ public:
 
 	bool running() const;
 
-	void resend_current_event() {
-		resend_ = true;
-	}
+	/**
+	 * This must only be called inside a handler's operator()(event_base const&), calling it
+	 * at other times or different threads is undefined behaviour.
+	 * Must not be called with timer events.
+	 */
+	void resend_current_event();
 
 private:
 	friend class event_handler;
@@ -132,6 +136,7 @@ private:
 	event_handler * active_handler_{};
 
 	monotonic_clock deadline_;
+	size_t deadline_index_{};
 
 	timer_id next_timer_id_{};
 

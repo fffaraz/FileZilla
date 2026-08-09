@@ -100,7 +100,7 @@ private:
 			finalizing
 		};
 		state state_{state::header};
-
+		uint8_t interim_responses_{};
 		bool keep_alive_{};
 		bool eof_{};
 	};
@@ -163,7 +163,7 @@ void client::destroy()
 }
 
 client::impl::impl(client & c, aio_buffer_pool * buffer_pool, event_handler & handler, logger_interface & logger, std::string && user_agent)
-	: event_handler(handler.event_loop_)
+	: event_handler(handler, child_event_handler)
 	, client_(c)
 	, handler_(handler)
 	, buffer_pool_(buffer_pool)
@@ -471,7 +471,7 @@ continuation client::impl::on_send()
 			}
 			else {
 				if (body_buffer_->empty()) {
-					send_buffer_.append("0\r\n\r\n\r\n"sv);
+					send_buffer_.append("0\r\n\r\n"sv);
 					request_send_state_ = request_send_state::finalizing;
 				}
 				else {
@@ -767,11 +767,9 @@ continuation client::impl::parse_header()
 			}
 
 			unsigned int code = res.code_ = (recv_buffer_[9] - '0') * 100 + (recv_buffer_[10] - '0') * 10 + recv_buffer_[11] - '0';
-			if (code != 100) {
-				res.code_ = code;
-				res.reason_ = recv_buffer_.to_view().substr(13, i - 13);
-				res.flags_ |= response::flag_got_code;
-			}
+			res.code_ = code;
+			res.reason_ = recv_buffer_.to_view().substr(13, i - 13);
+			res.flags_ |= response::flag_got_code;
 
 			if (!send_pos_) {
 				if (res.success()) {
@@ -841,6 +839,25 @@ continuation client::impl::process_complete_header()
 	auto & srr = requests_.front();
 	auto & req = srr->req();
 	auto & res = srr->res();
+
+	if (res.code_ >= 100 && res.code_ < 200) {
+		if (res.code_ == 101) {
+			logger_.log(logmsg::error, fztranslate("Switching protocols is not supported"));
+			return continuation::error;
+		}
+		if (++read_state_.interim_responses_ >= 10) {
+			logger_.log(logmsg::error, fztranslate("Server sent too many interimg responses"));
+			return continuation::error;
+		}
+
+		res.code_ = 0;
+		res.reason_.clear();
+		res.flags_ &= ~response::flag_got_code;
+		res.headers_.clear();
+		logger_.log(logmsg::debug_info, fztranslate("Discarding interim response"));
+		return continuation::next;
+	}
+
 
 	res.flags_ |= response::flag_got_header;
 	if (req.verb_ == "HEAD" || res.code_prohobits_body()) {
@@ -1260,7 +1277,7 @@ void client::impl::on_buffer_availability(aio_waitable const* w)
 			}
 		}
 
-		if ((buffer_pool_ && buffer_pool_ == w) || requests_.back()->res().writer_.get() == w) {
+		if ((buffer_pool_ && buffer_pool_ == w) || requests_.front()->res().writer_.get() == w) {
 			read_loop();
 			return;
 		}

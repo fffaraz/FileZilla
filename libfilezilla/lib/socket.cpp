@@ -298,7 +298,7 @@ int do_set_flags(socket::socket_t fd, int flags, int flags_mask, duration const&
 		if (res != 0) {
 			return last_socket_error();
 		}
-#ifdef TCP_KEEPIDLE
+#ifdef TCP_KEEPINTVL
 		int const idle = keepalive_interval.get_seconds();
 		res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (const char*)&idle, sizeof(idle));
 		if (res != 0) {
@@ -525,7 +525,7 @@ protected:
 		return fd;
 	}
 
-	int try_connect_host(addrinfo & addr, sockaddr_u const& bindAddr, scoped_lock & l)
+	int try_connect_host(addrinfo & addr, sockaddr_u const& bindAddr, socklen_t bindAddrLen, scoped_lock & l)
 	{
 		if (socket_->evt_handler_) {
 			socket_->evt_handler_->send_event<hostaddress_event>(socket_->ev_source_, socket::address_to_string(addr.ai_addr, addr.ai_addrlen));
@@ -540,8 +540,23 @@ protected:
 			return 0;
 		}
 
-		if (bindAddr.sockaddr_.sa_family != AF_UNSPEC && bindAddr.sockaddr_.sa_family == addr.ai_family) {
-			(void)::bind(socket_->fd_, &bindAddr.sockaddr_, sizeof(bindAddr));
+		if (bindAddr.sockaddr_.sa_family != AF_UNSPEC) {
+			if (bindAddr.sockaddr_.sa_family == addr.ai_family) {
+				if (bind(socket_->fd_, &bindAddr.sockaddr_, bindAddrLen) != 0) {
+					if (socket_->evt_handler_) {
+						socket_->evt_handler_->send_event<socket_event>(socket_->ev_source_, addr.ai_next ? socket_event_flag::connection_next : socket_event_flag::connection, last_socket_error());
+					}
+					close_socket_fd(socket_->fd_);
+					return 0;
+				}
+			}
+			else {
+				if (socket_->evt_handler_) {
+					socket_->evt_handler_->send_event<socket_event>(socket_->ev_source_, addr.ai_next ? socket_event_flag::connection_next : socket_event_flag::connection, EADDRNOTAVAIL);
+				}
+				close_socket_fd(socket_->fd_);
+				return 0;
+			}
 		}
 
 		auto* s = static_cast<socket*>(socket_);
@@ -632,6 +647,7 @@ protected:
 		std::swap(bind, bind_);
 
 		sockaddr_u bindAddr{};
+		socklen_t bindAddrLen{};
 
 #ifndef FZ_WINDOWS
 
@@ -653,15 +669,12 @@ protected:
 			addr.ai_addr = &u.sockaddr_;
 			addr.ai_addrlen = sizeof(u.un);
 
-			int res = try_connect_host(addr, bindAddr, l);
+			int res = try_connect_host(addr, bindAddr, bindAddrLen, l);
 			if (res == 1) {
 				return true;
 			}
 
 			if (socket_) {
-				if (socket_->evt_handler_) {
-					socket_->evt_handler_->send_event<socket_event>(socket_->ev_source_, socket_event_flag::connection, ECONNABORTED);
-				}
 				static_cast<socket*>(socket_)->state_ = socket_state::failed;
 			}
 
@@ -675,12 +688,24 @@ protected:
 			bind_hints.ai_flags = AI_NUMERICHOST | AI_NUMERICSERV | AI_PASSIVE;
 			bind_hints.ai_socktype = SOCK_STREAM;
 			addrinfo *bindAddressList{};
-			int res = getaddrinfo(bind.empty() ? nullptr : bind.c_str(), "0", &bind_hints, &bindAddressList);
+			int res = getaddrinfo(bind.c_str(), "0", &bind_hints, &bindAddressList);
 			if (!res && bindAddressList) {
 				if (bindAddressList->ai_addr) {
 					memcpy(&bindAddr.storage, bindAddressList->ai_addr, bindAddressList->ai_addrlen);
+					bindAddrLen = bindAddressList->ai_addrlen;
 				}
 				freeaddrinfo(bindAddressList);
+			}
+			else {
+#ifdef FZ_WINDOWS
+				res = convert_msw_error_code(res);
+#endif
+				if (socket_->evt_handler_) {
+					socket_->evt_handler_->send_event<socket_event>(socket_->ev_source_, socket_event_flag::connection, res);
+				}
+				static_cast<socket*>(socket_)->state_ = socket_state::failed;
+
+				return false;
 			}
 		}
 
@@ -734,7 +759,7 @@ protected:
 
 		res = 0;
 		for (addrinfo *addr = addressList; addr && !res; addr = addr->ai_next) {
-			res = try_connect_host(*addr, bindAddr, l);
+			res = try_connect_host(*addr, bindAddr, bindAddrLen, l);
 		}
 		freeaddrinfo(addressList);
 		if (res == 1) {
@@ -742,9 +767,6 @@ protected:
 		}
 
 		if (socket_) {
-			if (socket_->evt_handler_) {
-				socket_->evt_handler_->send_event<socket_event>(socket_->ev_source_, socket_event_flag::connection, ECONNABORTED);
-			}
 			static_cast<socket*>(socket_)->state_ = socket_state::failed;
 		}
 
@@ -1527,7 +1549,7 @@ socket_descriptor listen_socket::fast_accept(int &error)
 		}
 
 		if (fd == -1) {
-			error = errno;
+			error = last_socket_error();
 		}
 	}
 
@@ -1685,10 +1707,16 @@ int socket::read(void* buffer, unsigned int size, int& error)
 	}
 #endif
 
+repeat:
 	int res = recv(fd_, (char*)buffer, size, 0);
 
 	if (res == -1) {
 		error = last_socket_error();
+#if !FZ_WINDOWS
+		if (error == EINTR) {
+			goto repeat;
+		}
+#endif
 		if (error == EAGAIN) {
 			scoped_lock l(socket_thread_->mutex_);
 			if (!(socket_thread_->waiting_ & WAIT_READ)) {
@@ -1724,10 +1752,16 @@ int socket::write(void const* buffer, unsigned int size, int& error)
 	}
 #endif
 
+repeat:
 	int res = send(fd_, (const char*)buffer, size, flags);
 
 	if (res == -1) {
 		error = last_socket_error();
+#if !FZ_WINDOWS
+		if (error == EINTR) {
+			goto repeat;
+		}
+#endif
 		if (error == EAGAIN) {
 			scoped_lock l (socket_thread_->mutex_);
 

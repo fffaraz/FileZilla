@@ -1,5 +1,6 @@
 #include "../lib/libfilezilla/event_handler.hpp"
 #include "../lib/libfilezilla/event_loop.hpp"
+#include "../lib/libfilezilla/util.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -10,6 +11,7 @@ class EventloopTest final : public CppUnit::TestFixture
 	CPPUNIT_TEST(testFilter);
 	CPPUNIT_TEST(testCondition);
 	CPPUNIT_TEST(testTimer);
+	CPPUNIT_TEST(testTimerFairness);
 	CPPUNIT_TEST(testSelfremove);
 	CPPUNIT_TEST_SUITE_END();
 
@@ -21,6 +23,7 @@ public:
 	void testFilter();
 	void testCondition();
 	void testTimer();
+	void testTimerFairness();
 	void testSelfremove();
 };
 
@@ -255,6 +258,99 @@ void EventloopTest::testTimer()
 	handler.id_ = handler.add_timer(fz::duration::from_milliseconds(1), true);
 
 	CPPUNIT_ASSERT(handler.cond_.wait(l, fz::duration::from_seconds(1)));
+}
+
+namespace {
+class fairness_handler final : public fz::event_handler
+{
+public:
+	fairness_handler(fz::event_loop & l)
+	: fz::event_handler(l)
+	{}
+
+	virtual ~fairness_handler()
+	{
+		remove_handler();
+	}
+
+	virtual void operator()(fz::event_base const& ev) override {
+		bool res = fz::dispatch<event, fz::timer_event>(ev, this, &fairness_handler::on_event, &fairness_handler::on_timer);
+		CPPUNIT_ASSERT(res);
+	}
+
+	void on_event(bool stop)
+	{
+		if (stop) {
+			fz::scoped_lock l(m_);
+			cond_.signal(l);
+		}
+		else {
+			send_event<event>(false);
+		}
+	}
+
+	void on_timer(fz::timer_id const& id)
+	{
+		if (id == stop_id_) {
+			on_event(true);
+		}
+		else {
+			fz::sleep(fz::duration::from_milliseconds(100));
+		}
+	}
+
+	fz::mutex m_;
+	fz::condition cond_;
+
+	fz::timer_id stop_id_{};
+
+	struct event_type;
+	using event = fz::simple_event<event_type, bool>;
+};
+}
+
+void EventloopTest::testTimerFairness()
+{
+	// Check that busy timers don't starve slow ones
+	{
+		fz::event_loop loop;
+
+		fairness_handler handler(loop);
+
+		fz::scoped_lock l(handler.m_);
+		handler.add_timer(fz::duration::from_milliseconds(1), false);
+		handler.add_timer(fz::duration::from_milliseconds(1), false);
+		handler.add_timer(fz::duration::from_milliseconds(1), false);
+		handler.stop_id_ = handler.add_timer(fz::duration::from_milliseconds(220), false);
+
+		CPPUNIT_ASSERT(handler.cond_.wait(l, fz::duration::from_seconds(1)));
+	}
+
+	// Check that busy timers don't starve normal events
+	{
+		fz::event_loop loop;
+
+		fairness_handler handler(loop);
+
+		handler.add_timer(fz::duration::from_milliseconds(1), false);
+
+		fz::sleep(fz::duration::from_milliseconds(50));
+		handler.send_event<fairness_handler::event>(true);
+
+		fz::scoped_lock l(handler.m_);
+		CPPUNIT_ASSERT(handler.cond_.wait(l, fz::duration::from_seconds(1)));
+	}
+
+		// Check that busy events don't starve timers
+	{
+		fz::event_loop loop;
+
+		fairness_handler handler(loop);
+		fz::scoped_lock l(handler.m_);
+		handler.stop_id_ = handler.add_timer(fz::duration::from_milliseconds(220), false);
+		handler.send_event<fairness_handler::event>(false);
+		CPPUNIT_ASSERT(handler.cond_.wait(l, fz::duration::from_seconds(1)));
+	}
 }
 
 namespace {

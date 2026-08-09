@@ -10,6 +10,7 @@
 #include <winternl.h>
 #else
 #include <errno.h>
+#include <limits.h>
 #include <sys/fcntl.h>
 #include <sys/stat.h>
 #include <sys/types.h>

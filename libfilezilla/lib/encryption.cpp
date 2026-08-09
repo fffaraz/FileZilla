@@ -177,7 +177,11 @@ std::vector<uint8_t> encrypt(uint8_t const* plain, size_t size, public_key const
 			// Return ephemeral_pub.key_||ephemeral_pub.salt_||ciphertext||tag
 			memcpy(ret.data(), ephemeral_pub.key_.data(), public_key::key_size);
 			memcpy(ret.data() + public_key::key_size, ephemeral_pub.salt_.data(), public_key::salt_size);
+#if NETTLE_VERSION_MAJOR >= 4
+			nettle_gcm_aes256_digest(&ctx, ret.data() + public_key::key_size + public_key::salt_size + size);
+#else
 			nettle_gcm_aes256_digest(&ctx, GCM_DIGEST_SIZE, ret.data() + public_key::key_size + public_key::salt_size + size);
+#endif
 		}
 		else {
 			std::vector<uint8_t> ctr = hash_accumulator(hash_algorithm::sha256) << ephemeral_pub.salt_ << 1 << secret << ephemeral_pub.key_ << pub.key_ << pub.salt_;
@@ -276,7 +280,11 @@ std::vector<uint8_t> decrypt(uint8_t const* cipher, size_t size, private_key con
 
 			// Last but not least, verify the tag
 			uint8_t tag[GCM_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+			nettle_gcm_aes256_digest(&ctx, tag);
+#else
 			nettle_gcm_aes256_digest(&ctx, GCM_DIGEST_SIZE, tag);
+#endif
 			if (!nettle_memeql_sec(tag, cipher + size - GCM_DIGEST_SIZE, GCM_DIGEST_SIZE)) {
 				ret.clear();
 			}
@@ -470,7 +478,11 @@ std::vector<uint8_t> encrypt(uint8_t const* plain, size_t size, symmetric_key co
 
 		// Return nonce||ciphertext||tag
 		memcpy(ret.data(), nonce.data(), symmetric_key::salt_size);
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_gcm_aes256_digest(&ctx, ret.data() + symmetric_key::salt_size + size);
+#else
 		nettle_gcm_aes256_digest(&ctx, GCM_DIGEST_SIZE, ret.data() + symmetric_key::salt_size + size);
+#endif
 	}
 
 	return ret;
@@ -535,7 +547,11 @@ std::vector<uint8_t> decrypt(uint8_t const* cipher, size_t size, symmetric_key c
 
 		// Last but not least, verify the tag
 		uint8_t tag[GCM_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+		nettle_gcm_aes256_digest(&ctx, tag);
+#else
 		nettle_gcm_aes256_digest(&ctx, GCM_DIGEST_SIZE, tag);
+#endif
 		if (!nettle_memeql_sec(tag, cipher + size - GCM_DIGEST_SIZE, GCM_DIGEST_SIZE)) {
 			ret.clear();
 		}

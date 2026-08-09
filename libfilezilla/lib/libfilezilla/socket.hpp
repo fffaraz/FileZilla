@@ -589,7 +589,7 @@ public:
 	/**
 	 * Sets the interval between TCP keepalive packets.
 	 *
-	 * Duration must not be smaller than 5 minutes. The default interval is 2 hours.
+	 * Duration must not be smaller than 1 minute. The default interval is 2 hours.
 	 */
 	void set_keepalive_interval(duration const& d);
 
@@ -847,6 +847,9 @@ private:
 #endif
 #ifndef ESOCKTNOSUPPORT
 #define ESOCKTNOSUPPORT WSAESOCKTNOSUPPORT
+#endif
+#ifndef EADDRNOTAVAIL
+#define EADDRNOTAVAIL WSAEADDRNOTAVAIL
 #endif
 
 // For the future:
