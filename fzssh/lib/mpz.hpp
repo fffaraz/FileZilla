@@ -5,6 +5,9 @@
 #include <libfilezilla/util.hpp>
 #include <gmp.h>
 
+#include <optional>
+#include <string_view>
+
 namespace fz::ssh {
 
 struct mpz final
@@ -17,6 +20,18 @@ struct mpz final
 	~mpz()
 	{
 		mpz_clear(v);
+	}
+
+	mpz(mpz &&p) noexcept
+	{
+		mpz_init(v);
+		mpz_swap(v, p.v);
+	}
+
+	mpz& operator=(mpz &&p) noexcept
+	{
+		mpz_swap(v, p.v);
+		return *this;
 	}
 
 	explicit mpz(unsigned long int n)
@@ -45,11 +60,23 @@ struct mpz final
 	mpz_t v;
 };
 
+bool operator==(mpz const& l, mpz const& r);
+bool operator==(mpz const& l, unsigned long int r);
+bool operator<(mpz const& l, mpz const& r);
+bool operator<=(mpz const& l, unsigned long int r);
+bool operator<=(mpz const& l, mpz const& r);
+inline bool operator!=(mpz const& l, mpz const& r) { return !(l == r); }
+inline bool operator>(mpz const& l, mpz const& r) { return r < l; }
+inline bool operator>=(mpz const& l, mpz const& r) { return r <= l; }
+
 void wipe(mpz & v);
 using fz::wipe;
 
 fz::buffer to_string(mpz_t const& n, size_t pad = 0);
 void to_string_append(fz::buffer & buf, mpz_t const& n, size_t pad);
+
+std::optional<mpz> extract_mpint(std::string_view & buf, bool allow_negative);
+std::optional<mpz> mpint_from_blob(std::string_view buf, bool allow_negative);
 
 }
 

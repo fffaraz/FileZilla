@@ -36,6 +36,24 @@ std::optional<uint64_t> toUInt(ASN1Value const& v)
 	return ret;
 }
 
+namespace {
+bool is_printable_string(std::string_view & s)
+{
+	for (auto c : s) {
+		if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9')) {
+			continue;
+		}
+		if (c == ' ' || c == '\'' || c == '(' || c == ')' || c == '+' || c == ',' ||
+			c == '-' || c == '.'  || c == '/' || c == ':' || c == '=' || c == '?')
+		{
+			continue;
+		}
+		return false;
+	}
+	return true;
+}
+}
+
 ASN1Value parseDer(std::string_view & data)
 {
 	ASN1Value ret;
@@ -53,6 +71,40 @@ ASN1Value parseDer(std::string_view & data)
 	ret.constructed_ = *p & 0x20u;
 	++p;
 
+	if (ret.tag_ == 0x1fu) {
+		ret.tag_ = 0;
+		do {
+			if (p >= end) {
+				// Unterminated tag
+				data = std::string_view();
+				return {};
+			}
+			if (!*ret.tag_ && *p == 0x80u) {
+				// Violating shortest representation rule
+				data = std::string_view();
+				return {};
+			}
+			if (*ret.tag_ & 0xfe00000000000000ull) {
+				// Tag too big
+				data = std::string_view();
+				return {};
+			}
+			*ret.tag_ <<= 7;
+			if (std::numeric_limits<uint64_t>::max() - *ret.tag_ < (*p & 0x7fu)) {
+				// Too large
+				return {};
+			}
+			*ret.tag_ += *p & 0x7fu;
+		}
+		while (*(p++) & 0x80u);
+
+		if (ret.tag_ < 31) {
+			// Violating shortest representation rule
+			data = std::string_view();
+			return {};
+		}
+	}
+
 	if (ret.class_ == ASN1Class::universal) {
 		bool should_constructed{};
 		switch (static_cast<ASN1Type>(*ret.tag_)) {
@@ -67,32 +119,6 @@ ASN1Value parseDer(std::string_view & data)
 			data = std::string_view();
 			return {};
 		}
-	}
-
-	if (ret.tag_ == 0x1fu) {
-		if (ret.class_ == ASN1Class::universal) {
-		}
-		ret.tag_ = 0;
-		do {
-			if (p >= end) {
-				// Unterminated tag
-				data = std::string_view();
-				return {};
-			}
-			if (!ret.tag_ && *p == 0x80u) {
-				// Violating shortest representation rule
-				data = std::string_view();
-				return {};
-			}
-			if (*ret.tag_ & 0x0080000000000000ull) {
-				// Tag too big
-				data = std::string_view();
-				return {};
-			}
-			*ret.tag_ <<= 7;
-			*ret.tag_ += *p & 0x7fu;
-		}
-		while (*(p++) & 0x80u);
 	}
 
 	if (p >= end) {
@@ -115,6 +141,8 @@ ASN1Value parseDer(std::string_view & data)
 		size_t llen = *(p++) & 0x7fu;
 		if (!llen) {
 			// Violating shortest representation rule
+			data = std::string_view();
+			return {};
 		}
 		else if (llen > sizeof(size_t)) {
 			// Length of length too big
@@ -123,6 +151,11 @@ ASN1Value parseDer(std::string_view & data)
 		}
 		else if (llen > static_cast<size_t>(end - p)) {
 			// Unterminated length
+			data = std::string_view();
+			return {};
+		}
+		else if (llen == 1 && *p <= 0x7fu) {
+			// Violating shortest representation rule
 			data = std::string_view();
 			return {};
 		}
@@ -145,6 +178,41 @@ ASN1Value parseDer(std::string_view & data)
 		ret.data_ = std::string_view(reinterpret_cast<char const*>(p), len);
 	}
 	p += len;
+
+	if (ret.class_ == ASN1Class::universal) {
+		// Coarse validation
+		switch (static_cast<ASN1Type>(*ret.tag_)) {
+		case ASN1Type::Null:
+			if (len) {
+				// Length too big
+				data = std::string_view();
+				return {};
+			}
+			break;
+		case ASN1Type::IA5String:
+			for (auto const c : ret.data_) {
+				if (static_cast<unsigned char>(c) > 127) {
+					data = std::string_view();
+					return {};
+				}
+			}
+			break;
+		case ASN1Type::PrintableString:
+			if (!is_printable_string(ret.data_)) {
+				data = std::string_view();
+				return {};
+			}
+			break;
+		case ASN1Type::UTF8String:
+			if (!is_valid_utf8(ret.data_)) {
+				data = std::string_view();
+				return {};
+			}
+			break;
+		default:
+			break;
+		}
+	}
 
 	if (p < end) {
 		data.remove_prefix(p - start);
@@ -184,29 +252,50 @@ std::string parse_oid(ASN1Value const& v)
 	}
 
 	std::string ret;
-	auto c = static_cast<uint8_t>(in[0]);
-	if (c >= 120) {
-		return {};
-	}
 
-	ret += '0' + c / 40;
-	ret += '.';
-	ret += to_string(c % 40);
-	ret += '.';
+	// Note that "A Layman's Guide to a Subset of ASN.1, BER, and DER" is wrong on the "first octet"
+	// value1*40+value2 is actually also base-128 encoded, so potentially multiple octets.
 
 	uint64_t n{}; // Technically one needs a bignum library to parse OID as there are no restrictions.
-	for (size_t i = 1; i < in.size(); ++i) {
-		c = static_cast<uint8_t>(in[i]);
+	for (size_t i = 0; i < in.size(); ++i) {
+		auto c = static_cast<uint8_t>(in[i]);
 		if (c == 0x80u && !n) {
+			// Violating shortest representation rule
+			return {};
+		}
+		if (n & 0xfe00000000000000ull) {
+			// Too large
 			return {};
 		}
 		n <<= 7;
+		if (std::numeric_limits<uint64_t>::max() - n < (c & 0x7fu)) {
+			// Too large
+			return {};
+		}
 		n += c & 0x7fu;
 		if (!(c & 0x80u)) {
+			if (ret.empty()) {
+				if (n >= 80) {
+					ret += '2';
+					n -= 80;
+				}
+				else if (n >= 40) {
+					ret += '1';
+					n -= 40;
+				}
+				else {
+					ret += '0';
+				}
+				ret += '.';
+			}
 			ret += to_string(n);
 			ret += '.';
 			n = 0;
 		}
+	}
+	if (ret.empty() || n) {
+		// Unterminated value
+		return {};
 	}
 
 	ret.pop_back();
@@ -234,7 +323,7 @@ void der_encode(std::string& out, uint64_t v)
 {
 	out.push_back(static_cast<char>(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(ASN1Type::Integer)));
 
-	auto octets = v ? (bitscan_reverse(v) + 8) / 8 : 1;
+	auto octets = v ? (bitscan_reverse(v) + 9) / 8 : 1;
 	out.push_back(static_cast<char>(octets));
 	out.resize(out.size() + octets);
 	for (size_t i = 1; i <= octets; ++i) {
@@ -255,29 +344,38 @@ void encode_base128(std::string & out, uint64_t v)
 }
 }
 
-void der_encode_oid(std::string& out, std::string_view oid)
+bool der_encode_oid(std::string& out, std::string_view oid)
 {
-	out.push_back(static_cast<char>(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(ASN1Type::ObjectIdentifier)));
-
 	std::string tmp;
+
 	strtokenizer tok(oid, '.', false);
 	auto it = tok.begin();
 	if (it == tok.end()) {
-		abort();
+		return false;
 	}
-	auto first = to_integral<uint64_t>(*it);
-	if (++it == tok.end()) {
-		abort();
+	auto first = to_integral_o<uint64_t>(*it);
+	if (!first || *first > 2 || ++it == tok.end()) {
+		return false;
 	}
-	auto second = to_integral<uint64_t>(*it);
-	tmp.push_back(static_cast<char>(first * 40 + second));
+	auto second = to_integral_o<uint64_t>(*it);
+	auto limit = (*first == 2) ? (std::numeric_limits<uint64_t>::max() - 80) : 39;
+	if (!second || *second > limit) {
+		return false;
+	}
+	encode_base128(tmp, *first * 40 + *second);
 	while (++it != tok.end()) {
-		auto c = to_integral<uint64_t>(*it);
-		encode_base128(tmp, c);
+		auto c = to_integral_o<uint64_t>(*it);
+		if (!c) {
+			return false;
+		}
+		encode_base128(tmp, *c);
 	}
 
+	out.push_back(static_cast<char>(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(ASN1Type::ObjectIdentifier)));
 	der_encode_length(out, tmp.size());
 	out += tmp;
+
+	return true;
 }
 
 void der_encode(std::string& out, std::string_view data, ASN1Type type, bool constructed)
@@ -290,7 +388,7 @@ void der_encode(std::string& out, std::string_view data, ASN1Type type, bool con
 
 void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed)
 {
-	if (tag < 32) {
+	if (tag < 31) {
 		out.push_back(static_cast<char>(static_cast<uint8_t>(cl) | static_cast<uint8_t>(tag) | (constructed ? 0x20u : 0u)));
 	}
 	else {

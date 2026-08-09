@@ -147,8 +147,8 @@ enum class string_type : unsigned {
 	blob
 };
 
-
-extracted_string FZSSH_PUBLIC_SYMBOL extract_string(std::string_view & packet, string_type t, bool allow_empty);
+extracted_string FZSSH_PUBLIC_SYMBOL validate_string(std::string_view s, string_type t, bool allow_empty, bool trim_trailing_null = true);
+extracted_string FZSSH_PUBLIC_SYMBOL extract_string(std::string_view & packet, string_type t, bool allow_empty, bool trim_trailing_null = true);
 
 bool FZSSH_PUBLIC_SYMBOL extract_namelist(std::string_view & packet, std::string_view & out, logger_interface & logger);
 bool FZSSH_PUBLIC_SYMBOL is_namelist(std::string_view const& names, logger_interface & logger);

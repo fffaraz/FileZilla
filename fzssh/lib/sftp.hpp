@@ -56,7 +56,7 @@ std::string_view to_string(message_type id);
 class FZSSH_PUBLIC_SYMBOL sftp_base : public event_handler
 {
 public:
-	sftp_base(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, size_t max_in_payload_size, bool server);
+	sftp_base(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, size_t max_in_payload_size, bool server, compatibility_flags compatibility_flags);
 	virtual ~sftp_base() = default;
 
 	void dump();
@@ -102,6 +102,7 @@ protected:
 	buffer inbuf_;
 
 	bool is_retrying_process_{};
+	compatibility_flags compatibility_flags_{};
 
 private:
 	struct packet_type
@@ -117,7 +118,7 @@ private:
 };
 
 void FZSSH_PUBLIC_SYMBOL write_attributes(buffer& buf, attributes const& attrs);
-std::optional<attributes> FZSSH_PUBLIC_SYMBOL extract_attributes(std::string_view & data, fz::logger_interface & logger);
+std::optional<attributes> FZSSH_PUBLIC_SYMBOL extract_attributes(std::string_view & data, fz::logger_interface & logger, compatibility_flags compatibility_flags);
 
 }
 }

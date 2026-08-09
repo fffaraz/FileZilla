@@ -304,6 +304,15 @@ void transport::operator()(event_base const& ev)
 		&transport::on_timer);
 }
 
+bool transport::should_suppress_read_socket_error() const
+{
+	if (!server_ || service_ != service_type::connection || !connection_protocol_) {
+		return false;
+	}
+
+	return inbuf_.empty() && queued_inbuf_.empty() && outbuf_.empty() && queued_outbuf_.empty() && connection_protocol_->had_valid_channel() && !connection_protocol_->channel_count(true);
+}
+
 void transport::on_socket_event(fz::socket_event_source*, fz::socket_event_flag type, int error)
 {
 	if (error) {
@@ -320,7 +329,9 @@ void transport::on_socket_event(fz::socket_event_source*, fz::socket_event_flag 
 				}
 			}();
 
-			logger_.log(logmsg::error, "Got %s socket error: %s"sv, name, fz::socket_error_string(error));
+
+			auto level = (type == socket_event_flag::read && should_suppress_read_socket_error()) ? logmsg::status : logmsg::error;
+			logger_.log(level, "Got %s socket error: %s"sv, name, fz::socket_error_string(error));
 		}
 		stop();
 		return;
@@ -362,7 +373,6 @@ void transport::on_timer(timer_id t)
 	}
 }
 
-
 void transport::on_recv()
 {
 	wait_recv_ = false;
@@ -373,10 +383,7 @@ void transport::on_recv()
 		int read = s_.read(inbuf_.get(to_read), to_read, error);
 		if (!read) {
 			if (!disconnecting_) {
-				auto level = logmsg::error;
-				if (server_ && service_ == service_type::connection && !connection_protocol_->channel_count()) {
-					level = logmsg::status;
-				}
+				auto level = should_suppress_read_socket_error() ? logmsg::status : logmsg::error;
 				logger_.log(level, fztranslate("Could not read from socket, socket unexpectedly closed"));
 			}
 			stop();
@@ -388,7 +395,12 @@ void transport::on_recv()
 			}
 			else {
 				if (!disconnecting_) {
-					logger_.log(logmsg::error, fztranslate("Could not read from socket: %s"), fz::socket_error_string(error));
+					if (should_suppress_read_socket_error()) {
+						logger_.log(fz::logmsg::status, fztranslate("Error reading from socket: %s"), fz::socket_error_string(error));
+					}
+					else {
+						logger_.log(fz::logmsg::error, fztranslate("Could not read from socket: %s"), fz::socket_error_string(error));
+					}
 				}
 				stop();
 			}
@@ -438,23 +450,24 @@ continuation transport::read_version()
 	size_t max_preamble = server_ ? 0 : 4096;
 	size_t constexpr max_verlen = 255;
 
-	size_t max = std::min(std::max(max_verlen, max_preamble), inbuf_.size());
+	size_t max = std::max(max_verlen, max_preamble);
 	bool was_cr{};
-	for (size_t i = 0; i < max; ++i) {
-		auto c = inbuf_[i];
+	for (size_t i = 0; i < std::min(inbuf_.size(), max);) {
+		auto c = inbuf_[i++];
 		if (c == '\n') {
-			std::string_view line = inbuf_.to_view().substr(0, i);
+			std::string_view line = inbuf_.to_view().substr(0, i - 1);
 			if (!starts_with(line, "SSH-")) {
 				if (!is_valid_utf8(line)) {
 					// While this is only a SHOULD in the RFC, we still reject it
-					return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, bad encoding in preceeding lines"sv);
+					return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, bad encoding in preceding lines"sv);
 				}
 				was_cr = false;
-				decrypted_ += i + 1;
+				decrypted_ += i;
 				if (decrypted_ >= max_preamble) {
-					return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, too many preceeding lines"sv);
+					return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, too many preceding lines"sv);
 				}
-				inbuf_.consume(i + 1);
+				inbuf_.consume(i);
+				i = 0;
 				continue;
 			}
 			else {
@@ -467,12 +480,12 @@ continuation transport::read_version()
 				}
 
 				if (!was_cr && !starts_with(line, "SSH-1.99-"sv)) {
+					logger_.log(logmsg::error, "%s is in violation of the SSH specifications, it does not terminate its identification string with CRLF. As per RFC 4253 section 4.2 it MUST be terminated by CRLF."sv, server_ ? "Client"sv : "Server");
 					if (compatibility_flags_ & compatibility_flags::identification_string_not_terminated_by_crlf) {
-						logger_.log(logmsg::error, "%s is in violation of the SSH specifications, it does not terminate its identification string with CRLF. As per RFC 4253 section 4.2 it MUST be terminated by CRLF."sv, server_ ? "Client"sv : "Server");
 						used_compatibility_flags_ |= compatibility_flags::identification_string_not_terminated_by_crlf;
 					}
 					else {
-						return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Identification string not terminated by CRLF"sv);
+						return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, server_ ? "Client identification string not terminated by CRLF"sv : "Server identification string not terminated by CRLF"sv);
 					}
 				}
 				if (!str_is_ascii(line)) {
@@ -487,7 +500,7 @@ continuation transport::read_version()
 
 				peer_version_ = line;
 				logger_.log(logmsg::debug_info, "Received protover: %s"sv, peer_version_);
-				inbuf_.consume(i + 1);
+				inbuf_.consume(i);
 				decrypted_ = 0;
 				read_version_ = false;
 				if (!inbuf_.empty()) {
@@ -508,17 +521,47 @@ continuation transport::read_version()
 		}
 		else if (c < 32) {
 			if (could_be_telnet(inbuf_)) {
-				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, got inadmissable control characters. Are you trying to connect with a telnet client to an SSH server or vice-versa? That cannot possibly work."sv);
+				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, got inadmissible control characters. Are you trying to connect with a telnet client to an SSH server or vice-versa? That cannot possibly work."sv);
 			}
 			else {
-				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, got inadmissable control characters"sv);
+				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, got inadmissible control characters"sv);
 			}
 		}
 	}
-	if (inbuf_.size() >= std::max(max_verlen, max_preamble)) {
+	if (inbuf_.size() >= max) {
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not read identification string, line too long"sv);
 	}
 	return continuation::next;
+}
+
+bool transport::augment_message_id(message_id & id, message_type type)
+{
+	// Augment message id based on kex or auth type
+	if (type == message_type::transport_kex) {
+		if (!kex_type_) {
+			send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Got KEX-specific message id without having negotiated a KEX algorithm"sv);
+			return false;
+		}
+		switch (*kex_type_) {
+		case kex_type::dh:
+			id |= message_id::FLAG_KEX_DH;
+			break;
+		case kex_type::ecdh:
+			id |= message_id::FLAG_KEX_ECDH;
+			break;
+		case kex_type::dhge:
+			id |= message_id::FLAG_KEX_DHGE;
+			break;
+		case kex_type::pqth:
+			id |= message_id::FLAG_KEX_PQTH;
+			break;
+		}
+	}
+	else if (type == message_type::userauth_method) {
+		id |= auth_->get_method_flag();
+	}
+
+	return true;
 }
 
 continuation transport::process_raw_input()
@@ -538,13 +581,35 @@ continuation transport::process_raw_input()
 	uint32_t packet_length{};
 	size_t total_size{};
 
+	bool const aead = in_.enc_->aead();
 	bool const etm = in_.mac_->etm();
-	if (etm) {
+	if (aead) {
+		// Length decryption not supported by our ciphers, always assume plain
+		packet_length = read_uint32(inbuf_.get());
+		if (packet_length > max_packet_size - mac_size - 4) {
+			return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Packet too big"sv);
+		}
+
+		total_size = 4 + packet_length + mac_size;
+		if (inbuf_.size() < total_size) {
+			return continuation::next;
+		}
+
+		if (decrypted_ != std::numeric_limits<size_t>::max()) {
+			in_.enc_->add_authenticated_data(inbuf_.get(), 4);
+
+			// Decryption verifies the auth tag
+			if (!in_.enc_->decrypt(inbuf_.get() + 4, packet_length + mac_size)) {
+				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Decryption failed"sv);
+			}
+		}
+	}
+	else if (etm) {
 		// verify mac than decrypt
 
 		// Length decryption not supported by our ciphers, always assume plain
 		packet_length = read_uint32(inbuf_.get());
-		if (packet_length > max_packet_size) {
+		if (packet_length > max_packet_size - mac_size - 4) {
 			return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Packet too big"sv);
 		}
 
@@ -560,7 +625,7 @@ continuation transport::process_raw_input()
 			}
 
 			// Then decrypt
-			if (!in_.enc_->decrypt(inbuf_.get() + 4, packet_length, inbuf_.get() + 4 + packet_length, mac_size)) {
+			if (!in_.enc_->decrypt(inbuf_.get() + 4, packet_length)) {
 				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Decryption failed"sv);
 			}
 		}
@@ -569,7 +634,7 @@ continuation transport::process_raw_input()
 		// CBC requires special care.
 		// Cite: Albrecht, Martin R. et al. "Plaintext Recovery Attacks against SSH." 2009 30th IEEE Symposium on Security and Privacy (2009): 16-26
 		//
-		// The mitigation stratety: https://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/ssh2-cbc-pktlen-weakness.html
+		// The mitigation strategy: https://www.chiark.greenend.org.uk/~sgtatham/putty/wishlist/ssh2-cbc-pktlen-weakness.html
 		// Start blockwise,
 		while (decrypted_ != std::numeric_limits<size_t>::max()) {
 			if (inbuf_.size() < decrypted_ + in_.mac_->size()) {
@@ -581,7 +646,7 @@ continuation transport::process_raw_input()
 				break;
 			}
 
-			if (decrypted_ >= max_packet_size) {
+			if (decrypted_ >= max_packet_size - mac_size - block_size) {
 				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Packet too big or MAC failure"sv);
 			}
 
@@ -590,7 +655,7 @@ continuation transport::process_raw_input()
 				return continuation::next;
 			}
 
-			if (!in_.enc_->decrypt(inbuf_.get() + decrypted_, block_size, inbuf_.get() + decrypted_ + block_size, mac_size)) {
+			if (!in_.enc_->decrypt(inbuf_.get() + decrypted_, block_size)) {
 				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Decryption failed"sv);
 			}
 			decrypted_ += block_size;
@@ -614,7 +679,7 @@ continuation transport::process_raw_input()
 		}
 
 		packet_length = read_uint32(inbuf_.get());
-		if (packet_length > max_packet_size) {
+		if (packet_length > max_packet_size - mac_size - 4) {
 			return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Packet too big"sv);
 		}
 
@@ -624,7 +689,10 @@ continuation transport::process_raw_input()
 		}
 
 		if (decrypted_ != std::numeric_limits<size_t>::max()) {
-			if (!in_.enc_->decrypt(inbuf_.get() + decrypted_, 4 + packet_length - decrypted_, inbuf_.get() + 4 + packet_length, mac_size)) {
+			if (packet_length + 4 < decrypted_) {
+				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Invalid packet length"sv);
+			}
+			if (!in_.enc_->decrypt(inbuf_.get() + decrypted_, 4 + packet_length - decrypted_)) {
 				return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Decryption failed"sv);
 			}
 
@@ -664,33 +732,8 @@ continuation transport::process_raw_input()
 		in_.payload_ += total_size;
 	}
 
-	// Augment message id based on kex or auth type
-	auto id = static_cast<message_id>(inbuf_[5]);
-	auto type = get_type(id);
-	if (type == message_type::transport_kex) {
-		if (!kex_type_) {
-			return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Got KEX-specific message id without having negotiated a KEX algorithm"sv);
-		}
-		switch (*kex_type_) {
-		case kex_type::dh:
-			id |= message_id::FLAG_KEX_DH;
-			break;
-		case kex_type::ecdh:
-			id |= message_id::FLAG_KEX_ECDH;
-			break;
-		case kex_type::dhge:
-			id |= message_id::FLAG_KEX_DHGE;
-			break;
-		case kex_type::pqth:
-			id |= message_id::FLAG_KEX_PQTH;
-			break;
-		}
-	}
-	else if (type == message_type::userauth_method) {
-		id |= auth_->get_method_flag();
-	}
-
-	auto c = process_binary_packet(in_.seq_, type, id, inbuf_.to_view().substr(6, payload_size - 1), false);
+	auto raw_id = static_cast<message_id>(inbuf_[5]);
+	auto c = process_binary_packet(in_.seq_, raw_id, inbuf_.to_view().substr(6, payload_size - 1), false);
 	if (c != continuation::wait && !disconnecting_) {
 		inbuf_.consume(total_size);
 		decrypted_ = 0;
@@ -728,7 +771,7 @@ continuation transport::process_queued_input()
 	}
 
 	uint32_t in_seq = read_uint32(queued_inbuf_.get());
-	message_id id = static_cast<message_id>(queued_inbuf_[4]);
+	message_id raw_id = static_cast<message_id>(queued_inbuf_[4]);
 	uint32_t packet_length = read_uint32(queued_inbuf_.get() + 5);
 
 	auto packet = queued_inbuf_.to_view().substr(9, packet_length);
@@ -736,7 +779,7 @@ continuation transport::process_queued_input()
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Internal error"sv);
 	}
 
-	auto c = process_binary_packet(in_seq, get_type(id), id, packet, true);
+	auto c = process_binary_packet(in_seq, raw_id, packet, true);
 	if (c != continuation::wait && !disconnecting_) {
 		queued_inbuf_.consume(packet_length + 9);
 
@@ -749,6 +792,24 @@ continuation transport::process_queued_input()
 		}
 	}
 	return c;
+}
+
+continuation transport::process_binary_packet(uint32_t in_seq, message_id raw_id, std::string_view packet, bool from_queue)
+{
+	auto type = get_type(raw_id);
+
+	if (type == message_type::transport_kex && discard_guessed_kex_) {
+		logger_.log(logmsg::debug_info, "Discarding wrongly guessed KEX packet %u"sv, raw_id);
+		discard_guessed_kex_ = false;
+		return continuation::next;
+	}
+
+	auto id = raw_id;
+	if (!augment_message_id(id, type)) {
+		return continuation::error;
+	}
+
+	return process_binary_packet(in_seq, type, id, packet, from_queue);
 }
 
 continuation transport::process_binary_packet(uint32_t in_seq, message_type type, message_id id, std::string_view packet, bool from_queue)
@@ -1177,8 +1238,8 @@ size_t transport::kex_needed_bits_hint() const
 	size_t bits_hint = get_digest_size(exchange_hash_alg_) * 8;
 	bits_hint = std::max(bits_hint, get_cipher_bits(algorithms_next_.cipher_s2c_));
 	bits_hint = std::max(bits_hint, get_cipher_bits(algorithms_next_.cipher_c2s_));
-	bits_hint = std::max(bits_hint, mac_key_size(algorithms_next_.mac_s2c_));
-	bits_hint = std::max(bits_hint, mac_key_size(algorithms_next_.mac_c2s_));
+	bits_hint = std::max(bits_hint, mac_key_size(algorithms_next_.mac_s2c_) * 8);
+	bits_hint = std::max(bits_hint, mac_key_size(algorithms_next_.mac_c2s_) * 8);
 
 	return bits_hint;
 }
@@ -1337,8 +1398,9 @@ bool transport::init_out()
 			return false;
 		}
 
+		bool extra_padding = queued_outbuf_[4];
 		packet_builder b(*this, queued_outbuf_.to_view().substr(5, size));
-		if (!b.commit()) {
+		if (!b.commit(extra_padding)) {
 			return false;
 		}
 		queued_outbuf_.consume(size + 5);
@@ -1587,7 +1649,7 @@ continuation transport::process_ext_info(std::string_view packet)
 	if (server_ && service_ != service_type::none) {
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Got SSH_MSG_EXT_INFO not immediately following initial SSH_MSG_NEWKEYS"sv);
 	}
-	// Slightly more lenient than the RFC calls for wrt. _immediately_ preceeding SSH_MSG_USERAUTH_SUCCESS
+	// Slightly more lenient than the RFC calls for wrt. _immediately_ preceding SSH_MSG_USERAUTH_SUCCESS
 	if (!server_ && service_ > service_type::userauth) {
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Got SSH_MSG_EXT_INFO after accepted userauth"sv);
 	}
@@ -1732,15 +1794,21 @@ continuation transport::send_disconnect(disconnect_reason reason_code, std::stri
 	return continuation::error;
 }
 
-bool transport::protect_packet(size_t offset, uint32_t payload_size)
+bool transport::protect_packet(size_t offset, uint32_t payload_size, bool extra_padding)
 {
 	if (outbuf_.size() < offset + payload_size + 5) {
 		return false;
 	}
 
 	bool const etm = out_.mac_->etm();
-	size_t const block_size = out_.enc_->block_size();
-	size_t padding = 4 + block_size - (payload_size + 1 + (etm ? 0 : 4) + 4) % block_size;
+	bool const aead = out_.enc_->aead();
+	size_t const block_size = std::max(out_.enc_->block_size(), size_t(8));
+	size_t const to_pad = payload_size + 1 + (etm ? 0 : 4);
+	size_t padding = 4 + block_size - (to_pad + 4) % block_size;
+
+	if (extra_padding) {
+		padding += ((255 - padding) / block_size) * block_size;
+	}
 
 	size_t const mac_size = out_.mac_->size();
 
@@ -1759,16 +1827,24 @@ bool transport::protect_packet(size_t offset, uint32_t payload_size)
 
 	size_t to_encrypt = total + (etm ? 0 : 4);
 
-	if (!etm) {
-		out_.mac_->generate(out_.seq_, outbuf_.get() + offset, total + 4, outbuf_.get() + offset + 4 + total);
+	if (aead) {
+		out_.enc_->add_authenticated_data(outbuf_.get() + offset, 4);
+		if (!out_.enc_->encrypt(outbuf_.get() + offset + 4, to_encrypt + mac_size)) {
+			return false;
+		}
 	}
+	else {
+		if (!etm) {
+			out_.mac_->generate(out_.seq_, outbuf_.get() + offset, total + 4, outbuf_.get() + offset + 4 + total);
+		}
 
-	if (!out_.enc_->encrypt(outbuf_.get() + offset + (etm ? 4 : 0), to_encrypt, outbuf_.get() + offset + 4 + total, mac_size)) {
-		return false;
-	}
+		if (!out_.enc_->encrypt(outbuf_.get() + offset + (etm ? 4 : 0), to_encrypt)) {
+			return false;
+		}
 
-	if (etm) {
-		out_.mac_->generate(out_.seq_, outbuf_.get() + offset, total + 4, outbuf_.get() + offset + 4 + total);
+		if (etm) {
+			out_.mac_->generate(out_.seq_, outbuf_.get() + offset, total + 4, outbuf_.get() + offset + 4 + total);
+		}
 	}
 	++out_.seq_;
 	++out_.packets_;
@@ -1878,7 +1954,7 @@ packet_builder::~packet_builder()
 	}
 }
 
-bool packet_builder::commit()
+bool packet_builder::commit(bool extra_padding)
 {
 	if (committed_) {
 		return true;
@@ -1909,10 +1985,11 @@ bool packet_builder::commit()
 	if (&buf_ == &s_.queued_outbuf_) {
 		// Cannot yet encrypt. Must remember size for later.
 		write_uint32(buf_.get() + old_size_, payload_size);
+		buf_[old_size_ + 4] = extra_padding;
 		return true;
 	}
 
-	if (!s_.protect_packet(old_size_, payload_size)) {
+	if (!s_.protect_packet(old_size_, payload_size, extra_padding)) {
 		buf_.resize(old_size_);
 		s_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Could not send packet: Encryption failed"sv);
 		return false;

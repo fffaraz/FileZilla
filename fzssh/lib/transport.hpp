@@ -13,14 +13,15 @@
 
 #include <map>
 
-size_t constexpr max_packet_size{35000};
-size_t constexpr max_payload_size{32768};
 
 namespace fz {
 
 class logger_interface;
 
 namespace ssh {
+
+size_t constexpr max_packet_size{35000};
+size_t constexpr max_payload_size{32768};
 
 class cipher_base;
 class mac_base;
@@ -238,6 +239,7 @@ public:
 	std::string peer_version() const { return peer_version_; }
 
 	virtual continuation on_auth_success() = 0;
+	virtual std::string_view host_pubkey() const = 0;
 
 	session & session_;
 
@@ -267,6 +269,7 @@ private:
 	continuation read_version();
 	continuation process_raw_input();
 	continuation process_queued_input();
+	continuation process_binary_packet(uint32_t in_seq, message_id raw_id, std::string_view packet, bool from_queue);
 	continuation process_binary_packet(uint32_t in_seq, message_type type, message_id id, std::string_view packet, bool from_queue);
 
 	continuation process_disconnect(std::string_view packet);
@@ -287,13 +290,12 @@ private:
 	virtual continuation process_ext_info(std::string_view /*name*/, std::string_view /*value*/) { return continuation::next; }
 
 	virtual bool setup_hostkey() = 0;
-	virtual std::string_view host_pubkey() const = 0;
 
 	virtual continuation finalize_kexinit(std::string_view peer_hostkeys, bool bad_guess) = 0;
 	bool check_rekey();
 	bool send_kexinit();
 
-	bool protect_packet(size_t offset, uint32_t payload_size);
+	bool protect_packet(size_t offset, uint32_t payload_size, bool extra_padding);
 
 	size_t kex_needed_bits_hint() const;
 
@@ -323,6 +325,7 @@ protected:
 
 	keying_state keying_{};
 	bool initial_kex_{};
+	bool discard_guessed_kex_{};
 	struct gex {
 		uint32_t min_{}, n_{}, max_{};
 		buffer group_;
@@ -338,6 +341,9 @@ protected:
 	compatibility_flags used_compatibility_flags_{};
 
 private:
+	bool augment_message_id(message_id & id, message_type type);
+	bool should_suppress_read_socket_error() const;
+
 	friend class packet_builder;
 
 	socket_event read_event_;
@@ -389,7 +395,7 @@ public:
 	packet_builder(transport & s, std::string_view data);
 	~packet_builder();
 
-	bool commit();
+	bool commit(bool extra_padding = false);
 
 	packet_builder(packet_builder const&) = delete;
 

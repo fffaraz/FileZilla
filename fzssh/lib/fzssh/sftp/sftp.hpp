@@ -14,6 +14,22 @@ class logger_interface;
 
 namespace ssh::sftp {
 
+enum class compatibility_flags : unsigned {
+	none,
+	ignore_unknown_flags_in_attributes = 1
+};
+
+inline bool operator&(compatibility_flags lhs, compatibility_flags rhs) {
+	return (static_cast<std::underlying_type_t<compatibility_flags>>(lhs) & static_cast<std::underlying_type_t<compatibility_flags>>(rhs)) != 0;
+}
+inline compatibility_flags operator|(compatibility_flags lhs, compatibility_flags rhs) {
+	return static_cast<compatibility_flags>(static_cast<std::underlying_type_t<compatibility_flags>>(lhs) | static_cast<std::underlying_type_t<compatibility_flags>>(rhs));
+}
+inline compatibility_flags& operator|=(compatibility_flags & lhs, compatibility_flags rhs) {
+	lhs = lhs | rhs;
+	return lhs;
+}
+
 enum class status_code : uint32_t {
 	SSH_FX_OK = 0,
 	SSH_FX_EOF = 1,
@@ -31,11 +47,16 @@ enum class status_code : uint32_t {
 std::string_view FZSSH_PUBLIC_SYMBOL to_string(status_code id);
 
 enum class attribute_flags : uint32_t {
+	none = 0,
+
 	SSH_FILEXFER_ATTR_SIZE = 0x1u,
 	SSH_FILEXFER_ATTR_UIDGID = 0x2u,
 	SSH_FILEXFER_ATTR_PERMISSIONS = 0x4u,
 	SSH_FILEXFER_ATTR_ACMODTIME = 0x8u,
-	SSH_FILEXFER_ATTR_EXTENDED = 0x80000000u
+	SSH_FILEXFER_ATTR_EXTENDED = 0x80000000u,
+
+	mask = 0x8000000fu,
+	inverse_mask = ~mask
 };
 
 enum class file_flags : uint32_t {

@@ -46,7 +46,7 @@ class sftp_client_impl;
 class FZSSH_CLIENT_PUBLIC_SYMBOL sftp_client final
 {
 public:
-	sftp_client(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger);
+	sftp_client(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, compatibility_flags compatibility_flags = {});
 
 	~sftp_client();
 

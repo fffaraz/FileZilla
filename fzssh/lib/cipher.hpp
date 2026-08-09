@@ -13,10 +13,11 @@ namespace fz::ssh {
 class cipher_base
 {
 public:
-	cipher_base(size_t block_size, size_t key_size, size_t iv_size, bool plain_packet_length = false, bool requires_random_padding = true)
+	cipher_base(size_t block_size, size_t key_size, size_t iv_size, bool plain_packet_length = false, bool requires_random_padding = true, size_t auth_size = 0)
 	    : block_size_(block_size)
 	    , key_size_(key_size)
 	    , iv_size_(iv_size)
+	    , auth_size_(auth_size)
 	    , plain_packet_length_(plain_packet_length)
 	    , requires_random_padding_(requires_random_padding)
 	{}
@@ -25,11 +26,12 @@ public:
 
 	virtual std::string_view name() const = 0;
 
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size) = 0;
+	virtual bool encrypt(uint8_t* plain, size_t size) = 0;
 	virtual bool decrypt_length(uint8_t* cipher, size_t size) = 0;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size) = 0;
+	virtual bool decrypt(uint8_t* cipher, size_t size) = 0;
 	virtual bool set_key(uint8_t const* key, size_t len) = 0;
 	virtual bool set_iv(std::vector<uint8_t> && iv) = 0;
+	virtual void add_authenticated_data(uint8_t const* /*data*/, size_t /*size*/) {};
 
 	template <typename Data,
 		std::enable_if_t<sizeof(typename Data::value_type) == sizeof(uint8_t)>* = nullptr>
@@ -45,10 +47,14 @@ public:
 
 	bool requires_random_padding() const { return requires_random_padding_; }
 
+	bool aead() const { return auth_size_ != 0; }
+	size_t auth_size() const { return auth_size_; }
+
 protected:
 	size_t const block_size_;
 	size_t const key_size_;
 	size_t const iv_size_;
+	size_t const auth_size_{};
 	bool const plain_packet_length_{};
 	bool const requires_random_padding_{true};
 	bool const must_check_mac_before_length_{};

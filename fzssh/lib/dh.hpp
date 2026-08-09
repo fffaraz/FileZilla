@@ -10,7 +10,9 @@
 #include <string>
 #include <vector>
 
-namespace fz::ssh {
+namespace fz {
+class logger_interface;
+namespace ssh {
 
 enum class kex_type
 {
@@ -39,7 +41,7 @@ protected:
 class dh_privkey_base
 {
 public:
-	virtual ~dh_privkey_base() = default;
+	virtual ~dh_privkey_base() noexcept = default;
 
 	virtual bool generate(size_t bits_hint) = 0;
 
@@ -56,7 +58,8 @@ std::unique_ptr<dh_pubkey_base> create_dh_pubkey(std::string_view const& alg);
 std::unique_ptr<dh_privkey_base> create_dh_privkey(std::string_view const& alg, bool is_server);
 
 std::tuple<buffer, std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_base>> FZSSH_PUBLIC_SYMBOL get_dh_group(uint32_t min, uint32_t bits, uint32_t max);
-std::tuple<std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_base>> FZSSH_PUBLIC_SYMBOL get_dh_group(std::string_view group_blob);
+std::tuple<std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_base>> FZSSH_PUBLIC_SYMBOL get_dh_group(std::string_view group_blob, uint32_t min_bits, uint32_t max_bits, logger_interface & log);
+}
 }
 
 #endif

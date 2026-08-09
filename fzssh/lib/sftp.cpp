@@ -76,22 +76,23 @@ std::string_view to_string(status_code id)
 bool attributes::is_directory() const
 {
 	// Intentionally not using S_IFDIR
-	return perms_ && (*perms_ & 040000);
+	return perms_ && ((*perms_ & 0170000) == 040000);
 }
 
 bool attributes::is_symlink() const
 {
 	// Intentionally not using S_IFLNK
-	return perms_ && (*perms_ & 0120000);
+	return perms_ && ((*perms_ & 0170000) == 0120000);
 }
 
-sftp_base::sftp_base(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, size_t max_in_payload_size, bool server)
+sftp_base::sftp_base(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, size_t max_in_payload_size, bool server, compatibility_flags compatibility_flags)
 	: event_handler(handler, child_event_handler)
 	, event_handler_(handler)
 	, logger_(logger)
 	, socket_(std::move(channel))
 	, max_in_payload_size_(max_in_payload_size)
 	, server_(server)
+	, compatibility_flags_(compatibility_flags)
 {
 	socket_->set_event_handler(this);
 	channel_is_fzssh_ = dynamic_cast<ssh_channel*>(socket_.get()) != nullptr;
@@ -343,7 +344,7 @@ void sftp_base::do_send()
 				}
 				stop(true);
 			}
-			break;
+			return;
 		}
 		outbuf_.consume(sent);
 	}
@@ -460,12 +461,12 @@ void write_attributes(buffer& buf, attributes const& attrs)
 	}
 	// Revisit this eventually, Y2K38...
 	if (attrs.modified_) {
-		write_uint32(buf, attrs.modified_->get_time_t());
 		write_uint32(buf, (attrs.accessed_ ? attrs.accessed_ : attrs.modified_)->get_time_t());
+		write_uint32(buf, attrs.modified_->get_time_t());
 	}
 }
 
-std::optional<attributes> extract_attributes(std::string_view & data, fz::logger_interface & logger)
+std::optional<attributes> extract_attributes(std::string_view & data, fz::logger_interface & logger, compatibility_flags compatibility_flags)
 {
 	attributes attrs;
 
@@ -477,6 +478,13 @@ std::optional<attributes> extract_attributes(std::string_view & data, fz::logger
 			return {};
 		}
 		flags = static_cast<attribute_flags>(f);
+	}
+
+	if (flags & attribute_flags::inverse_mask) {
+		logger.log(fz::logmsg::error, "Cannot parse attributes, unknown bits set in flags: 0x%x"sv, flags);
+		if (!(compatibility_flags & compatibility_flags::ignore_unknown_flags_in_attributes)) {
+			return {};
+		}
 	}
 
 	if (flags & attribute_flags::SSH_FILEXFER_ATTR_SIZE) {

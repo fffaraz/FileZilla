@@ -4,6 +4,7 @@
 #include <nettle/ctr.h>
 #include <nettle/gcm.h>
 #include <nettle/memops.h>
+#include <nettle/version.h>
 
 #include <libfilezilla/util.hpp>
 
@@ -32,9 +33,9 @@ public:
 
 	std::string_view name() const override { return "none"sv; }
 
-	virtual bool encrypt(uint8_t*, size_t, uint8_t*, size_t) override { return true; }
+	virtual bool encrypt(uint8_t*, size_t) override { return true; }
 	virtual bool decrypt_length(uint8_t*, size_t) override { return true; }
-	virtual bool decrypt(uint8_t*, size_t, uint8_t*, size_t) override { return true; }
+	virtual bool decrypt(uint8_t*, size_t) override { return true; }
 	virtual bool set_key(uint8_t const*, size_t) override { return true; }
 	virtual bool set_iv(std::vector<uint8_t> &&) override { return true; }
 };
@@ -48,24 +49,26 @@ public:
 	std::string_view name() const override { return "aes256-gcm@openssh.com"sv; }
 
 	virtual bool decrypt_length(uint8_t*, size_t) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
 
+	virtual void add_authenticated_data(uint8_t const* data, size_t size) override;
 private:
 	std::vector<uint8_t> iv_;
 	gcm_aes256_ctx ctx_;
 };
 
 cipher_aes256_gcm::cipher_aes256_gcm()
-    : cipher_base(16, 32, 12, true, false)
+    : cipher_base(16, 32, 12, true, false, GCM_DIGEST_SIZE)
 {
 }
 
 cipher_aes256_gcm::~cipher_aes256_gcm()
 {
+	fz::wipe(iv_);
 }
 
 bool cipher_aes256_gcm::decrypt_length(uint8_t*, size_t)
@@ -73,18 +76,24 @@ bool cipher_aes256_gcm::decrypt_length(uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes256_gcm::encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size)
+void cipher_aes256_gcm::add_authenticated_data(uint8_t const* data, size_t size)
 {
-	uint8_t buf[4];
-	write_uint32(buf, size);
-	gcm_aes256_update(&ctx_, 4, buf);
+	gcm_aes256_update(&ctx_, size, reinterpret_cast<unsigned char const*>(data));
+}
 
-	gcm_aes256_encrypt(&ctx_, size, plain, plain);
-
-	if (mac_size != 16) {
+bool cipher_aes256_gcm::encrypt(uint8_t* plain, size_t size)
+{
+	if (size < GCM_DIGEST_SIZE) {
 		return false;
 	}
-	gcm_aes256_digest(&ctx_, 16, mac);
+
+	gcm_aes256_encrypt(&ctx_, size - GCM_DIGEST_SIZE, plain, plain);
+
+#if NETTLE_VERSION_MAJOR >= 4
+	gcm_aes256_digest(&ctx_, plain + size - GCM_DIGEST_SIZE);
+#else
+	gcm_aes256_digest(&ctx_, GCM_DIGEST_SIZE, plain + size - GCM_DIGEST_SIZE);
+#endif
 
 	// Update IV
 	for (size_t i = 11; i > 3; --i) {
@@ -97,17 +106,21 @@ bool cipher_aes256_gcm::encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_
 	return true;
 }
 
-bool cipher_aes256_gcm::decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size)
+bool cipher_aes256_gcm::decrypt(uint8_t* cipher, size_t size)
 {
-	uint8_t buf[4];
-	write_uint32(buf, size);
-	gcm_aes256_update(&ctx_, 4, buf);
+	if (size < GCM_DIGEST_SIZE) {
+		return false;
+	}
 
-	gcm_aes256_decrypt(&ctx_, size, cipher, cipher);
+	gcm_aes256_decrypt(&ctx_, size - GCM_BLOCK_SIZE, cipher, cipher);
 
-	uint8_t digest[16];
-	gcm_aes256_digest(&ctx_, 16, digest);
-	if (mac_size != 16 || !memeql_sec(digest, mac, 16)) {
+	uint8_t digest[GCM_DIGEST_SIZE];
+#if NETTLE_VERSION_MAJOR >= 4
+	gcm_aes256_digest(&ctx_, digest);
+#else
+	gcm_aes256_digest(&ctx_, GCM_DIGEST_SIZE, digest);
+#endif
+	if (!memeql_sec(digest, cipher + size - GCM_DIGEST_SIZE, GCM_DIGEST_SIZE)) {
 		return false;
 	}
 
@@ -149,8 +162,8 @@ public:
 	std::string_view name() const override { return "aes256-cbc"sv; }
 
 	virtual bool decrypt_length(uint8_t*, size_t) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
@@ -169,7 +182,7 @@ cipher_aes256_cbc::cipher_aes256_cbc()
 cipher_aes256_cbc::~cipher_aes256_cbc()
 {
 	wipe(&ctx_, sizeof(aes256_ctx));
-	wipe(&ctx_, sizeof(aes256_ctx));
+	wipe(&dec_ctx_, sizeof(aes256_ctx));
 	wipe(iv_);
 }
 
@@ -182,7 +195,7 @@ bool cipher_aes256_cbc::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes256_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes256_cbc::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -191,7 +204,7 @@ bool cipher_aes256_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes256_cbc::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes256_cbc::decrypt(uint8_t* cipher, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -228,8 +241,8 @@ public:
 	std::string_view name() const override { return "aes192-cbc"sv; }
 
 	virtual bool decrypt_length(uint8_t*, size_t) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
@@ -261,7 +274,7 @@ bool cipher_aes192_cbc::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes192_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes192_cbc::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -270,7 +283,7 @@ bool cipher_aes192_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes192_cbc::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes192_cbc::decrypt(uint8_t* cipher, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -307,8 +320,8 @@ public:
 	std::string_view name() const override { return "aes128-cbc"sv; }
 
 	virtual bool decrypt_length(uint8_t*, size_t) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t* mac, size_t mac_size) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t* mac, size_t mac_size) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
@@ -340,7 +353,7 @@ bool cipher_aes128_cbc::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes128_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes128_cbc::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -349,7 +362,7 @@ bool cipher_aes128_cbc::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes128_cbc::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes128_cbc::decrypt(uint8_t* cipher, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -387,8 +400,8 @@ public:
 	std::string_view name() const override { return "aes256-ctr"sv; }
 
 	virtual bool decrypt_length(uint8_t* cipher, size_t s) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t*, size_t) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
 
@@ -398,11 +411,12 @@ private:
 };
 
 cipher_aes256_ctr::cipher_aes256_ctr()
-    : cipher_base(16, 32, 16, false, false)
+	: cipher_base(16, 32, 16, false, false)
 {}
 
 cipher_aes256_ctr::~cipher_aes256_ctr()
 {
+	fz::wipe(iv_);
 }
 
 bool cipher_aes256_ctr::decrypt_length(uint8_t* cipher, size_t s)
@@ -414,7 +428,7 @@ bool cipher_aes256_ctr::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes256_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes256_ctr::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -423,9 +437,9 @@ bool cipher_aes256_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes256_ctr::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes256_ctr::decrypt(uint8_t* cipher, size_t size)
 {
-	return encrypt(cipher, size, nullptr, 0);
+	return encrypt(cipher, size);
 }
 
 bool cipher_aes256_ctr::set_key(uint8_t const* key, size_t len)
@@ -457,8 +471,8 @@ public:
 	std::string_view name() const override { return "aes192-ctr"sv; }
 
 	virtual bool decrypt_length(uint8_t* cipher, size_t s) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t*, size_t) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
 
@@ -484,7 +498,7 @@ bool cipher_aes192_ctr::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes192_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes192_ctr::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -493,9 +507,9 @@ bool cipher_aes192_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes192_ctr::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes192_ctr::decrypt(uint8_t* cipher, size_t size)
 {
-	return encrypt(cipher, size, nullptr, 0);
+	return encrypt(cipher, size);
 }
 
 bool cipher_aes192_ctr::set_key(uint8_t const* key, size_t len)
@@ -526,8 +540,8 @@ public:
 	std::string_view name() const override { return "aes128-ctr"sv; }
 
 	virtual bool decrypt_length(uint8_t* cipher, size_t s) override;
-	virtual bool encrypt(uint8_t* plain, size_t size, uint8_t*, size_t) override;
-	virtual bool decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t) override;
+	virtual bool encrypt(uint8_t* plain, size_t size) override;
+	virtual bool decrypt(uint8_t* cipher, size_t size) override;
 	virtual bool set_key(uint8_t const* key, size_t len) override;
 	virtual bool set_iv(std::vector<uint8_t> && iv) override;
 
@@ -553,7 +567,7 @@ bool cipher_aes128_ctr::decrypt_length(uint8_t* cipher, size_t s)
 	return true;
 }
 
-bool cipher_aes128_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
+bool cipher_aes128_ctr::encrypt(uint8_t* plain, size_t size)
 {
 	if (size % block_size_) {
 		return false;
@@ -562,9 +576,9 @@ bool cipher_aes128_ctr::encrypt(uint8_t* plain, size_t size, uint8_t*, size_t)
 	return true;
 }
 
-bool cipher_aes128_ctr::decrypt(uint8_t* cipher, size_t size, uint8_t*, size_t)
+bool cipher_aes128_ctr::decrypt(uint8_t* cipher, size_t size)
 {
-	return encrypt(cipher, size, nullptr, 0);
+	return encrypt(cipher, size);
 }
 
 bool cipher_aes128_ctr::set_key(uint8_t const* key, size_t len)

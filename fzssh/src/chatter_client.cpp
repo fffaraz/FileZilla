@@ -12,6 +12,8 @@
 
 #include <fzssh/client.hpp>
 
+#include <locale.h>
+
 using namespace std::literals;
 
 namespace {

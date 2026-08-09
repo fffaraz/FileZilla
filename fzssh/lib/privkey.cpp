@@ -252,7 +252,9 @@ bool private_key_ed25519::export_pkcs8(std::string & out) const
 	}
 
 	std::string oid;
-	der_encode_oid(oid, "1.3.101.112"sv);
+	if (!der_encode_oid(oid, "1.3.101.112"sv) ) {
+		return {};
+	}
 
 	der_encode(out, oid, ASN1Type::Sequence, true);
 
@@ -355,7 +357,7 @@ bool private_key_ecdsa_sha2_nistp::generate()
 buffer private_key_ecdsa_sha2_nistp::sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
 {
 	if (pub_.empty() || data.empty() || signature_algorithm != name()) {
-		{};
+		return {};
 	}
 
 	hash_accumulator acc(get_digest(curve_));
@@ -503,8 +505,9 @@ bool private_key_ecdsa_sha2_nistp::export_pkcs8(std::string & out) const
 	}
 
 	std::string oid;
-	der_encode_oid(oid, "1.2.840.10045.2.1"sv);
-	der_encode_oid(oid, curve_oid(curve_));
+	if (!der_encode_oid(oid, "1.2.840.10045.2.1"sv) || !der_encode_oid(oid, curve_oid(curve_))) {
+		return {};
+	}
 
 	der_encode(out, oid, ASN1Type::Sequence, true);
 
@@ -824,7 +827,9 @@ bool private_key_rsa::export_pkcs8(std::string & out) const
 	}
 
 	std::string oid;
-	der_encode_oid(oid, "1.2.840.113549.1.1.1"sv);
+	if (!der_encode_oid(oid, "1.2.840.113549.1.1.1"sv)) {
+		return false;
+	}
 	der_encode(oid, {}, ASN1Type::Null, false);
 
 	der_encode(out, oid, ASN1Type::Sequence, true);

@@ -1,6 +1,6 @@
 project('fzssh', ['cpp'],
 	meson_version: '>=1.3',
-	version: '1.2.0',
+	version: '1.3.0',
 	default_options: ['cpp_std=c++20,c++2a', 'b_pie=true', 'warning_level=3']
 )
 
@@ -10,7 +10,7 @@ project('fzssh', ['cpp'],
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-soversion = '11.0.0'
+soversion = '13.0.0'
 
 if host_machine.system() == 'windows'
 	platform = 'windows'

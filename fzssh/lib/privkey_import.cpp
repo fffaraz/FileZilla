@@ -80,11 +80,25 @@ void load_openssh_private_key(std::vector<private_key_info> & keys, std::string_
 		rawpubs.emplace_back(*pub);
 	}
 
-	auto privdata = extract_blob(data);
-	if (!privdata) {
+	// In case of a AEAD cipher, OpenSSH's PROTOCOL.key omits to mention what to do wrt.
+	// authenticated data, and where the tag goes, but this is how it works:
+	// - Length is ciphertext length
+	// - There is no authenticated data
+	// - Auth tag directly follows the ciphertext
+
+	uint32_t privlen{};
+	if (!extract_uint32(data, privlen)) {
 		logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 		return;
 	}
+	size_t const authlen = cipher ? cipher->auth_size() : 0;
+	if (data.size() < privlen + authlen) {
+		logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
+		return;
+	}
+
+	auto privdata = data.substr(0, privlen + authlen);
+	data.remove_prefix(privlen + authlen);
 
 	if (cipher && !password) {
 		for (size_t i = 0; i < count; ++i) {
@@ -105,15 +119,23 @@ void load_openssh_private_key(std::vector<private_key_info> & keys, std::string_
 		return;
 	}
 
-	std::string decoded(*privdata);
+	std::string decoded;
+	fz::scoped_wiper w(decoded);
+
+	bool decrypted{};
 	if (cipher) {
-		cipher->decrypt(reinterpret_cast<uint8_t*>(decoded.data()), decoded.size(), nullptr, 0);
+		decoded = privdata;
+		decrypted = cipher->decrypt(reinterpret_cast<uint8_t*>(decoded.data()), decoded.size());
 		privdata = decoded;
+		privdata.remove_suffix(authlen);
+	}
+	else {
+		decrypted = true;
 	}
 
 	uint32_t checkint1{}, checkint2{};
 	// Also look at the length of the key algo of the first key, as just comparing the integers still randomly succeeds with probability of 1/2^32
-	if (!extract_uint32(*privdata, checkint1) || !extract_uint32(*privdata, checkint2) || checkint1 != checkint2 || privdata->size() < 4 || read_uint32(privdata->data()) >= privdata->size() - 4) {
+	if (!decrypted || !extract_uint32(privdata, checkint1) || !extract_uint32(privdata, checkint2) || checkint1 != checkint2 || privdata.size() < 4 || read_uint32(privdata.data()) >= privdata.size() - 4) {
 		if (!cipher) {
 			logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 			return;
@@ -138,7 +160,7 @@ void load_openssh_private_key(std::vector<private_key_info> & keys, std::string_
 	}
 
 	for (size_t i = 0; i < count; ++i) {
-		auto type = extract_string(*privdata, string_type::ascii, false);
+		auto type = extract_string(privdata, string_type::ascii, false);
 		if (!type) {
 			logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 			return;
@@ -148,7 +170,7 @@ void load_openssh_private_key(std::vector<private_key_info> & keys, std::string_
 			logger.log(logmsg::debug_warning, "Unsupported private key algorithm"sv);
 			return;
 		}
-		if (!key->parse_openssh_blob(*privdata)) {
+		if (!key->parse_openssh_blob(privdata)) {
 			logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 			return;
 		}
@@ -156,7 +178,7 @@ void load_openssh_private_key(std::vector<private_key_info> & keys, std::string_
 			logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 			return;
 		}
-		auto comment = extract_string(*privdata, string_type::utf8, true);
+		auto comment = extract_string(privdata, string_type::utf8, true);
 		if (!comment) {
 			logger.log(logmsg::debug_warning, "Malformed OpenSSH private key block"sv);
 			return;
@@ -398,7 +420,7 @@ std::optional<private_key_info> load_encrypted_pkcs8_der_key(std::string_view da
 
 		key.resize(cipher->key_size());
 
-		if (ciphertext.size() % 16) {
+		if (ciphertext.size() % cipher->block_size()) {
 			logger.log(logmsg::debug_warning, "Malformed encrypted PKCS#8 structure, ciphertext length does not align with block size"sv);
 			return {};
 		}
@@ -414,7 +436,10 @@ std::optional<private_key_info> load_encrypted_pkcs8_der_key(std::string_view da
 
 		std::vector<uint8_t> buf;
 		buf.assign((uint8_t const*)ciphertext.data(), (uint8_t const*)ciphertext.data() + ciphertext.size());
-		cipher->decrypt(buf.data(), buf.size(), nullptr, 0);
+		if (!cipher->decrypt(buf.data(), buf.size())) {
+			logger.log(logmsg::debug_warning, "Bad ciphertext"sv);
+			return {};
+		}
 
 		auto data = std::string_view(reinterpret_cast<char const*>(buf.data()), buf.size());
 
@@ -454,7 +479,7 @@ std::optional<private_key_info> load_der_key(std::string_view label, std::string
 	std::string iv;
 	size_t blocksize{};
 
-	for (auto l : strtokenizer(headers, "\r\n", true)) {
+	for (auto l : strtokenizer(headers, "\r\n"sv, true)) {
 		trim(l);
 		auto pos = l.find(':');
 		if (pos == l.npos) {
@@ -463,7 +488,7 @@ std::optional<private_key_info> load_der_key(std::string_view label, std::string
 		auto name = l.substr(0, pos);
 		auto value = l.substr(pos + 1);
 		trim(value);
-		if (name == "Proc-Type") {
+		if (name == "Proc-Type"sv) {
 			if (!starts_with(value, "4,"sv)) {
 				logger.log(logmsg::debug_warning, "Unsupported encapsulated Proc-Type header found in key"sv);
 				return {};
@@ -472,7 +497,7 @@ std::optional<private_key_info> load_der_key(std::string_view label, std::string
 				encrypted = true;
 			}
 		}
-		else if (name == "DEK-Info") {
+		else if (name == "DEK-Info"sv) {
 			if (starts_with(value, "AES-128-CBC,"sv)) {
 				value.remove_prefix(12);
 				blocksize = 16;
@@ -495,6 +520,10 @@ std::optional<private_key_info> load_der_key(std::string_view label, std::string
 	}
 
 	if (encrypted) {
+		if (!blocksize) {
+			logger.log(logmsg::debug_warning, "Encrypted key lacks DEK-Info header"sv);
+			return {};
+		}
 		if (data.size() % blocksize) {
 			logger.log(logmsg::debug_warning, "Encrypted key ciphertext doesn't align with blocksize"sv);
 			return {};
@@ -891,8 +920,11 @@ std::vector<private_key_info> do_load_private_key_infos(std::string_view const& 
 		}
 
 		// Found valid label, look for end header
-
-		auto headers = *++it;
+		if (++it == lines.end()) {
+			logger.log(logmsg::error, "Invalid PEM, could not find end header for label '%s'"sv, label);
+			return {};
+		}
+		auto headers = *it;
 		std::string_view begin;
 		for (; it != lines.end(); ++it) {
 			auto line = *it;

@@ -68,71 +68,80 @@ extracted_string extract_blob(std::string_view & packet)
 	return extracted_string{ret};
 }
 
-extracted_string extract_string(std::string_view & packet, string_type t, bool allow_empty)
+extracted_string validate_string(std::string_view s, string_type t, bool allow_empty, bool trim_trailing_null)
 {
-	auto s = extract_blob(packet);
-	if (!s) {
-		return s;
-	}
-
 	if (t != string_type::blob) {
-		while (!s->empty() && s->back() == '\0') {
-			s->remove_suffix(1);
+		if (!s.empty() && s.back() == '\0') {
+			if (!trim_trailing_null) {
+				return {extract_fail, "Trailing null in string"};
+			}
+			do {
+				s.remove_suffix(1);
+			} while (!s.empty() && s.back() == '\0');
 		}
 	}
 
-	if (!allow_empty && s->empty()) {
+	if (!allow_empty && s.empty()) {
 		return {extract_fail, "String cannot be empty"sv};
 	}
 
 	switch (t) {
 		case string_type::ascii_noquotes:
-			for (auto const c : *s) {
+			for (auto const c : s) {
 				if (c == '\'' || c == '"' || c == '`') {
 					return {extract_fail, "Bad character in string"sv};
 				}
 			}
 			[[fallthrough]];
 		case string_type::ascii:
-			for (auto const c : *s) {
+			for (auto const c : s) {
 				if (c == '\t') {
 					continue;
 				}
-				if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) > 127) {
+				if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127) {
 					return {extract_fail, "Bad character in string"sv};
 				}
 			}
 			break;
 		case string_type::multiline_ascii:
-			for (auto const c : *s) {
+			for (auto const c : s) {
 				if (c == '\r' || c == '\n' || c == '\t') {
 					continue;
 				}
-				if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) > 127) {
+				if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127) {
 					return {extract_fail, "Bad character in string"sv};
 				}
 			}
 			break;
 		case string_type::utf8:
-			if (!is_valid_utf8(*s)) {
+			if (!is_valid_utf8(s)) {
 				return {extract_fail, "String is not UTF-8"sv};
 			}
 			[[fallthrough]];
 		case string_type::text:
-			for (auto const c : *s) {
+			for (auto const c : s) {
 				if (c == '\r' || c == '\n' || c == '\t') {
 					continue;
 				}
-				if (static_cast<unsigned char>(c) < 32) {
+				if (static_cast<unsigned char>(c) < 32 || c == 127) {
 					return {extract_fail, "Bad character in string"sv};
 				}
 			}
 			break;
-	    case string_type::blob:
+		case string_type::blob:
 			break;
 	}
+	return extracted_string(s);
+}
 
-	return s;
+extracted_string extract_string(std::string_view & packet, string_type t, bool allow_empty, bool trim_trailing_null)
+{
+	auto s = extract_blob(packet);
+	if (!s) {
+		return s;
+	}
+
+	return validate_string(*s, t, allow_empty, trim_trailing_null);
 }
 
 bool extract_namelist(std::string_view & packet, std::string_view & out, logger_interface & logger)
@@ -166,11 +175,15 @@ bool is_namelist(std::string_view const& names, logger_interface & logger)
 			return false;
 		}
 		for (auto const c : name) {
-			if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) > 127) {
+			if (static_cast<unsigned char>(c) < 32 || static_cast<unsigned char>(c) >= 127) {
 				logger.log(logmsg::error, "Cannot parse namelist: Invalid character in name"sv);
 				return false;
 			}
 		}
+	}
+	if (!names.empty() && names.back() == ',') {
+		logger.log(logmsg::error, "Cannot parse namelist: found empty name"sv);
+		return false;
 	}
 	return true;
 }

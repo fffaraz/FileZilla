@@ -110,7 +110,8 @@ std::string fingerprint_from_blob(std::string_view const& blob, hash_algorithm a
 		auto h = hex_encode<std::string>(acc.digest());
 		std::string ret;
 		for (size_t i = 0; i < h.size(); i += 2) {
-			ret += h[i] + h[i];
+			ret += h[i];
+			ret += h[i + 1];
 			ret += ':';
 		}
 		ret.pop_back();
@@ -236,10 +237,12 @@ bool public_key_ed25519::verify(std::string_view const& data, std::string_view s
 	if (key_.empty() || data.empty()) {
 		return false;
 	}
+
 	auto n = extract_string(sig, string_type::ascii, false);
 	if (!n || *n != name()) {
 		return false;
 	}
+
 	auto s = extract_blob(sig);
 	if (!s || s->size() != 64) {
 		return false;
@@ -366,14 +369,11 @@ bool public_key_ecdsa_sha2_nistp::verify(std::string_view const& data, std::stri
 		return false;
 	}
 
-	fz::hash_accumulator acc(get_digest(curve_));
-	acc.update(data);
-	auto digest = acc.digest();
-
 	auto n = extract_string(sig, string_type::ascii, false);
 	if (!n || *n != name()) {
 		return false;
 	}
+
 	auto raw_sig = extract_blob(sig);
 	if (!raw_sig) {
 		return false;
@@ -388,6 +388,10 @@ bool public_key_ecdsa_sha2_nistp::verify(std::string_view const& data, std::stri
 	if (!raw_sig->empty() || !sig.empty()) {
 		return false;
 	}
+
+	fz::hash_accumulator acc(get_digest(curve_));
+	acc.update(data);
+	auto digest = acc.digest();
 
 	dsa_signature dsa_sig;
 	dsa_signature_init(&dsa_sig);
@@ -504,6 +508,10 @@ bool public_key_rsa::parse_putty(std::string_view key)
 
 bool public_key_rsa::verify(std::string_view const& data, std::string_view sig) const
 {
+	if (key_.empty() || data.empty()) {
+		return false;
+	}
+
 	auto alg = extract_string(sig, string_type::ascii, false);
 	if (!alg) {
 		return false;
@@ -655,7 +663,8 @@ std::vector<std::unique_ptr<public_key>> load_public_keys_4716(fz::strtokenizer<
 			auto line = *it;
 
 			if (!begin.data()) {
-				if (size_t pos = line.find(':') != std::string_view::npos) {
+				size_t pos = line.find(':');
+				if (pos != std::string_view::npos) {
 					bool const is_comment = equal_insensitive_ascii(line.substr(0, pos), "comment"sv);
 					line = line.substr(pos + 1);
 					if (is_comment) {
@@ -663,7 +672,8 @@ std::vector<std::unique_ptr<public_key>> load_public_keys_4716(fz::strtokenizer<
 					}
 					while ((*it).back() == '\\' && ++it != end) {
 						if (is_comment) {
-							comment += line;
+							comment.pop_back();
+							comment += *it;
 						}
 					}
 					continue;
@@ -691,12 +701,7 @@ std::vector<std::unique_ptr<public_key>> load_public_keys_4716(fz::strtokenizer<
 		auto decoded = fz::base64_decode_s(data);
 
 		auto k = load_public_key_blob(decoded, logger);
-		std::string_view tmp = decoded;
-		auto type = extract_string(tmp, string_type::ascii, false);
-		if (!type) {
-			logger.log(logmsg::debug_warning, "Invalid SSH2 public key, could not get key type"sv);
-		}
-		else {
+		if (k) {
 			k->comment_ = comment;
 			ret.emplace_back(std::move(k));
 		}

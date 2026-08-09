@@ -48,21 +48,23 @@ void client_userauth::auth_with_password(std::string_view const& pw)
 	write_string(b.buf_, "password"sv);
 	b.buf_.append(0);
 	write_string(b.buf_, pw);
-	b.commit();
+	b.commit(true);
 
 	pending_auths_.emplace_back("password", false);
 }
 
 void client_userauth::auth_with_key(std::string_view const& pubblob, std::string_view const& signature_algorithm)
 {
-	packet_builder b(transport_, message_id::SSH_MSG_USERAUTH_REQUEST, sprintf("method=publickey, without %s signature"sv, signature_algorithm));
+	packet_builder b(transport_, message_id::SSH_MSG_USERAUTH_REQUEST, sprintf("method=%s, without %s signature"sv, hostbound_pubkey_auth_ ? "publickey-hostbound-v00@openssh.com"sv : "publickey"sv, signature_algorithm));
 	write_string(b.buf_, user_);
 	write_string(b.buf_, "ssh-connection"sv);
-	write_string(b.buf_, "publickey"sv);
+	write_string(b.buf_, hostbound_pubkey_auth_ ? "publickey-hostbound-v00@openssh.com"sv : "publickey"sv);
 	b.buf_.append(0);
-
 	write_string(b.buf_, signature_algorithm);
 	write_string(b.buf_, pubblob);
+	if (hostbound_pubkey_auth_) {
+		write_string(b.buf_, static_cast<client_transport&>(transport_).previous_hostkey_);
+	}
 	b.commit();
 	pending_auths_.emplace_back("publickey", true);
 }
@@ -85,6 +87,14 @@ bool select_signature_algorithm(std::unique_ptr<T> const& key, std::string_view 
 				}
 			}
 		}
+
+		// As per RFC 8308:
+		// > early server implementations that do not enumerate all accepted algorithms do
+		// > exist.  For this reason, a client MAY send a user authenticationrequest using
+		// > a public key algorithm not included in "server-sig-algs"
+
+		// For now, do just that. This might be change in future versions, but might need
+		// a compatibility flag.
 		return true;
 	}
 	else {
@@ -98,6 +108,7 @@ void client_userauth::auth_with_key(std::unique_ptr<private_key> const& key, boo
 	if (!key) {
 		logger_.log(logmsg::error, "Cannot authenticate with key: No key given"sv);
 		transport_.handler_.send_event<auth_signature_failure_event>(static_cast<client*>(&transport_.session_));
+		return;
 	}
 
 	if (!select_signature_algorithm(key, signature_algorithm, accepted_pk_auth_signatures_)) {
@@ -143,6 +154,7 @@ void client_userauth::auth_with_key(std::unique_ptr<public_key> const& key, std:
 	if (!key || !*key) {
 		logger_.log(logmsg::error, "Cannot authenticate with key: No key given"sv);
 		transport_.handler_.send_event<auth_signature_failure_event>(static_cast<client*>(&transport_.session_));
+		return;
 	}
 
 	if (!select_signature_algorithm(key, signature_algorithm, accepted_pk_auth_signatures_)) {
@@ -183,7 +195,7 @@ void client_userauth::auth_keyboard_interactive_response(std::vector<std::string
 		write_string(b.buf_, r);
 	}
 
-	b.commit();
+	b.commit(true);
 }
 
 continuation client_userauth::process_auth_banner(std::string_view packet)
@@ -197,6 +209,10 @@ continuation client_userauth::process_auth_banner(std::string_view packet)
 	if (!lang) {
 		logger_.log(logmsg::error, fztranslate("Received malformed SSH_MSG_USERAUTH_BANNER, cannot extract language tag: %s"), *lang);
 		return continuation::next;
+	}
+
+	if (!packet.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_BANNER with excessive data"sv);
 	}
 
 	// TODO: Filter and display message
@@ -251,12 +267,28 @@ continuation client_userauth::process_auth_failure(std::string_view packet)
 	return continuation::next;
 }
 
-continuation client_userauth::process_auth_pubkey_ok(std::string_view)
+continuation client_userauth::process_auth_pubkey_ok(std::string_view packet)
 {
 	if (pending_auths_.empty() || pending_auths_.front().name_ != "publickey"sv || !pending_auths_.front().request_only_) {
 		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_PK_OK when not having sent a signature-less public key request"sv);
 	}
 	pending_auths_.pop_front();
+
+	auto alg = extract_string(packet, string_type::ascii_noquotes, false);
+	if (!alg) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, fz::sprintf("Could not extract public key algorithm name from SSH_MSG_USERAUTH_PK_OK: %s"sv, *alg));
+	}
+	auto blob = extract_string(packet, string_type::blob, false);
+	if (!blob) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, fz::sprintf("Could not extract public key algorithm name from SSH_MSG_USERAUTH_PK_OK: %s"sv, *blob));
+	}
+
+	if (!packet.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_PK_OK with excessive data"sv);
+	}
+
+	// We could verify that alg and blob match what was sent in the auth
+	// request, but in practice this makes no difference to omit this check.
 
 	transport_.handler_.send_event<auth_public_key_okay_event>(static_cast<client*>(&transport_.session_));
 	return continuation::next;
@@ -332,6 +364,7 @@ continuation client_userauth::process_auth_info_request(std::string_view packet)
 	if (!extract_uint32(packet, count)) {
 		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_USERAUTH_INFO_REQUEST, cannot extract number of prompts"sv);
 	}
+	logger_.log(logmsg::debug_verbose, "Number of prompts in info request: %u", count);
 
 	std::vector<keyboard_interactive_prompt> prompts;
 	if (count > 10) {
@@ -350,6 +383,10 @@ continuation client_userauth::process_auth_info_request(std::string_view packet)
 		prompt.prompt_ = std::move(*p);
 		prompt.echo_ = echo;
 		prompts.emplace_back(std::move(prompt));
+	}
+
+	if (!packet.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_INFO_REQUEST with excessive data"sv);
 	}
 
 	// For reasons unknown, OpenSSH sends an empty request

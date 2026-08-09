@@ -19,11 +19,29 @@ namespace ssh {
 class public_key;
 class private_key;
 
+enum class agent_compatibility_flags : unsigned
+{
+	none,
+	allow_keys_with_unknown_types = 1
+};
+
+inline bool operator&(agent_compatibility_flags lhs, agent_compatibility_flags rhs) {
+	return (static_cast<std::underlying_type_t<agent_compatibility_flags>>(lhs) & static_cast<std::underlying_type_t<agent_compatibility_flags>>(rhs)) != 0;
+}
+inline agent_compatibility_flags operator|(agent_compatibility_flags lhs, agent_compatibility_flags rhs) {
+	return static_cast<agent_compatibility_flags>(static_cast<std::underlying_type_t<agent_compatibility_flags>>(lhs) | static_cast<std::underlying_type_t<agent_compatibility_flags>>(rhs));
+}
+inline agent_compatibility_flags& operator|=(agent_compatibility_flags & lhs, agent_compatibility_flags rhs) {
+	lhs = lhs | rhs;
+	return lhs;
+}
+
+
 /// Connects to the local SSH agent
 class FZSSH_CLIENT_PUBLIC_SYMBOL agent_connection final : public event_source
 {
 public:
-	agent_connection(thread_pool & pool, event_handler& parent, logger_interface & logger);
+	agent_connection(thread_pool & pool, event_handler& parent, logger_interface & logger, agent_compatibility_flags = {});
 	~agent_connection();
 
 	agent_connection(agent_connection const&) = delete;

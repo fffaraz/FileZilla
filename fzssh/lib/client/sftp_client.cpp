@@ -22,7 +22,7 @@ size_t constexpr max_in_payload_size{256*1024};
 class sftp_client_impl final : public sftp_base
 {
 public:
-	sftp_client_impl(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, sftp_client* c);
+	sftp_client_impl(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, sftp_client* c, compatibility_flags compatibility_flags);
 
 	virtual ~sftp_client_impl();
 
@@ -140,6 +140,7 @@ request_builder::~request_builder()
 	if (payload_size > max_out_payload_size) {
 		buf_.resize(old_size_);
 		s_.logger_.log(logmsg::error, "Payload size %u exceeds max payload size %u", payload_size, max_out_payload_size);
+		return;
 	}
 
 	write_uint32(buf_.get() + old_size_, payload_size);
@@ -179,8 +180,8 @@ bool is_allowed_response(message_type cmd, message_type response)
 }
 }
 
-sftp_client_impl::sftp_client_impl(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, sftp_client* c)
-	: sftp_base(std::move(channel), handler, logger, max_in_payload_size, true)
+sftp_client_impl::sftp_client_impl(std::unique_ptr<socket_interface> && channel, event_handler & handler, logger_interface & logger, sftp_client* c, compatibility_flags compatibility_flags)
+	: sftp_base(std::move(channel), handler, logger, max_in_payload_size, false, compatibility_flags)
 	, c_(c)
 {
 }
@@ -379,25 +380,51 @@ continuation sftp_client_impl::process_names(response_handler* handler, message_
 	}
 
 	for (size_t i = 0; i < count; ++i) {
+		bool ignore{};
+
 		entry e;
-		auto name = extract_string(data, string_type::text, false);
+		auto name = extract_blob(data);
 		if (!name) {
-			logger_.log(fz::logmsg::error, "Could not extract name %u from received SSH_FXP_NAME packet: %s"sv, i, *name);
+			logger_.log(fz::logmsg::error, "Could not extract name of item %u from received SSH_FXP_NAME packet: %s"sv, i, *name);
 			return handler->failure();
 		}
-		e.name_ = *name;
+		name = validate_string(*name, string_type::text, false);
+		if (!name) {
+			logger_.log(fz::logmsg::error, "Could not extract name of item %u from received SSH_FXP_NAME packet: %s"sv, i, *name);
+			if (request_type == message_type::SSH_FXP_REALPATH) {
+				return handler->failure();
+			}
+			else {
+				logger_.log(fz::logmsg::error, "Item will not be returned in directory listing."sv);
+				ignore = true;
+			}
+		}
+		else {
+			e.name_ = *name;
+		}
 
-		auto longname = extract_string(data, string_type::text, true);
+		auto longname = extract_blob(data);
 		if (!longname) {
-			logger_.log(fz::logmsg::error, "Could not extract longname %u from received SSH_FXP_NAME packet: %s"sv, i, *longname);
+			logger_.log(fz::logmsg::error, "Could not extract longname of item %u from received SSH_FXP_NAME packet: %s"sv, i, *longname);
 			return handler->failure();
 		}
-		e.longname_ = *longname;
+		longname = validate_string(*longname, string_type::text, true);
+		if (!longname) {
+			logger_.log(fz::logmsg::error, "Could not extract longname of item %u from received SSH_FXP_NAME packet: %s"sv, i, *longname);
+		}
+		else {
+			e.longname_ = *longname;
+		}
 
-		auto attrs = extract_attributes(data, logger_);
+		auto attrs = extract_attributes(data, logger_, compatibility_flags_);
 		if (!attrs) {
 			return handler->failure();
 		}
+
+		if (ignore) {
+			continue;
+		}
+
 		static_cast<attributes&>(e) = *attrs;
 
 		auto ret = handler->process_name(e, i != count - 1);
@@ -411,7 +438,7 @@ continuation sftp_client_impl::process_names(response_handler* handler, message_
 
 continuation sftp_client_impl::process_attributes(response_handler* handler, std::string_view data)
 {
-	auto attrs = extract_attributes(data, logger_);
+	auto attrs = extract_attributes(data, logger_, compatibility_flags_);
 	if (!attrs) {
 		return handler->failure();
 	}
@@ -498,28 +525,38 @@ continuation sftp_client_impl::process_data(response_handler* handler, std::stri
 continuation sftp_client_impl::process_status(response_handler* handler, std::string_view data)
 {
 	uint32_t rawcode{};
-	extract_uint32(data, rawcode);
+	if (!extract_uint32(data, rawcode)) {
+		logger_.log(logmsg::error, "Could not extract status code from SSH_FXP_STATUS packet"sv);
+		return handler->failure();
+	}
 	if (rawcode > static_cast<size_t>(status_code::MAX)) {
-		logger_.log(logmsg::error, "Could not extract status"sv);
+		logger_.log(logmsg::error, "Received SSH_FXP_STATUS packet with unknown status code %u"sv, rawcode);
 		return handler->failure();
 	}
 
 	auto code = static_cast<status_code>(rawcode);
 
-	auto s = extract_string(data, string_type::utf8, true);
-	if (!s) {
-		logger_.log(logmsg::error, "Could not extract description"sv);
-		return handler->failure();
-	}
-
-	if (!s->empty()) {
-		logger_.log(code == status_code::SSH_FX_OK ? logmsg::debug_info : logmsg::debug_warning, "Got status %s: %s"sv, to_string(code), *s);
+	std::string_view desc;
+	if (data.empty()) {
+		logger_.log(logmsg::error, "The SFTP server is outdated or non-compliant, it sent a SSH_FXP_STATUS message without description and language tag"sv);
 	}
 	else {
-		logger_.log(code == status_code::SSH_FX_OK ? logmsg::debug_info : logmsg::debug_warning, "Got status %s"sv, to_string(code));
+		auto s = extract_string(data, string_type::utf8, true);
+		if (!s) {
+			logger_.log(logmsg::error, "Could not extract description: %s"sv, *s);
+			return handler->failure();
+		}
+
+		if (!s->empty()) {
+			logger_.log(code == status_code::SSH_FX_OK ? logmsg::debug_info : logmsg::debug_warning, "Got status %s: %s"sv, to_string(code), *s);
+		}
+		else {
+			logger_.log(code == status_code::SSH_FX_OK ? logmsg::debug_info : logmsg::debug_warning, "Got status %s"sv, to_string(code));
+		}
+		desc = *s;
 	}
 
-	return handler->process_status(code, *s);
+	return handler->process_status(code, desc);
 }
 
 void sftp_client_impl::on_can_send_packets()
@@ -542,8 +579,8 @@ bool sftp_client::can_send_packets(event_handler & waiter)
 
 // sftp_client
 
-sftp_client::sftp_client(std::unique_ptr<socket_interface> && channel, event_handler & h, logger_interface & logger)
-	: impl_(std::make_unique<sftp_client_impl>(std::move(channel), h, logger, this))
+sftp_client::sftp_client(std::unique_ptr<socket_interface> && channel, event_handler & h, logger_interface & logger, compatibility_flags compatibility_flags)
+	: impl_(std::make_unique<sftp_client_impl>(std::move(channel), h, logger, this, compatibility_flags))
 {
 }
 
@@ -677,6 +714,9 @@ void sftp_client::write(response_handler* handler, std::string_view handle, uint
 	if (impl_->disconnecting_) {
 		return;
 	}
+
+	// FIXME: Split overly large data into multiple packets
+
 	request_builder b(*impl_, handler, message_type::SSH_FXP_WRITE);
 	write_string(b.buf_, handle);
 	write_uint64(b.buf_, offset);

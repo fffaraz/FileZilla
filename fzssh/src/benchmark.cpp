@@ -15,6 +15,8 @@
 #include <fzssh/client.hpp>
 #include <fzssh/privkey.hpp>
 
+#include <locale.h>
+
 using namespace std::literals;
 
 class sftp : public fz::ssh::sftp::response_handler, fz::event_handler

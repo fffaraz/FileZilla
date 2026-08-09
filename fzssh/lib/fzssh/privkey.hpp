@@ -17,7 +17,8 @@ class logger_interface;
 
 namespace fz::ssh {
 
-class FZSSH_PUBLIC_SYMBOL private_key {
+class FZSSH_PUBLIC_SYMBOL private_key
+{
 public:
 	virtual ~private_key();
 
@@ -29,7 +30,7 @@ public:
 	virtual std::string_view name() const = 0;
 	bool supports_signature_algorithm(std::string_view alg) const { return fz::ssh::supports_signature_algorithm(name(), alg); }
 
-	std::unique_ptr<public_key> pubkey() const;
+	virtual std::unique_ptr<public_key> pubkey() const;
 	std::string_view pubkey_blob() const { return pub_.to_view(); }
 	std::string openssh_pubkey() const;
 	std::string rfc4716_pubkey() const;
@@ -91,7 +92,7 @@ public:
 };
 
 std::vector<private_key_info> FZSSH_PUBLIC_SYMBOL load_private_key_infos(std::string_view const& data, logger_interface & logger, std::optional<std::string_view> const& password = {});
-std::vector<private_key_info> FZSSH_PUBLIC_SYMBOL load_private_key_file(std::string_view const& filename, logger_interface & logger, std::optional<std::string_view> const& password = {});
+std::vector<private_key_info> FZSSH_PUBLIC_SYMBOL load_private_key_file(native_string const& filename, logger_interface & logger, std::optional<std::string_view> const& password = {});
 
 std::string FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const& key, bool pem);
 

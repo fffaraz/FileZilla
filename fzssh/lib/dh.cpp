@@ -1,11 +1,13 @@
 #include "dh.hpp"
 #include "ecc.hpp"
 
+#include <libfilezilla/logger.hpp>
 #include <libfilezilla/util.hpp>
 
 #include <nettle/curve25519.h>
 #include <nettle/ecc.h>
 #include <nettle/ecdsa.h>
+#include <nettle/memops.h>
 
 #include "crypt/mlkem.hpp"
 
@@ -25,7 +27,7 @@ kex_type get_kex_type(std::string_view v)
 	if (fz::starts_with(v, "diffie-hellman-group-exchange")) {
 		return kex_type::dhge;
 	}
-	else if (fz::starts_with(v, "curve-22519-"sv) || fz::starts_with(v, "ecdh-"sv)) {
+	else if (fz::starts_with(v, "curve25519-"sv) || fz::starts_with(v, "ecdh-"sv)) {
 		return kex_type::ecdh;
 	}
 	else if (fz::starts_with(v, "mlkem"sv)) {
@@ -54,9 +56,14 @@ public:
 class dh_privkey_curve25519 final : public dh_privkey_base
 {
 public:
+	virtual ~dh_privkey_curve25519() noexcept
+	{
+		fz::wipe(priv_);
+	}
+
 	virtual bool generate(size_t /*bits_hint*/) override
 	{
-		priv_ = random_bytes(pub_octet_size());
+		priv_ = random_bytes(pub_octet_size_);
 		priv_[0] &= 248;
 		priv_[31] &= 127;
 		priv_[31] |= 64;
@@ -67,13 +74,13 @@ public:
 			0, 0, 0, 0, 0, 0, 0, 0,
 			0, 0, 0, 0, 0, 0, 0, 0 };
 
-		pub_.resize(pub_octet_size());
+		pub_.resize(pub_octet_size_);
 		nettle_curve25519_mul(pub_.data(), priv_.data(), nine);
 
 		return true;
 	}
 	virtual buffer shared_secret(std::unique_ptr<dh_pubkey_base> const& pub) override;
-	size_t pub_octet_size() const { return 32; }
+	constexpr static size_t pub_octet_size_{32};
 
 	std::vector<uint8_t> priv_;
 };
@@ -81,13 +88,18 @@ public:
 buffer dh_privkey_curve25519::shared_secret(std::unique_ptr<dh_pubkey_base> const& pub)
 {
 	auto pub2 = dynamic_cast<dh_pubkey_curve25519 const*>(pub.get());
-	if (!pub2 || pub2->key().size() != pub_octet_size()) {
+	if (!pub2 || pub2->key().size() != pub_octet_size_) {
 		return {};
 	}
 
 	buffer ret;
-	ret.resize(pub_octet_size());
+	ret.resize(pub_octet_size_);
 	nettle_curve25519_mul(ret.data(), priv_.data(), reinterpret_cast<uint8_t const*>(pub2->key().data()));
+
+	char zero[pub_octet_size_] = {};
+	if (memeql_sec(ret.data(), zero, pub_octet_size_)) {
+		return {};
+	}
 	return ret;
 }
 
@@ -203,14 +215,17 @@ struct group
 		bits = mpz_sizeinbase(p, 2);
 	}
 
-	group(std::string_view const& prime, std::string_view const& generator)
+	group(mpz && prime, mpz && generator)
+		: p(std::move(prime))
+		, g(std::move(generator))
 	{
-		mpz_import(p, prime.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(prime.data()));
 		mpz_sub_ui(p_sub1, p, 1);
-		mpz_import(g, generator.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(generator.data()));
 		mpz_tdiv_q_ui(q, p, 2);
 		bits = mpz_sizeinbase(p, 2);
 	}
+
+	bool validate(logger_interface & log);
+
 	size_t bits{};
 	mpz p;
 	mpz p_sub1;
@@ -374,7 +389,7 @@ std::array<group, 6> const& get_groups()
 			"B1D510BD7EE74D73FAF36BC31ECFA268359046F4EB879F92"
 			"4009438B481C6CD7889A002ED5EE382BC9190DA6FC026E47"
 			"9558E4475677E9AA9E3050E2765694DFC81F56E880B96E71"
-			"60C980DD 98EDD3DFFFFFFFFFFFFFFFFF",
+			"60C980DD98EDD3DFFFFFFFFFFFFFFFFF",
 			"2"
 		}
 	});
@@ -443,12 +458,13 @@ bool dh_pubkey_group::parse(std::string_view key)
 		return false;
 	}
 
-	mpz_import(f_, key.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(key.data()));
-	if (mpz_cmp_si(f_.operator mpz_t&(), 1) <= 0 || mpz_cmp(f_, g_.p_sub1) >= 0) {
+	auto f = mpint_from_blob(key, false);
+	if (!f || f <= 1 || f >= g_.p_sub1) {
 		return false;
 	}
+	f_ = std::move(*f);
 
-	// Check for abnormal keys. The probability of this happening at random is infitesimal
+	// Check for abnormal keys. The probability of this happening at random is infinitesimal
 	auto const b = mpz_popcount(f_);
 	if (b < 8 || b > g_.bits - 8) {
 		return false;
@@ -503,11 +519,11 @@ bool dh_privkey_group::generate(size_t bits_hint)
 			mpz_import(x_, raw.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(raw.data()));
 			wipe(raw);
 		}
-		while (mpz_cmp_ui(x_.operator mpz_t&(), 1) <= 0 || mpz_cmp(x_, g_.q) >= 0);
+		while (x_ <= 1 || x_ >= g_.q);
 
 		mpz_powm_sec(e, g_.g, x_, g_.p);
 	}
-	while (mpz_cmp_si(e.operator mpz_t&(), 1) <= 0 || mpz_cmp(e, g_.p_sub1) >= 0);
+	while (e <= 1 || e >= g_.p_sub1);
 
 	pub_.append(0);
 	auto bytes = (mpz_sizeinbase(e, 2) + 7) / 8;
@@ -527,14 +543,11 @@ buffer dh_privkey_group::shared_secret(std::unique_ptr<dh_pubkey_base> const& pu
 		return {};
 	}
 
-	mpz f;
-	mpz_import(f, pub2->key().size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(pub2->key().data()));
-
 	mpz k;
 	scoped_wiper w(k);
-	mpz_powm_sec(k, f, x_, g_.p);
+	mpz_powm_sec(k, pub2->f_, x_, g_.p);
 
-	if (mpz_cmp_ui(k.operator mpz_t&(), 1) <= 0 || mpz_cmp(k, g_.p_sub1) >= 0) {
+	if (k <= 1 || k >= g_.p_sub1) {
 		return {};
 	}
 
@@ -565,6 +578,10 @@ public:
 		: server_(server)
 	{}
 
+	virtual ~dh_privkey_mlkem() noexcept {
+		fz::wipe(priv_);
+	}
+
 	virtual bool generate(size_t bits_hint) override
 	{
 		if (!traditional_.generate(bits_hint)) {
@@ -582,7 +599,7 @@ public:
 	virtual buffer shared_secret(std::unique_ptr<dh_pubkey_base> const& pub) override;
 
 private:
-	size_t pub_octet_size() const { return 1184 + traditional_.pub_octet_size(); }
+	size_t pub_octet_size() const { return 1184 + traditional_.pub_octet_size_; }
 
 	fz::buffer priv_;
 	dh_privkey_curve25519 traditional_;
@@ -597,13 +614,13 @@ buffer dh_privkey_mlkem::shared_secret(std::unique_ptr<dh_pubkey_base> const& pu
 		return {};
 	}
 
-	if (pub2->key().size() != (server_ ? 1184 : 1088) + traditional_.pub_octet_size()) {
+	if (pub2->key().size() != (server_ ? 1184 : 1088) + traditional_.pub_octet_size_) {
 		return {};
 	}
-	auto pq_part = pub2->key().to_view().substr(0, pub2->key().size() - traditional_.pub_octet_size());
+	auto pq_part = pub2->key().to_view().substr(0, pub2->key().size() - traditional_.pub_octet_size_);
 
 	auto curve = create_dh_pubkey("curve25519-sha256"sv);
-	if (!curve || !curve->parse(pub2->key().to_view().substr(pub2->key().size() - traditional_.pub_octet_size()))) {
+	if (!curve || !curve->parse(pub2->key().to_view().substr(pub2->key().size() - traditional_.pub_octet_size_))) {
 		return {};
 	}
 
@@ -755,17 +772,69 @@ std::tuple<buffer, std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_b
 	return {param, std::make_unique<dh_pubkey_group>(g), std::make_unique<dh_privkey_group>(g)};
 }
 
-std::tuple<std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_base>> FZSSH_PUBLIC_SYMBOL get_dh_group(std::string_view group_blob)
+bool group::validate(logger_interface & log)
 {
-	auto prime = extract_blob(group_blob);
-	auto gen = extract_blob(group_blob);
-	if (!prime || !gen || !group_blob.empty()) {
+	// P must be a safe prime as per RFC 4419:
+	// "A prime p is safe if p = 2q + 1 and q is prime."
+	if (mpz_probab_prime_p(p, 64) == 0) {
+		log.log(logmsg::error, "Received group prime failed primality check"sv);
+		return false;
+	}
+	if (mpz_probab_prime_p(q, 64) == 0) {
+		log.log(logmsg::error, "Received group prime is not a safe prime"sv);
+		return false;
+	}
+
+	// Reject trivial g
+	if (g <= 1 || g >= p_sub1) {
+		log.log(logmsg::error, "Received group generator is out of range"sv);
+		return false;
+	}
+
+	// Check that the order is either q or p-1
+	mpz r;
+	mpz_powm(r, g, q, p);
+
+	if (r == 1) {
+		return true; // order q
+	}
+
+	if (r == p_sub1) {
+		return true; // order p-1
+	}
+
+	log.log(logmsg::error, "Received group generator is neither of order q nor p-1"sv);
+
+	return false;
+}
+
+std::tuple<std::unique_ptr<dh_pubkey_base>, std::unique_ptr<dh_privkey_base>> FZSSH_PUBLIC_SYMBOL get_dh_group(std::string_view group_blob, uint32_t min_bits, uint32_t max_bits, logger_interface & log)
+{
+	auto prime = extract_mpint(group_blob, false);
+	if (!prime) {
+		log.log(logmsg::error, "Could not extract group prime"sv);
+		return {};
+	}
+	auto gen = extract_mpint(group_blob, false);
+	if (!gen) {
+		log.log(logmsg::error, "Could not extract group generator"sv);
+		return {};
+	}
+	if (!group_blob.empty()) {
+		log.log(logmsg::error, "Trailing extra data in received group data"sv);
 		return {};
 	}
 
-	// Should we validate the parameters?
+	auto g = group(std::move(*prime), std::move(*gen));
+	if (g.bits < min_bits || g.bits > max_bits) {
+		log.log(logmsg::error, "Size of received group (%u) outside of requested range %u-%u"sv, g.bits, min_bits, max_bits);
+		return {};
+	}
 
-	auto g = group(*prime, *gen);
+	if (!g.validate(log)) {
+		return {};
+	}
+
 	return {std::make_unique<dh_pubkey_group>(g), std::make_unique<dh_privkey_group>(g)};
 }
 }

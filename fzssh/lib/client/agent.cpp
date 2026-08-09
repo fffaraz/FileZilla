@@ -36,11 +36,40 @@ namespace fz::ssh {
 #define SSH_AGENT_RSA_SHA2_512 4
 
 namespace {
+class agent_public_key final : public public_key
+{
+public:
+	agent_public_key(std::string_view name, std::string_view blob)
+		: name_(name)
+	{
+		key_ = blob;
+	}
+
+	virtual std::string_view name() const override {
+		return name_;
+	}
+
+	virtual std::unique_ptr<public_key> clone() const override {
+		if (key_.empty()) {
+			return {};
+		}
+		auto ret = std::make_unique<agent_public_key>(name_, key_);
+		ret->comment_ = comment_;
+		return ret;
+	}
+
+	std::string_view name_;
+
+	virtual bool parse(std::string_view key) override { key_ = key; return !key_.empty(); }
+	virtual bool parse_putty(std::string_view /*key*/) override { return false; }
+	virtual bool verify(std::string_view const& /*data*/, std::string_view /*sig*/) const override { return false; }
+};
+
 class single_agent_connection;
 class agent_private_key final : public private_key
 {
 public:
-	agent_private_key(std::weak_ptr<single_agent_connection> conn, std::string_view const& name, std::string_view const& pubblob);
+	agent_private_key(std::weak_ptr<single_agent_connection> conn, std::string_view const& name, std::string_view const& pubblob, bool opaque);
 	virtual ~agent_private_key();
 
 	virtual std::string_view name() const override { return name_; }
@@ -48,22 +77,26 @@ public:
 	virtual void cancel(event_handler& h) override;
 
 	virtual std::unique_ptr<private_key> clone() const override;
+	virtual std::unique_ptr<public_key> pubkey() const override;
 
 	std::weak_ptr<single_agent_connection> conn_{};
 	std::string const name_;
 
 	event_handler* h_{};
+
+	bool opaque_{};
 };
 
 class single_agent_connection : public event_handler, public std::enable_shared_from_this<single_agent_connection>
 {
 public:
-	single_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, std::string_view name)
-	    : event_handler(parent, child_event_handler)
-	    , agent_(agent)
-	    , pool_(pool)
-	    , logger_(log)
+	single_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, std::string_view name, agent_compatibility_flags flags)
+		: event_handler(parent, child_event_handler)
+		, agent_(agent)
+		, pool_(pool)
+		, logger_(log)
 		, name_(name)
+		, flags_(flags)
 	{
 	}
 
@@ -107,13 +140,14 @@ protected:
 	logger_interface& logger_;
 
 	std::string name_;
+	agent_compatibility_flags flags_{};
 };
 
 class socket_agent_connection : public single_agent_connection
 {
 public:
-	socket_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log)
-		: single_agent_connection(agent, pool, parent, log, "SSH_AUTH_SOCK"sv)
+	socket_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, 	agent_compatibility_flags flags)
+		: single_agent_connection(agent, pool, parent, log, "SSH_AUTH_SOCK"sv, flags)
 	{}
 
 	~socket_agent_connection()
@@ -237,8 +271,8 @@ void socket_agent_connection::on_read()
 class pipe_agent_connection : public single_agent_connection
 {
 public:
-	pipe_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, std::string_view name, std::wstring_view const& pipename)
-		: single_agent_connection(agent, pool, parent, log, name)
+	pipe_agent_connection(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, std::string_view name, std::wstring_view const& pipename, agent_compatibility_flags flags)
+		: single_agent_connection(agent, pool, parent, log, name, flags)
 		, pipename_(pipename)
 	{}
 
@@ -351,9 +385,10 @@ void pipe_agent_connection::on_read()
 #endif
 
 
-agent_private_key::agent_private_key(std::weak_ptr<single_agent_connection> conn, std::string_view const& name, std::string_view const& pubblob)
+agent_private_key::agent_private_key(std::weak_ptr<single_agent_connection> conn, std::string_view const& name, std::string_view const& pubblob, bool opaque)
 	: conn_(std::move(conn))
 	, name_(name)
+	, opaque_(opaque)
 {
 	pub_.append(pubblob);
 }
@@ -395,7 +430,17 @@ void agent_private_key::cancel(event_handler& h)
 
 std::unique_ptr<private_key> agent_private_key::clone() const
 {
-	return std::make_unique<agent_private_key>(conn_, name_, pub_.to_view());
+	return std::make_unique<agent_private_key>(conn_, name_, pub_.to_view(), opaque_);
+}
+
+std::unique_ptr<public_key> agent_private_key::pubkey() const
+{
+	if (opaque_) {
+		return std::make_unique<agent_public_key>(name(), pub_.to_view());
+	}
+	else {
+		return private_key::pubkey();
+	}
 }
 
 void single_agent_connection::get_keys(event_handler & h)
@@ -494,36 +539,47 @@ void single_agent_connection::process_identities(std::string_view data)
 
 	std::vector<std::unique_ptr<private_key>> keys;
 
+	logger_.log(logmsg::debug_verbose, "Agent (%s) has %u keys"sv, name_, count);
+
 	for (size_t i = 0; i < count; ++i) {
 		auto blob = extract_string(data, string_type::blob, false);
 		auto comment = extract_string(data, string_type::utf8, true);
 		if (!blob || !comment) {
-			logger_.log(logmsg::error, "Could not extract key and comment, closing socket."sv);
+			logger_.log(logmsg::error, "Could not extract key and comment for key %u, closing socket."sv, i);
 			fail(true);
+			return;
 		}
 
 		std::string_view v = *blob;
 		auto alg = extract_string(v, string_type::ascii, false);
 		if (!alg) {
-			logger_.log(logmsg::error, "Could not extract key algorithm, closing socket."sv);
+			logger_.log(logmsg::error, "Could not extract key algorithm for key %u, closing socket."sv, i);
 			fail(true);
+			return;
 		}
 
+		bool opaque{};
 		auto key = create_public_key(*alg);
 		if (!key) {
-			logger_.log(logmsg::debug_warning, "Key %d from agent has unsupported type %s"sv, *alg);
+			if (flags_ & agent_compatibility_flags::allow_keys_with_unknown_types) {
+				logger_.log(logmsg::debug_warning, "Key %u from agent has unknown type '%s'"sv, i, *alg);
+				key = std::make_unique<agent_public_key>(*alg, *blob);
+				opaque = true;
+			}
+			else {
+				logger_.log(logmsg::debug_warning, "Ignoring key %u from agent with unknown type '%s'"sv, i, *alg);
+				continue;
+			}
+		}
+		else if (!key->parse(*blob)) {
+			logger_.log(logmsg::debug_warning, "Could not load key %u from agent of type %s", i, *alg);
 			continue;
 		}
 
-		if (!key->parse(*blob)) {
-			logger_.log(logmsg::debug_warning, "Could not load key %d from agent of type %s", i, *alg);
-			continue;
-		}
-
-		auto pkey = std::make_unique<agent_private_key>(weak_from_this(), key->name(), key->pubkey_blob());
+		auto pkey = std::make_unique<agent_private_key>(weak_from_this(), key->name(), key->pubkey_blob(), opaque);
 		pkey->comment_ = *comment;
 
-		logger_.log(logmsg::debug_info, "Successfully loaded public key %d of type %s from agent (%s)"sv, i, *alg, name_);
+		logger_.log(logmsg::debug_info, "Successfully loaded public key %u of type '%s' from agent (%s)"sv, i, *alg, name_);
 		keys.emplace_back(std::move(pkey));
 	}
 
@@ -624,9 +680,9 @@ std::wstring get_putty_obfuscated_name()
 	memset(buf, 0, CRYPTPROTECTMEMORY_BLOCK_SIZE);
 	strcpy(buf, "Pageant");
 
-	if (!CryptProtectMemory(buf, CRYPTPROTECTMEMORY_BLOCK_SIZE, CRYPTPROTECTMEMORY_CROSS_PROCESS)) {
-		return {};
-	}
+	// PuTTY ignores if this function fails, so we must do the same
+	(void)CryptProtectMemory(buf, CRYPTPROTECTMEMORY_BLOCK_SIZE, CRYPTPROTECTMEMORY_CROSS_PROCESS);
+
 	fz::hash_accumulator acc(fz::hash_algorithm::sha256);
 	acc.update_with_length(std::string_view(buf, CRYPTPROTECTMEMORY_BLOCK_SIZE));
 	return fz::hex_encode<std::wstring>(acc.digest());
@@ -640,6 +696,10 @@ std::wstring get_username()
 		name.resize(len + 1);
 		if (GetUserNameExW(NameUserPrincipal, name.data(), &len)) {
 			name.resize(len);
+			auto pos = name.find('@');
+			if (pos != std::wstring::npos) {
+				name.resize(pos);
+			}
 			return name;
 		}
 	}
@@ -670,7 +730,7 @@ std::wstring get_putty_pipename()
 class agent_connection::impl : public fz::event_handler
 {
 public:
-	impl(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log);
+	impl(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, agent_compatibility_flags flags);
 	~impl()
 	{
 		remove_handler();
@@ -725,18 +785,18 @@ private:
 	size_t discarded_{};
 };
 
-agent_connection::impl::impl(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log)
+agent_connection::impl::impl(agent_connection* agent, thread_pool & pool, fz::event_handler& parent, logger_interface& log, agent_compatibility_flags flags)
 	: event_handler(parent, child_event_handler)
 	, logger_(log)
 	, agent_(agent)
 {
-	connections_.emplace_back(std::make_unique<socket_agent_connection>(agent, pool, parent, log));
+	connections_.emplace_back(std::make_unique<socket_agent_connection>(agent, pool, parent, log, flags));
 #if FZ_WINDOWS
 	auto putty_pipe = get_putty_pipename();
 	if (!putty_pipe.empty()) {
-		connections_.emplace_back(std::make_shared<pipe_agent_connection>(agent, pool, parent, log, "Pageant"sv, putty_pipe));
+		connections_.emplace_back(std::make_shared<pipe_agent_connection>(agent, pool, parent, log, "Pageant"sv, putty_pipe, flags));
 	}
-	connections_.emplace_back(std::make_shared<pipe_agent_connection>(agent, pool, parent, log, "OpenSSH Authentication Agent"sv,L"openssh-ssh-agent"sv));
+	connections_.emplace_back(std::make_shared<pipe_agent_connection>(agent, pool, parent, log, "OpenSSH Authentication Agent"sv, L"openssh-ssh-agent"sv, flags));
 #endif
 }
 
@@ -771,8 +831,8 @@ void agent_connection::impl::cancel(fz::event_handler& h)
 }
 
 
-agent_connection::agent_connection(thread_pool & pool, fz::event_handler& parent, logger_interface & log)
-	: impl_(std::make_unique<impl>(this, pool, parent, log))
+agent_connection::agent_connection(thread_pool & pool, fz::event_handler& parent, logger_interface & log, agent_compatibility_flags flags)
+	: impl_(std::make_unique<impl>(this, pool, parent, log, flags))
 {
 }
 

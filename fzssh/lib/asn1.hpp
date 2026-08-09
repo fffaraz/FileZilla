@@ -18,7 +18,7 @@ enum class ASN1Type : uint64_t
 	Sequence         = 0x10u,
 	Set              = 0x11u,
 	PrintableString  = 0x13u,
-	T61String        = 0x14u,
+	T61String        = 0x14u, // Constraint: Application must verify string contents
 	IA5String        = 0x16u
 };
 
@@ -52,17 +52,23 @@ struct ASN1Value
 	explicit operator bool() const { return tag_ >= 0; }
 };
 
+// Constraint: OID arcs are capped to uin64_t
 std::string parse_oid(ASN1Value const& v);
 
 std::optional<uint64_t> toUInt(ASN1Value const& v);
 
+// Constraint: For universal types, values are only coarsely checked, for other types
+// the application has to verify the data.
 ASN1Value parseDer(std::string_view & data);
 ASN1Value parseDer(std::string_view & data, ASN1Type expected);
 ASN1Value parseDer(std::string_view & data, ASN1Class cl, int64_t tag);
 
 void der_encode_length(std::string& out, size_t len);
 void der_encode(std::string& out, uint64_t v);
-void der_encode_oid(std::string& out, std::string_view oid);
+
+// Constraint: OID arcs are capped to uin64_t
+bool der_encode_oid(std::string& out, std::string_view oid);
+
 void der_encode(std::string& out, std::string_view data, ASN1Type type, bool constructed);
 void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed);
 

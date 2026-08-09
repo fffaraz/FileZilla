@@ -16,6 +16,10 @@
 #include <fzssh/privkey.hpp>
 
 #include <iostream>
+#include <optional>
+
+#include <locale.h>
+#include <string.h>
 
 using namespace std::literals;
 
@@ -197,11 +201,14 @@ public:
 		exit(1);
 	}
 
-	void on_hostkey_event(fz::ssh::session* s, std::unique_ptr<fz::ssh::public_key> const&, fz::ssh::algorithm_info const&)
+	void on_hostkey_event(fz::ssh::session* s, std::unique_ptr<fz::ssh::public_key> const& k, fz::ssh::algorithm_info const&)
 	{
 		log_.log(fz::logmsg::status, "Got host key verification event"sv);
 		if (s == ssh_.get()) {
-			ssh_->hostkey_decision(true);
+			std::cout << "Trust hostkey of type "sv << k->name() << " with fingerprint "sv << k->fingerprint() << "? (yes/no/fingerprint)? "sv << std::flush;
+			std::string decision;
+			std::getline(std::cin, decision);
+			ssh_->hostkey_decision(decision[0] == 'y' || decision[0] == 'Y' || decision == k->fingerprint());
 		}
 	}
 
@@ -322,36 +329,54 @@ int main(int argc, char *argv[])
 	std::setlocale(LC_ALL, "");
 
 	fz::stdout_logger log;
-	log.set_all(fz::logmsg::type(-1));
 
-	if (argc < 2) {
+	std::optional<fz::uri> u;
+
+	for (int i = 1; i < argc; ++i) {
+		std::string_view arg(argv[i], strlen(argv[i]));
+		if (arg.empty()) {
+			continue;
+		}
+
+		if (arg == "-v"sv) {
+			log.set_all(fz::logmsg::type(-1));
+		}
+		else if (arg.front() == '-') {
+			log.log(fz::logmsg::error, "Unknown option: %s"sv, arg);
+			return 1;
+		}
+		else {
+			u = fz::uri(arg, fz::uri_parsing_flags::assume_authority);
+		}
+	}
+
+	if (!u) {
 		log.log(fz::logmsg::error, "Must pass server address as argument: [user@]host:[port]"sv);
 		return 1;
 	}
-	fz::uri u(argv[1], fz::uri_parsing_flags::assume_authority);
 
 	// Literal IPv6
-	if (u.host_.size() >= 2 && u.host_[0] == '[' && u.host_.back() == ']') {
-		u.host_ = u.host_.substr(1, u.host_.size() - 2);
+	if (u->host_.size() >= 2 && u->host_[0] == '[' && u->host_.back() == ']') {
+		u->host_ = u->host_.substr(1, u->host_.size() - 2);
 	}
 
-	if (u.host_.empty()) {
+	if (u->host_.empty()) {
 		log.log(fz::logmsg::error, "Must pass server address as argument: [user@]host:[port]"sv);
 		return 1;
 	}
 
-	if (!u.port_) {
-		u.port_ = 22;
+	if (!u->port_) {
+		u->port_ = 22;
 	}
 
-	if (u.user_.empty()) {
-		u.user_ = "test"sv;
+	if (u->user_.empty()) {
+		u->user_ = "test"sv;
 	}
 
 	fz::thread_pool pool;
 
 	fz::event_loop loop(fz::event_loop::threadless);
-	runner r(log, pool, loop, u.host_, u.port_, u.user_);
+	runner r(log, pool, loop, u->host_, u->port_, u->user_);
 	loop.run();
 
 	return 0;

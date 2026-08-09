@@ -36,8 +36,8 @@ continuation client_transport::process_dh_gex_group(std::string_view packet)
 	}
 
 	gex_info_.group_.append(packet);
-	std::tie(peer_dh_, own_dh_) = get_dh_group(packet);
-	if (!peer_dh_ || peer_dh_->octet_size() < gex_info_.min_ || peer_dh_->octet_size() > gex_info_.max_) {
+	std::tie(peer_dh_, own_dh_) = get_dh_group(packet, gex_info_.min_, gex_info_.max_, logger_);
+	if (!own_dh_ || !peer_dh_) {
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_KEX_DH_GEX_GROUP without a valid group"sv);
 	}
 
@@ -205,6 +205,10 @@ continuation client_transport::process_service_accept(std::string_view packet)
 		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_SERVICE_ACCEPT, could not extract a service name"sv);
 	}
 
+	if (!packet.empty()) {
+		return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_SERVICE_ACCEPT, packet too big"sv);
+	}
+
 	if (service == "ssh-userauth"sv) {
 		if (service_ != service_type::userauth_requested) {
 			return send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Got SSH_MSG_SERVICE_ACCEPT for a service we did not request"sv);
@@ -219,7 +223,7 @@ continuation client_transport::process_service_accept(std::string_view packet)
 
 bool client_transport::setup_hostkey()
 {
-	if (!host_pubkey_ || host_pubkey_->supports_signature_algorithm(algorithms_next_.hostkey_signature_)) {
+	if (!host_pubkey_ || !host_pubkey_->supports_signature_algorithm(algorithms_next_.hostkey_signature_)) {
 		host_pubkey_ = create_public_key(algorithms_next_.hostkey_signature_);
 	}
 	if (!host_pubkey_) {

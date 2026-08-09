@@ -155,7 +155,7 @@ void ssh_channel_layer::set_event_handler(event_handler* pEvtHandler, fz::socket
 native_string ssh_channel_layer::peer_host() const
 {
 	if (!data_ || !conn_) {
-		{};
+		return {};
 	}
 	return conn_->transport_.s_.peer_host();
 }
@@ -205,7 +205,7 @@ int ssh_channel_layer::shutdown()
 		return ECONNABORTED;
 	}
 
-	data_->out_eof_ = true;
+	data_->out_eof_ = 2;
 
 	return 0;
 }
@@ -659,24 +659,22 @@ continuation connection_protocol::disconnect_channel(channel_data & channel)
 	channel.state_ = channel_state::closing;
 
 	if (!transport_.disconnecting_) {
-		if (channel.in_eof_ && channel.out_eof_ && (channel.type_ == channel_type::exec || channel.type_ == channel_type::shell || channel.type_ == channel_type::subsystem)) {
-			packet_builder b(transport_, message_id::SSH_MSG_CHANNEL_REQUEST, fz::sprintf("channel=%u, type=\"exit-status\", want_reply=FALSE"sv, channel.peer_id_));
-			write_uint32(b.buf_, channel.peer_id_);
-			write_string(b.buf_, "exit-status"sv);
-			b.buf_.append('\0');
-			write_uint32(b.buf_, 0);
-			if (!b.commit()) {
-				return continuation::error;
-			}
-		}
-		packet_builder b(transport_, message_id::SSH_MSG_CHANNEL_CLOSE);
-		write_uint32(b.buf_, channel.peer_id_);
-		if (!b.commit()) {
+		if (!send_close(channel)) {
 			return continuation::error;
 		}
 	}
 
 	return continuation::next;
+}
+
+bool connection_protocol::send_close(channel_data & channel)
+{
+	if (!transport_.disconnecting_) {
+		packet_builder b(transport_, message_id::SSH_MSG_CHANNEL_CLOSE);
+		write_uint32(b.buf_, channel.peer_id_);
+		return b.commit();
+	}
+	return true;
 }
 
 bool connection_protocol::send_data(channel_data & c)
@@ -766,9 +764,29 @@ void connection_protocol::erase_channel(uint32_t id)
 	channels_.erase(id);
 }
 
-size_t connection_protocol::channel_count()
+size_t connection_protocol::channel_count(bool exclude_eof)
 {
-	return channels_.size();
+	if (!exclude_eof) {
+		return channels_.size();
+	}
+
+	auto const ignore_eof_channel = [](channel_data& c) {
+		return c.in_eof_ && c.in_buf_.empty() && c.out_buf_.empty() && (c.out_eof_ == 2 || c.state_ == channel_state::closing);
+	};
+
+	size_t s{};
+	for (auto const& cp : channels_) {
+		channel_data& c = *cp.second;
+		if (!ignore_eof_channel(c)) {
+			++s;
+		}
+	}
+	return s;
+}
+
+bool connection_protocol::had_valid_channel()
+{
+	return had_valid_channel_;
 }
 
 }

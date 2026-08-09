@@ -49,6 +49,11 @@ continuation client_connection_protocol::process_channel_open_confirmation(chann
 		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received nonsensical maximum package size in SSH_MSG_CHANNEL_OPEN_CONFIRMATION"sv);
 	}
 
+	if (channel.state_ != channel_state::setup) {
+		logger_.log(logmsg::debug_warning, "Discarding SSH_MSG_CHANNEL_OPEN_CONFIRMATION on a channel that is not in setup state."sv);
+		return continuation::next;
+	}
+
 	channel.state_ = channel_state::pending_accept;
 	channel.peer_id_ = peer_id;
 
@@ -61,6 +66,7 @@ continuation client_connection_protocol::process_channel_open_confirmation(chann
 
 	if (channel.type_ == channel_type::direct_tcpip) {
 		channel.state_ = channel_state::active;
+		had_valid_channel_ = true;
 		if (channel.layer_) {
 			if (channel.layer_->handler_) {
 				channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::connection, 0);
@@ -110,6 +116,11 @@ continuation client_connection_protocol::process_channel_open_failure(channel_da
 		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_CHANNEL_OPEN_FAILURE, packet too big"sv);
 	}
 
+	if (channel.state_ != channel_state::setup) {
+		logger_.log(logmsg::debug_warning, "Discarding SSH_MSG_CHANNEL_OPEN_FAILURE on a channel that is not in setup state."sv);
+		return continuation::next;
+	}
+
 	if (channel.layer_) {
 		channel.layer_->conn_ = nullptr;
 		if (channel.layer_->handler_) {
@@ -145,6 +156,7 @@ continuation client_connection_protocol::process_channel_success(channel_data & 
 		return continuation::next;
 	}
 	channel.state_ = channel_state::active;
+	had_valid_channel_ = true;
 	if (channel.layer_) {
 		if (channel.layer_->handler_) {
 			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::connection, 0);
@@ -235,11 +247,13 @@ std::unique_ptr<socket_interface> client_connection_protocol::open_channel(chann
 			logger_.log(logmsg::error, "Invalid direct-tcpip parameters"sv);
 			return {};
 		}
-		for (auto const& tok : tokens) {
-			if (tok.empty()) {
-				logger_.log(logmsg::error, "Invalid direct-tcpip parameters"sv);
-				return {};
-			}
+		if (tokens[0].empty() || !fz::to_integral<unsigned short>(tokens[1])) {
+			logger_.log(logmsg::error, "Invalid direct-tcpip parameters"sv);
+			return {};
+		}
+		if (tokens.size() == 4 && (tokens[2].empty() || !fz::to_integral<unsigned short>(tokens[3]))) {
+			logger_.log(logmsg::error, "Invalid direct-tcpip parameters"sv);
+			return {};
 		}
 	}
 	else if (type != channel_type::shell && cmd.empty()) {
@@ -247,7 +261,7 @@ std::unique_ptr<socket_interface> client_connection_protocol::open_channel(chann
 		return {};
 	}
 
-	if (channels_.size() >= channel_limit) {
+	if (channels_.size() >= ((no_flow_control_ || single_channel_) ? 1 : channel_limit)) {
 		logger_.log(logmsg::error, "Too many open channels"sv);
 		return {};
 	}

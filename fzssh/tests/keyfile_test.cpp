@@ -202,11 +202,23 @@ void test_openssh_keys(fz::logger_interface & log)
 		"H/VE\n"
 		"-----END OPENSSH PRIVATE KEY-----\n"sv;
 
+	constexpr auto openssh_ed25519_encrypted_with_aes256_ctr =
+		"-----BEGIN OPENSSH PRIVATE KEY-----\n"
+		"b3BlbnNzaC1rZXktdjEAAAAACmFlczI1Ni1jdHIAAAAGYmNyeXB0AAAAGAAAABCZe2wU8P\n"
+		"xcQSrVnyzFj66UAAAAGAAAAAEAAAAzAAAAC3NzaC1lZDI1NTE5AAAAIP2x4Nm5jT2qG5L1\n"
+		"BpCFW8k6KUZbtw/D1sk7C2L1JRVGAAAAoKneMFS2Mos1e48nclOby6aikVKMxtYW6ePZvD\n"
+		"aOdwHK+nwhekJqqyYT7dy97tons7KCSbSYKQyRNJuwqF5C9pMalvcovRNTm3NCvWFh+glW\n"
+		"1T/BKTxunT5KlSI1+nOtmYgzedpd5wUmcDP8TntTEGVKHjQutZ0pOqle/Wy3nEgrSF79KF\n"
+		"RzZWYtVc1IAItIshg5u2qv85diIky6XdmGyHg=\n"
+		"-----END OPENSSH PRIVATE KEY-----\n"sv;
+
+
 	assert(fz::ssh::load_private_keys(plain_rsa, log).size() == 1);
 	assert(test_key(openssh_ecdsa, log));
 	assert(test_key(openssh_ecdsa_384, log));
 	assert(test_key(openssh_ecdsa_521, log));
 	assert(test_key(openssh_ed25519_encrypted_with_aes256_gcm, log, "aes256-gcm@openssh.com encrypted"sv));
+	assert(test_key(openssh_ed25519_encrypted_with_aes256_ctr, log, "counter"sv));
 
 	auto info = fz::ssh::load_private_key_infos(openssh_ed25519_encrypted_with_aes256_gcm, log);
 	assert(info.size() == 1);

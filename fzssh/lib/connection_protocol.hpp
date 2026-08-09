@@ -70,7 +70,10 @@ public:
 
 	void dump();
 
-	size_t channel_count();
+	size_t channel_count(bool exclude_eof = false);
+
+	// True after there has been at least one successfully opened channel
+	bool had_valid_channel();
 
 protected:
 	friend class ssh_channel_layer;
@@ -97,6 +100,8 @@ protected:
 	continuation process_channel_close(channel_data & channel, std::string_view packet);
 	continuation process_channel_window_adjust(channel_data & channel, std::string_view packet);
 
+	virtual bool send_close(channel_data & channel);
+
 	continuation disconnect_channel(channel_data & channel);
 	void erase_channel(uint32_t id);
 
@@ -112,6 +117,7 @@ protected:
 
 	bool no_flow_control_{};
 	bool single_channel_{};
+	bool had_valid_channel_{};
 };
 
 class FZSSH_PUBLIC_SYMBOL ssh_channel_layer : public ssh_channel
