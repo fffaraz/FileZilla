@@ -30,9 +30,9 @@ integrate() {
 	local icons=${data_home}/icons/hicolor
 	local target=${apps}/filezilla.desktop
 	local exec_line="Exec=\"${APPIMAGE}\""
-	local source=${HERE}/usr/share/applications/filezilla.desktop
+	local src=${HERE}/usr/share/applications/filezilla.desktop
 
-	[ -f "${source}" ] || return 0
+	[ -f "${src}" ] || return 0
 
 	# Already installed for this exact path; nothing to do. Re-runs if the
 	# AppImage has since been moved or renamed.
@@ -53,13 +53,15 @@ integrate() {
 
 	# Point Exec at wherever the AppImage actually lives, and pin the app_id
 	# match so the compositor ties the running window to this entry.
-	awk -v exec_line="${exec_line}" '
-		/^Exec=/ { print exec_line; next }
+	# Passed through the environment rather than -v, which would expand
+	# backslash escapes in the path.
+	FZ_EXEC_LINE=${exec_line} awk '
+		/^Exec=/ { print ENVIRON["FZ_EXEC_LINE"]; next }
 		/^TryExec=/ { next }
 		/^StartupWMClass=/ { seen = 1 }
 		{ print }
 		END { if (!seen) print "StartupWMClass=filezilla" }
-	' "${source}" > "${target}.tmp" 2>/dev/null &&
+	' "${src}" > "${target}.tmp" 2>/dev/null &&
 		mv -f "${target}.tmp" "${target}" ||
 		{ rm -f "${target}.tmp"; return 0; }
 

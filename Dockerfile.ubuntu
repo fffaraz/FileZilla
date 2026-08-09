@@ -54,7 +54,7 @@ RUN \
 	cp /opt/filezilla/data/filezilla.desktop /opt/approot/filezilla.desktop && \
 	cp /opt/filezilla/data/filezilla.desktop /opt/approot/usr/share/applications/filezilla.desktop && \
 	cp /opt/filezilla/src/interface/resources/480x480/filezilla.png /opt/approot/filezilla.png && \
-	for s in 16x16 32x32 48x48 480x480; do \
+	for s in 16x16 32x32 48x48; do \
 		mkdir -p "/opt/approot/usr/share/icons/hicolor/$s/apps" && \
 		cp "/opt/filezilla/src/interface/resources/$s/filezilla.png" "/opt/approot/usr/share/icons/hicolor/$s/apps/filezilla.png"; \
 	done && \
