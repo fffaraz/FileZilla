@@ -16,7 +16,13 @@ fi
 
 docker build -f "$DOCKERFILE" -t filezilla .
 
-docker run --privileged -it --name filezilla filezilla
+# -it only when attached to a terminal, so this also works in CI
+RUN_FLAGS=(--privileged)
+if [ -t 0 ] && [ -t 1 ]; then
+	RUN_FLAGS+=(-it)
+fi
+
+docker run "${RUN_FLAGS[@]}" --name filezilla filezilla
 docker cp filezilla:/opt/FileZilla.AppImage $(pwd)/FileZilla.AppImage
 docker rm -f filezilla
 

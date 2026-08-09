@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+permissions:
+  contents: write
+
+jobs:
+
+  release:
+
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Free up disk space
+      run: |
+        sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup
+        df -h /
+
+    - name: Build the AppImage
+      run: ./build.sh --ubuntu
+
+    - name: Prepare release assets
+      run: |
+        mv FileZilla.AppImage "FileZilla-${GITHUB_REF_NAME}-x86_64.AppImage"
+        sha256sum "FileZilla-${GITHUB_REF_NAME}-x86_64.AppImage" > SHA256SUMS.txt
+        cat SHA256SUMS.txt
+
+    - name: Create the GitHub release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release create "$GITHUB_REF_NAME" \
+          --title "$GITHUB_REF_NAME" \
+          --generate-notes \
+          "FileZilla-${GITHUB_REF_NAME}-x86_64.AppImage" \
+          SHA256SUMS.txt
