@@ -48,6 +48,7 @@ RUN \
 	make install
 
 ADD ./AppRun.sh /opt/approot/AppRun
+ADD ./bundle-libs.sh /opt/bundle-libs.sh
 RUN \
 	mkdir -p /opt/approot/opt/filezilla /opt/approot/usr/share/applications /opt/approot/usr/share/icons/hicolor/scalable/apps && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
@@ -60,17 +61,7 @@ RUN \
 	done && \
 	cp /opt/filezilla/src/interface/resources/filezilla.svg /opt/approot/usr/share/icons/hicolor/scalable/apps/filezilla.svg && \
 	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
-	cp -P /lib/x86_64-linux-gnu/libpugixml.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libjpeg.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libtiff.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libjbig.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libwebp.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libsharpyuv.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libdeflate.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libLerc.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libpcre2-32.so* /opt/approot/opt/filezilla && \
-	cp -P /usr/lib/x86_64-linux-gnu/libnotify.so* /opt/approot/opt/filezilla && \
+	sh /opt/bundle-libs.sh /opt/approot/opt/filezilla /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun
