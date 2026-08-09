@@ -56,6 +56,15 @@ RUN \
 	cp -r /usr/local/share/filezilla /opt/approot/opt/filezilla/share && \
 	cp -P /lib/x86_64-linux-gnu/libpugixml.so* /opt/approot/opt/filezilla && \
 	cp -P /usr/lib/x86_64-linux-gnu/libwx_*.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libjpeg.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libtiff.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libjbig.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libwebp.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libsharpyuv.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libdeflate.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libLerc.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libpcre2-32.so* /opt/approot/opt/filezilla && \
+	cp -P /usr/lib/x86_64-linux-gnu/libnotify.so* /opt/approot/opt/filezilla && \
 	strip -s /opt/approot/opt/filezilla/filezilla && \
 	strip -s /opt/approot/opt/filezilla/*.so* && \
 	chmod +x /opt/approot/AppRun
