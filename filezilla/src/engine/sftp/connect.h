@@ -42,6 +42,9 @@ public:
 	void set_keyfile_password(std::string const& pw);
 	void set_password(std::string const& pw);
 
+private:
+	void set_keys_loaded();
+
 	virtual void operator()(fz::event_base const& ev) override;
 	void on_agent_keys(fz::ssh::agent_connection* conn, std::vector<std::unique_ptr<fz::ssh::private_key>> & keys);
 
@@ -49,8 +52,10 @@ public:
 	std::unique_ptr<fz::ssh::agent_connection> agent_;
 
 	std::string methods_;
+	std::string_view method_;
 	std::set<std::string> used_keys_{};
 
+	uint8_t retry_counter_{};
 	bool keys_loaded_{};
 	bool tried_pw_{};
 	bool tried_interactive_{};

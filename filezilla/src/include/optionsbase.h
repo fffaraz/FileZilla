@@ -12,6 +12,7 @@
 #include <libfilezilla/mutex.hpp>
 #include <libfilezilla/rwmutex.hpp>
 #include <libfilezilla/string.hpp>
+#include <libfilezilla/util.hpp>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -163,6 +164,12 @@ public:
 	int get_int(T opt)
 	{
 		return get_int(mapOption(opt));
+	}
+
+	template<typename R, typename T>
+	R get(T opt)
+	{
+		return fz::clamped_cast<R>(get_int(mapOption(opt)));
 	}
 
 	template<typename T>

@@ -8,16 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: FileZilla 3\n"
 "Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
-"POT-Creation-Date: 2026-04-09 09:56+0200\n"
-"PO-Revision-Date: 2025-12-17 09:02+0100\n"
-"Last-Translator: Niels von Wowern Fanøe <niels.f@noee.dk>\n"
+"POT-Creation-Date: 2026-06-04 15:20+0200\n"
+"PO-Revision-Date: 2026-05-13 10:44+0200\n"
+"Last-Translator: Niels Fanøe <niels.f@noee.dk>\n"
 "Language-Team: Danish\n"
 "Language: da\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 3.8\n"
+"X-Generator: Poedit 3.9\n"
 
 #. @translator: This is a date/time formatting specifier. See https://wiki.filezilla-project.org/Date_and_Time_formatting
 #: ../src/interface/statuslinectrl.cpp:62
@@ -185,7 +185,7 @@ msgstr "%u - brugernavn"
 msgid "%w - Proxy password"
 msgstr "%w - proxy-adgangskode"
 
-#: ../src/interface/sitemanager_controls.cpp:1527
+#: ../src/interface/sitemanager_controls.cpp:1573
 msgid "&AWS S3 encryption"
 msgstr "&AWS S3-kryptering"
 
@@ -213,7 +213,7 @@ msgstr "&Konto:"
 
 #: ../src/interface/settings/optionspage_connection_ftp.cpp:55
 #: ../src/interface/netconfwizard.cpp:111
-#: ../src/interface/sitemanager_controls.cpp:1309
+#: ../src/interface/sitemanager_controls.cpp:1310
 msgid "&Active"
 msgstr "Akti&v"
 
@@ -315,10 +315,10 @@ msgid "&Browse"
 msgstr "&Gennemse"
 
 #: ../src/interface/settings/optionspage_edit.cpp:71
-#: ../src/interface/edithandler.cpp:1792
-#: ../src/interface/sitemanager_controls.cpp:1144
+#: ../src/interface/edithandler.cpp:1792 ../src/interface/search.cpp:1344
 #: ../src/interface/sitemanager_dialog.cpp:278
-#: ../src/interface/bookmarks_dialog.cpp:95 ../src/interface/search.cpp:1344
+#: ../src/interface/bookmarks_dialog.cpp:95
+#: ../src/interface/sitemanager_controls.cpp:1144
 msgid "&Browse..."
 msgstr "&Gennemse..."
 
@@ -332,7 +332,7 @@ msgstr "&Certifikat i kæde:"
 
 #: ../src/interface/chmoddialog.cpp:106
 msgid "&Chmod:"
-msgstr ""
+msgstr "&Chmod:"
 
 #: ../src/interface/menu_bar.cpp:52
 msgid "&Clear private data..."
@@ -401,11 +401,10 @@ msgstr "&Standardhandling når filen findes..."
 msgid "&Delay between failed login attempts:"
 msgstr "&Forsinkelse mellem mislykkede login-forsøg:"
 
-#: ../src/interface/filteredit.cpp:100
+#: ../src/interface/filteredit.cpp:100 ../src/interface/LocalTreeView.cpp:1145
+#: ../src/interface/LocalListView.cpp:836
 #: ../src/interface/sitemanager_dialog.cpp:335
 #: ../src/interface/bookmarks_dialog.cpp:335
-#: ../src/interface/LocalTreeView.cpp:1145
-#: ../src/interface/LocalListView.cpp:836
 msgid "&Delete"
 msgstr "Sl&et"
 
@@ -454,7 +453,7 @@ msgstr "&Vis aktuel overførselshastighed i stedet for gennemsnitlig hastighed"
 msgid "&Display size in bytes"
 msgstr "&Vis størrelse i byte"
 
-#: ../src/interface/sitemanager_controls.cpp:1791
+#: ../src/interface/sitemanager_controls.cpp:1837
 msgid "&Domain:"
 msgstr "&Domæne:"
 
@@ -519,7 +518,7 @@ msgstr "Aktivér &komprimering"
 msgid "&Enable speed limits"
 msgstr "&Aktivér hastighedsgrænser"
 
-#: ../src/interface/sitemanager_controls.cpp:1428
+#: ../src/interface/sitemanager_controls.cpp:1429
 msgid "&Encoding:"
 msgstr "&Kodning:"
 
@@ -647,9 +646,9 @@ msgstr "&Højeste"
 msgid "&Highest available port:"
 msgstr "&Højeste tilgængelige port:"
 
+#: ../src/interface/quickconnectbar.cpp:40
 #: ../src/interface/sitemanager_controls.cpp:139
 #: ../src/interface/sitemanager_controls.cpp:489
-#: ../src/interface/quickconnectbar.cpp:40
 msgid "&Host:"
 msgstr "Vær&t:"
 
@@ -693,7 +692,7 @@ msgstr "&Layout for fil- og mapperuder:"
 msgid "&Limit local ports used by FileZilla"
 msgstr "Be&græns antal lokale porte, der bruges af FileZilla"
 
-#: ../src/interface/sitemanager_controls.cpp:1315
+#: ../src/interface/sitemanager_controls.cpp:1316
 msgid "&Limit number of simultaneous connections"
 msgstr "&Begræns antal samtidige forbindelser"
 
@@ -734,7 +733,7 @@ msgstr "&Manuel overførsel..."
 msgid "&Master password:"
 msgstr "&Master-adgangskode:"
 
-#: ../src/interface/sitemanager_controls.cpp:1319
+#: ../src/interface/sitemanager_controls.cpp:1320
 msgid "&Maximum number of connections:"
 msgstr "Ma&ks. antal forbindelser:"
 
@@ -801,16 +800,15 @@ msgstr "&Normal"
 #: ../src/interface/speedlimits_dialog.cpp:78
 #: ../src/interface/manual_transfer.cpp:179
 #: ../src/interface/verifyhostkeydialog.cpp:139
-#: ../src/interface/dialogex.cpp:305
-#: ../src/interface/sitemanager_dialog.cpp:347
-#: ../src/interface/bookmarks_dialog.cpp:340
-#: ../src/interface/loginmanager.cpp:68 ../src/interface/loginmanager.cpp:157
-#: ../src/interface/loginmanager.cpp:257 ../src/interface/loginmanager.cpp:380
-#: ../src/interface/loginmanager.cpp:469 ../src/interface/loginmanager.cpp:600
-#: ../src/interface/fileexistsdlg.cpp:102
+#: ../src/interface/dialogex.cpp:305 ../src/interface/fileexistsdlg.cpp:102
 #: ../src/interface/verifycertdialog.cpp:638
 #: ../src/interface/verifycertdialog.cpp:708
-#: ../src/interface/chmoddialog.cpp:145
+#: ../src/interface/chmoddialog.cpp:145 ../src/interface/loginmanager.cpp:68
+#: ../src/interface/loginmanager.cpp:157 ../src/interface/loginmanager.cpp:257
+#: ../src/interface/loginmanager.cpp:380 ../src/interface/loginmanager.cpp:469
+#: ../src/interface/loginmanager.cpp:600
+#: ../src/interface/sitemanager_dialog.cpp:347
+#: ../src/interface/bookmarks_dialog.cpp:340
 msgid "&OK"
 msgstr "&OK"
 
@@ -823,7 +821,7 @@ msgstr "&Åbn"
 msgid "&Overwrite"
 msgstr "&Overskriv"
 
-#: ../src/interface/sitemanager_controls.cpp:1311
+#: ../src/interface/sitemanager_controls.cpp:1312
 msgid "&Passive"
 msgstr "&Passiv"
 
@@ -835,8 +833,8 @@ msgstr "&Adgangskode:"
 msgid "&Play sound"
 msgstr "Afspil &lyd"
 
-#: ../src/interface/sitemanager_controls.cpp:146
 #: ../src/interface/quickconnectbar.cpp:56
+#: ../src/interface/sitemanager_controls.cpp:146
 msgid "&Port:"
 msgstr "&Port:"
 
@@ -915,13 +913,12 @@ msgstr "&Fjern nøgle"
 msgid "&Remove selected"
 msgstr "Fjern &valgte"
 
-#: ../src/interface/filteredit.cpp:101
-#: ../src/interface/sitemanager_dialog.cpp:334
-#: ../src/interface/bookmarks_dialog.cpp:334
-#: ../src/interface/LocalTreeView.cpp:1146
+#: ../src/interface/filteredit.cpp:101 ../src/interface/LocalTreeView.cpp:1146
 #: ../src/interface/RemoteTreeView.cpp:911
 #: ../src/interface/LocalListView.cpp:837
 #: ../src/interface/RemoteListView.cpp:1067
+#: ../src/interface/sitemanager_dialog.cpp:334
+#: ../src/interface/bookmarks_dialog.cpp:334
 msgid "&Rename"
 msgstr "Om&døb"
 
@@ -985,7 +982,7 @@ msgstr "&Søg"
 msgid "&Search remote files..."
 msgstr "S&øg efter filer på fjernsted..."
 
-#: ../src/interface/sitemanager_controls.cpp:1536
+#: ../src/interface/sitemanager_controls.cpp:1582
 msgid "&Select a key:"
 msgstr "&Vælg en nøgle:"
 
@@ -1084,7 +1081,7 @@ msgstr "&Token-kode:"
 msgid "&Transfer"
 msgstr "&Overfør"
 
-#: ../src/interface/sitemanager_controls.cpp:1303
+#: ../src/interface/sitemanager_controls.cpp:1304
 msgid "&Transfer mode:"
 msgstr "Over&førselstilstand:"
 
@@ -1100,9 +1097,9 @@ msgstr "Behandl &punktumfiler som ASCII-filer"
 msgid "&Trust this certificate on the listed alternative hostnames."
 msgstr "Hav &tillid til dette certifikat for de viste alternative værtsnavne."
 
-#: ../src/interface/sitemanager_controls.cpp:1422
+#: ../src/interface/sitemanager_controls.cpp:1423
 msgid "&UTF-8"
-msgstr ""
+msgstr "&UTF-8"
 
 #: ../src/interface/edithandler.cpp:1473
 msgid "&Unedit"
@@ -1154,10 +1151,10 @@ msgstr "Brug i stedet &serverens eksterne IP-adresse"
 msgid "&Use thousands separator"
 msgstr "Brug &tusindtalsseparator"
 
+#: ../src/interface/loginmanager.cpp:344
 #: ../src/interface/sitemanager_controls.cpp:190
 #: ../src/interface/sitemanager_controls.cpp:492
 #: ../src/interface/sitemanager_controls.cpp:610
-#: ../src/interface/loginmanager.cpp:344
 msgid "&User:"
 msgstr "&Bruger:"
 
@@ -1170,7 +1167,7 @@ msgstr "Br&ugernavn:"
 msgid "&Version %s"
 msgstr "&Version %s"
 
-#: ../src/interface/sitemanager_controls.cpp:1785
+#: ../src/interface/sitemanager_controls.cpp:1831
 msgid "&Version 3"
 msgstr "&Version 3"
 
@@ -1269,7 +1266,7 @@ msgstr "(10-9999, 0 for at deaktivere)"
 
 #: ../src/interface/verifyhostkeydialog.cpp:89
 msgid "(changed)"
-msgstr ""
+msgstr "(ændret)"
 
 #: ../src/interface/settings/optionspage_dateformatting.cpp:73
 msgid "(example: %H-%M-%S)"
@@ -1289,7 +1286,7 @@ msgstr "(i %s/s)"
 
 #: ../src/interface/verifyhostkeydialog.cpp:103
 msgid "(insecure)"
-msgstr ""
+msgstr "(ikke sikker)"
 
 #: ../src/interface/settings/optionspage_edit.cpp:41
 #, c-format
@@ -1532,7 +1529,7 @@ msgstr "API-nøgle:"
 msgid "ASCII"
 msgstr "ASCII"
 
-#: ../src/interface/sitemanager_controls.cpp:1530
+#: ../src/interface/sitemanager_controls.cpp:1576
 msgid "AWS &KMS encryption"
 msgstr "AWS &KMS-kryptering"
 
@@ -1559,9 +1556,9 @@ msgstr "Adgang til nogle lokale mapper kunne ikke genoprettes:"
 
 #: ../src/interface/sitemanager_controls.cpp:607
 msgid "Acco&unt ID:"
-msgstr "&Konto-ID"
+msgstr "&Konto-ID:"
 
-#: ../src/engine/server.cpp:757 ../src/engine/server.cpp:786
+#: ../src/engine/server.cpp:762 ../src/engine/server.cpp:791
 msgid "Account"
 msgstr "Konto"
 
@@ -1668,7 +1665,7 @@ msgstr "Algoritme:"
 
 #: ../src/interface/verifyhostkeydialog.cpp:95
 msgid "Algorithms"
-msgstr ""
+msgstr "Algoritmer"
 
 #: ../src/interface/sitemanager_controls.cpp:293
 #: ../src/interface/sitemanager_controls.cpp:296
@@ -1694,13 +1691,21 @@ msgstr[1] "Alle overførsler afsluttet. %d filer kunne ikke overføres."
 msgid "Allow &fall back to other transfer mode on failure"
 msgstr "&Tillad at falde tilbage til anden overførselstilstand ved fejl"
 
+#: ../src/interface/sitemanager_controls.cpp:1521
+msgid "Allow SSH agent keys of unknown type"
+msgstr "Tillad SSH-agentnøgler af ukendt type"
+
 #: ../src/interface/netconfwizard.cpp:113
 msgid "Allow fallback to other transfer mode on failure"
 msgstr "Tillad tilbagefald til anden overførselstilstand ved fejl"
 
+#: ../src/interface/sitemanager_controls.cpp:1519
+msgid "Allow peer identification string not terminated by CRLF"
+msgstr "Tillad, at peer-identifikationsstreng ikke afsluttes med CRLF"
+
 #: ../src/interface/verifyhostkeydialog.cpp:124
 msgid "Allow use of the insecure algorithms with this server."
-msgstr ""
+msgstr "Tillad brugen af usikre algoritmer med denne server."
 
 #: ../src/interface/Mainfrm.cpp:2099
 msgid "Already connected"
@@ -1760,7 +1765,7 @@ msgstr ""
 "Et emne med samme navn som det trukne emne findes allerede på "
 "destinationsstedet."
 
-#: ../src/engine/server.cpp:792
+#: ../src/engine/server.cpp:797
 msgid "Anonymous"
 msgstr "Anonym"
 
@@ -1772,6 +1777,7 @@ msgstr "En anden handling er i gang på fjernstedet - kan ikke skifte mappe nu."
 #: ../src/interface/loginmanager.cpp:195
 msgid "Answer the challenge received by the server to authenticate."
 msgstr ""
+"Besvar den udfordring, der modtages fra serveren, for at autentificere."
 
 #: ../src/interface/sitemanager_dialog.cpp:777
 msgid "Any changes made in the Site Manager could not be saved."
@@ -1794,7 +1800,7 @@ msgstr "Skal kun gælde &mapper"
 msgid "Application &Key:"
 msgstr "Applikations&nøgle:"
 
-#: ../src/engine/server.cpp:763 ../src/engine/server.cpp:790
+#: ../src/engine/server.cpp:768 ../src/engine/server.cpp:795
 msgid "Application Default Credentials"
 msgstr "Application Default Credentials"
 
@@ -1824,7 +1830,7 @@ msgstr "Som faneblad i ruden Overførselskø"
 msgid "Ask for action"
 msgstr "Spørg efter handling"
 
-#: ../src/engine/server.cpp:748 ../src/engine/server.cpp:780
+#: ../src/engine/server.cpp:753 ../src/engine/server.cpp:785
 msgid "Ask for password"
 msgstr "Spørg efter adgangskode"
 
@@ -1856,13 +1862,21 @@ msgstr "På dette tidspunkt er al nødvendig information indsamlet."
 msgid "Attribute"
 msgstr "Attribut"
 
-#: ../src/interface/loginmanager.cpp:189
-msgid "Authentication required"
-msgstr ""
+#: ../src/engine/sftp/connect.cpp:145
+msgid "Authenticating with public key"
+msgstr "Autentificerer med offentlig nøgle"
 
-#: ../src/engine/sftp/connect.cpp:205
-msgid "Authentication successful, requesting SFTP subsystem"
-msgstr ""
+#: ../src/engine/sftp/connect.cpp:169
+msgid "Authentication failed"
+msgstr "Autentifikation fejlede"
+
+#: ../src/engine/sftp/connect.cpp:185 ../src/interface/loginmanager.cpp:189
+msgid "Authentication required"
+msgstr "Autentifikation kræves"
+
+#: ../src/engine/sftp/connect.cpp:236
+msgid "Authentication successful"
+msgstr "Autentifikation lykkedes"
 
 #: ../src/interface/settings/optionspage_themes.cpp:149
 msgid "Author:"
@@ -1884,9 +1898,9 @@ msgstr "B <Unit symbol for bytes. Only translate first letter>"
 msgid "B&ypass proxy"
 msgstr "F&orbigå proxy"
 
-#: ../src/engine/sftp/connect.cpp:141
+#: ../src/engine/sftp/connect.cpp:155
 msgid "Bad key info"
-msgstr ""
+msgstr "Ugyldig nøgleinfo"
 
 #: ../src/interface/welcome_dialog.cpp:109
 msgid "Basic usage instructions"
@@ -1978,7 +1992,7 @@ msgstr "Kopiér &URL(er) med adgangskode til udklipsholder"
 msgid "C&ustom"
 msgstr "B&rugerdefineret"
 
-#: ../src/interface/sitemanager_controls.cpp:1542
+#: ../src/interface/sitemanager_controls.cpp:1588
 msgid "C&ustom KMS ARN:"
 msgstr "Bruger&defineret KMS ARN:"
 
@@ -1990,7 +2004,7 @@ msgstr "Br&ugerdefinerede filtypetilknytninger:"
 msgid "CPU features:"
 msgstr "CPU-funktioner:"
 
-#: ../src/engine/ftp/list.cpp:141
+#: ../src/engine/ftp/list.cpp:139
 msgid "Calculating timezone offset of server..."
 msgstr "Beregner serverens tidszoneforskydning..."
 
@@ -2005,17 +2019,17 @@ msgstr "Beregner serverens tidszoneforskydning..."
 #: ../src/interface/manual_transfer.cpp:184
 #: ../src/interface/edithandler.cpp:1208 ../src/interface/edithandler.cpp:1800
 #: ../src/interface/verifyhostkeydialog.cpp:143
-#: ../src/interface/dialogex.cpp:309
-#: ../src/interface/sitemanager_dialog.cpp:350
-#: ../src/interface/bookmarks_dialog.cpp:344
-#: ../src/interface/loginmanager.cpp:72 ../src/interface/loginmanager.cpp:161
-#: ../src/interface/loginmanager.cpp:261 ../src/interface/loginmanager.cpp:384
-#: ../src/interface/loginmanager.cpp:474 ../src/interface/loginmanager.cpp:604
-#: ../src/interface/listctrlex.cpp:744 ../src/interface/fileexistsdlg.cpp:106
+#: ../src/interface/dialogex.cpp:309 ../src/interface/listctrlex.cpp:744
+#: ../src/interface/fileexistsdlg.cpp:106
 #: ../src/interface/verifycertdialog.cpp:395
 #: ../src/interface/verifycertdialog.cpp:645
 #: ../src/interface/verifycertdialog.cpp:715
-#: ../src/interface/chmoddialog.cpp:150
+#: ../src/interface/chmoddialog.cpp:150 ../src/interface/loginmanager.cpp:72
+#: ../src/interface/loginmanager.cpp:161 ../src/interface/loginmanager.cpp:261
+#: ../src/interface/loginmanager.cpp:384 ../src/interface/loginmanager.cpp:474
+#: ../src/interface/loginmanager.cpp:604
+#: ../src/interface/sitemanager_dialog.cpp:350
+#: ../src/interface/bookmarks_dialog.cpp:344
 msgid "Cancel"
 msgstr "Annuller"
 
@@ -2060,13 +2074,16 @@ msgstr ""
 "Kan ikke sammenligne mapper - forskellige filtre for lokale og fjernmapper "
 "er aktiveret"
 
-#: ../src/engine/controlsocket.cpp:516
+#: ../src/engine/controlsocket.cpp:527
 #, c-format
 msgid ""
 "Cannot convert to the server's character set. You can only use characters "
 "that can be encoded using the custom character encoding (%s) you have "
 "configured in the Site Manager."
 msgstr ""
+"Kan ikke konvertere til serverens tegnsæt. Du kan kun anvende tegn, der kan "
+"indkodes vha. den definerede tegnindkodning (%s), som du har konfigureret i "
+"Stedhåndtering."
 
 #: ../src/interface/filteredit.cpp:216
 msgid "Cannot create new filter"
@@ -2109,9 +2126,9 @@ msgstr "Kan ikke omdøbe post"
 msgid "Cannot rename file"
 msgstr "Kan ikke omdøbe fil"
 
-#: ../src/engine/sftp/filetransfer.cpp:356
+#: ../src/engine/sftp/filetransfer.cpp:354
 msgid "Cannot resume, could not get size of local file"
-msgstr ""
+msgstr "Kan ikke genoptage, kunne ikke få størrelsen af lokal fil"
 
 #: ../src/interface/filter_manager.cpp:260
 #: ../src/interface/filter_manager.cpp:330
@@ -2174,7 +2191,7 @@ msgstr "Certifikat-detaljer"
 
 #: ../src/interface/loginmanager.cpp:202
 msgid "Challenge"
-msgstr ""
+msgstr "Udfordring"
 
 #: ../src/interface/chmoddialog.cpp:55
 msgid "Change file attributes"
@@ -2194,6 +2211,8 @@ msgid ""
 "Characters that are not supported by the local operating system in filenames "
 "are replaced if downloading such a file."
 msgstr ""
+"Tegn i filnavne, der ikke understøttes af det lokale operativsystem, "
+"erstattes, hvis du henter en sådan fil."
 
 #: ../src/interface/sitemanager_site.cpp:90
 msgid "Charset"
@@ -2390,7 +2409,7 @@ msgstr "Kommentar"
 
 #: ../src/interface/loginmanager.cpp:571
 msgid "Comment:"
-msgstr ""
+msgstr "Kommentar:"
 
 #: ../src/interface/verifycertdialog.cpp:504
 msgid "Common name:"
@@ -2428,6 +2447,10 @@ msgstr "Sammenlignings&grænse (i minutter):"
 #: ../src/interface/settings/optionspage_filelists.cpp:127
 msgid "Comparison threshold needs to be between 0 and 1440 minutes."
 msgstr "Sammenligningsgrænsen skal være mellem 0 og 1440 minutter."
+
+#: ../src/interface/sitemanager_controls.cpp:1518
+msgid "Compatibility flags:"
+msgstr "Kompabilitetsflag:"
 
 #: ../src/interface/aboutdialog.cpp:56
 msgid "Compiled for:"
@@ -2520,12 +2543,12 @@ msgstr "Opretter forbindelse"
 msgid "Connecting to %s"
 msgstr "Opretter forbindelse til %s"
 
-#: ../src/engine/ftp/logon.cpp:99 ../src/engine/controlsocket.cpp:873
+#: ../src/engine/ftp/logon.cpp:99 ../src/engine/controlsocket.cpp:884
 #, c-format
 msgid "Connecting to %s through %s proxy"
 msgstr "Opretter forbindelse til %s gennem proxyen %s"
 
-#: ../src/engine/storj/connect.cpp:33 ../src/engine/controlsocket.cpp:814
+#: ../src/engine/storj/connect.cpp:33 ../src/engine/controlsocket.cpp:825
 #, c-format
 msgid "Connecting to %s..."
 msgstr "Opretter forbindelse til %s..."
@@ -2538,12 +2561,12 @@ msgstr "Forbindelse"
 msgid "Connection attempt failed"
 msgstr "Forbindelsesforsøg mislykkedes"
 
-#: ../src/engine/controlsocket.cpp:773
+#: ../src/engine/controlsocket.cpp:784
 #, c-format
 msgid "Connection attempt failed with \"%s\", trying next address."
 msgstr "Forbindelsesforsøg mislykkedes med \"%s\". Prøver næste adresse."
 
-#: ../src/engine/controlsocket.cpp:779
+#: ../src/engine/controlsocket.cpp:790
 #, c-format
 msgid "Connection attempt failed with \"%s\"."
 msgstr "Forbindelsesforsøg mislykkedes med \"%s\"."
@@ -2584,7 +2607,7 @@ msgstr "Forbindelsen tillades ikke af regelsættet"
 msgid "Connection refused"
 msgstr "Forbindelsen blev nægtet"
 
-#: ../src/engine/controlsocket.cpp:533
+#: ../src/engine/controlsocket.cpp:544
 #, c-format
 msgid "Connection timed out after %d second of inactivity"
 msgid_plural "Connection timed out after %d seconds of inactivity"
@@ -2665,14 +2688,14 @@ msgstr "Kunne ikke fuldføre handling"
 msgid "Could not connect to server"
 msgstr "Kunne ikke forbinde til server"
 
-#: ../src/engine/controlsocket.cpp:909
+#: ../src/engine/controlsocket.cpp:920
 #, c-format
 msgid "Could not connect to server: %s"
 msgstr "Kunne ikke forbinde til server: %s"
 
-#: ../src/engine/sftp/filetransfer.cpp:79
-#: ../src/engine/sftp/filetransfer.cpp:98
-#: ../src/engine/sftp/filetransfer.cpp:125
+#: ../src/engine/sftp/filetransfer.cpp:77
+#: ../src/engine/sftp/filetransfer.cpp:96
+#: ../src/engine/sftp/filetransfer.cpp:123
 #: ../src/engine/storj/storjcontrolsocket.cpp:234
 msgid "Could not convert command to server encoding"
 msgstr "Kunne ikke konvertere kommando til serveres kodning"
@@ -2696,10 +2719,10 @@ msgstr "Kunne ikke oprette CFURL fra stien %s"
 msgid "Could not create URI for this transfer."
 msgstr "Kunne ikke oprette URI til denne overførsel."
 
-#: ../src/engine/sftp/mkd.cpp:76
+#: ../src/engine/sftp/mkd.cpp:77
 #, c-format
 msgid "Could not create directory: %s"
-msgstr ""
+msgstr "Kunne ikke oprette mappe: %s"
 
 #: ../src/commonui/updater.cpp:555
 #, c-format
@@ -2723,7 +2746,7 @@ msgstr "Kunne ikke oprette et midlertidigt filnavn."
 #: ../src/engine/sftp/delete.cpp:61
 #, c-format
 msgid "Could not delete %s: %s"
-msgstr ""
+msgstr "Kunne ikke slette %s: %s"
 
 #: ../src/interface/RemoteTreeView.cpp:880
 #: ../src/interface/RemoteListView.cpp:2305
@@ -2754,7 +2777,7 @@ msgstr ""
 "Kunne ikke finde ressourcefilerne til FileZilla - afslutter FileZilla.\n"
 "Du kan angive datamappe for FileZilla ved at sætte miljøvariablen FZ_DATADIR."
 
-#: ../src/engine/ftp/logon.cpp:779
+#: ../src/engine/ftp/logon.cpp:758
 msgid "Could not generate custom login sequence."
 msgstr "Kunne ikke generere en brugerdefineret login-sekvens."
 
@@ -2763,24 +2786,24 @@ msgstr "Kunne ikke generere en brugerdefineret login-sekvens."
 msgid "Could not generate key"
 msgstr "Kunne ikke generere nøgle"
 
-#: ../src/engine/sftp/cwd.cpp:186 ../src/engine/sftp/cwd.cpp:195
+#: ../src/engine/sftp/cwd.cpp:209
 #, c-format
 msgid "Could not get directory information: %s"
-msgstr ""
+msgstr "Kunne ikke hente mappeinformation: %s"
 
-#: ../src/engine/sftp/chmod.cpp:33 ../src/engine/sftp/filetransfer.cpp:479
+#: ../src/engine/sftp/chmod.cpp:33 ../src/engine/sftp/filetransfer.cpp:477
 #, c-format
 msgid "Could not get file attributes: %s"
-msgstr ""
+msgstr "Kunne ikke hente filattributter: %s"
 
 #: ../src/interface/state.cpp:1177
 msgid "Could not get full remote path."
 msgstr "Kunne ikke hente den fulde fjernsti."
 
-#: ../src/engine/sftp/cwd.cpp:181
+#: ../src/engine/sftp/cwd.cpp:197
 #, c-format
 msgid "Could not get initial directory: %s"
-msgstr ""
+msgstr "Kunne ikke hente startmappen: %s"
 
 #: ../src/interface/osx_sandbox_userdirs.cpp:98
 msgid "Could not get native path from CFURL"
@@ -2865,24 +2888,24 @@ msgstr "Kunne ikke åbne '%s'"
 msgid "Could not open clipboard"
 msgstr "Kunne ikke åbne udklipsholder"
 
-#: ../src/engine/sftp/list.cpp:145
+#: ../src/engine/sftp/list.cpp:143
 #, c-format
 msgid "Could not open directory: %s"
-msgstr ""
+msgstr "Kunne ikke åbne mappe: %s"
 
 #: ../src/engine/logfile_writer.cpp:238
 msgid "Could not open log file for writing."
 msgstr "Kunne ikke åbne logfilen for skrivning."
 
-#: ../src/engine/sftp/filetransfer.cpp:493
-#: ../src/engine/sftp/filetransfer.cpp:506
+#: ../src/engine/sftp/filetransfer.cpp:491
+#: ../src/engine/sftp/filetransfer.cpp:504
 #, c-format
-msgid "Could not open remote file, server sent error %s. Description: %s"
+msgid "Could not open remote file: %s"
 msgstr ""
 
 #: ../src/engine/sftp/chmod.cpp:61
 msgid "Could not parse new permissions"
-msgstr ""
+msgstr "Kunne ikke parse nye tilladelser"
 
 #: ../src/interface/bookmarks_dialog.cpp:137
 msgid "Could not parse remote path."
@@ -2892,14 +2915,14 @@ msgstr "Kunne ikke fortolke fjernstien."
 msgid "Could not parse server address:"
 msgstr "Kunne ikke fortolke serveradressen:"
 
-#: ../src/engine/sftp/list.cpp:148
+#: ../src/engine/sftp/list.cpp:146
 #, c-format
 msgid "Could not read directory: %s"
-msgstr ""
+msgstr "Kunne ikke læse mappe: %s"
 
 #: ../src/interface/settings/optionspage_connection_sftp.cpp:162
 msgid "Could not read file"
-msgstr ""
+msgstr "Kunne ikke læse fil"
 
 #: ../src/commonui/updater.cpp:889
 #, c-format
@@ -2910,9 +2933,9 @@ msgstr "Kunne ikke læse fra '%s'"
 msgid "Could not read from data socket."
 msgstr "Kunne ikke læse fra datasokkel."
 
-#: ../src/engine/sftp/filetransfer.cpp:488
+#: ../src/engine/sftp/filetransfer.cpp:486
 #, c-format
-msgid "Could not read from remote file, server sent error %s. Description: %s"
+msgid "Could not read from remote file: %s"
 msgstr ""
 
 #: ../src/engine/ftp/ftpcontrolsocket.cpp:67
@@ -2920,10 +2943,10 @@ msgstr ""
 msgid "Could not read from socket: %s"
 msgstr "Kunne ikke læse fra sokkel: %s"
 
-#: ../src/engine/sftp/connect.cpp:95
+#: ../src/engine/sftp/connect.cpp:98
 #, c-format
 msgid "Could not read key file '%s'."
-msgstr ""
+msgstr "Kunne ikke læse nøglefil '%s'."
 
 #: ../src/interface/netconfwizard.cpp:519
 msgid "Could not receive data from server."
@@ -2932,12 +2955,12 @@ msgstr "Kunne ikke modtage data fra server."
 #: ../src/engine/sftp/rename.cpp:40
 #, c-format
 msgid "Could not rename file or directory: %s"
-msgstr ""
+msgstr "Kunne ikke omdøbe fil eller mappe: %s"
 
 #: ../src/engine/sftp/rmd.cpp:35
 #, c-format
 msgid "Could not rename file: %s"
-msgstr ""
+msgstr "Kunne ikke omdøbe fil: %s"
 
 #: ../src/interface/osx_sandbox_userdirs.cpp:124
 msgid "Could not restore directory access"
@@ -2950,14 +2973,14 @@ msgstr "Kunne ikke sende kommando til fzstorj."
 #: ../src/engine/sftp/chmod.cpp:41
 #, c-format
 msgid "Could not set file attributes: %s"
-msgstr ""
+msgstr "Kunne ikke angive filattributter: %s"
 
 #: ../src/interface/queue.cpp:407
 msgid "Could not start transfer"
 msgstr "Kunne ikke starte overførsel"
 
-#: ../src/interface/sitemanager_dialog.cpp:800
 #: ../src/interface/sitemanager.cpp:330
+#: ../src/interface/sitemanager_dialog.cpp:800
 #, c-format
 msgid ""
 "Could not write \"%s\", any changes to the Site Manager could not be saved: "
@@ -2976,8 +2999,8 @@ msgstr "Kunne ikke skrive \"%s\" - bogmærket kunne ikke tilføjes: %s"
 msgid "Could not write \"%s\", the global bookmarks could no be saved: %s"
 msgstr "Kunne ikke skrive \"%s\" - de globale bogmærker kunne ikke gemmes: %s"
 
-#: ../src/interface/sitemanager_dialog.cpp:1971
 #: ../src/interface/sitemanager.cpp:423 ../src/interface/sitemanager.cpp:480
+#: ../src/interface/sitemanager_dialog.cpp:1971
 #, c-format
 msgid "Could not write \"%s\", the selected sites could not be exported: %s"
 msgstr "Kunne ikke skrive \"%s\" - de valgte steder kunne ikke eksporteres: %s"
@@ -2992,12 +3015,12 @@ msgstr "Kunne ikke skrive \"%s\":"
 msgid "Could not write to local file"
 msgstr "Kunne ikke skrive til lokal fil"
 
-#: ../src/engine/sftp/filetransfer.cpp:510
+#: ../src/engine/sftp/filetransfer.cpp:508
 #, c-format
-msgid "Could not write to remote file, server sent error %s. Description: %s"
+msgid "Could not write to remote file: %s"
 msgstr ""
 
-#: ../src/engine/controlsocket.cpp:734 ../src/engine/controlsocket.cpp:832
+#: ../src/engine/controlsocket.cpp:745 ../src/engine/controlsocket.cpp:843
 #, c-format
 msgid "Could not write to socket: %s"
 msgstr "Kunne ikke skrive til sokkel: %s"
@@ -3107,15 +3130,15 @@ msgstr "Den aktuelle overførselstype er sat til binær."
 msgid "Cus&tom"
 msgstr "Bruger&defineret"
 
-#: ../src/interface/sitemanager_controls.cpp:1545
+#: ../src/interface/sitemanager_controls.cpp:1591
 msgid "Cus&tomer encryption"
 msgstr "&Kunde-kryptering"
 
-#: ../src/interface/sitemanager_controls.cpp:1539
+#: ../src/interface/sitemanager_controls.cpp:1585
 msgid "Custom KMS ARN"
 msgstr "Brugerdefineret KMS ARN"
 
-#: ../src/interface/sitemanager_controls.cpp:1709
+#: ../src/interface/sitemanager_controls.cpp:1755
 msgid "Custom KMS ARN id cannot be empty."
 msgstr "Brugerdefineret KMS ARN-id må ikke være tomt."
 
@@ -3123,11 +3146,11 @@ msgstr "Brugerdefineret KMS ARN-id må ikke være tomt."
 msgid "Custom filter set"
 msgstr "Brugerdefineret filtersæt"
 
-#: ../src/interface/sitemanager_controls.cpp:1721
+#: ../src/interface/sitemanager_controls.cpp:1767
 msgid "Custom key cannot be empty."
 msgstr "Brugerdefineret nøgle må ikke være tom."
 
-#: ../src/interface/sitemanager_controls.cpp:1735
+#: ../src/interface/sitemanager_controls.cpp:1781
 msgid "Custom key length must be 256-bit."
 msgstr "Længden af brugerdefineret nøgle skal være 256 bit."
 
@@ -3136,7 +3159,7 @@ msgstr "Længden af brugerdefineret nøgle skal være 256 bit."
 msgid "Custom server"
 msgstr "Brugerdefineret server"
 
-#: ../src/interface/sitemanager_controls.cpp:1550
+#: ../src/interface/sitemanager_controls.cpp:1596
 msgid "Customer Ke&y:"
 msgstr "Kunde&nøgle:"
 
@@ -3152,7 +3175,7 @@ msgstr "D&atatype"
 msgid "D&ecimal prefixes using SI symbols (e.g. 1 KB = 1000 bytes)"
 msgstr "De&cimalt præfiks med SI-symboler (f.eks. 1 KB = 1000 byte)"
 
-#: ../src/interface/sitemanager_controls.cpp:1307
+#: ../src/interface/sitemanager_controls.cpp:1308
 msgid "D&efault"
 msgstr "Standa&rd"
 
@@ -3179,7 +3202,7 @@ msgstr "Gem &ikke adgangskoder"
 msgid "D&uplicate"
 msgstr "D&uplikér"
 
-#: ../src/engine/server.cpp:75
+#: ../src/engine/server.cpp:74
 msgid "DOS-like with virtual paths"
 msgstr "DOS-agtig med virtuelle stier"
 
@@ -3218,13 +3241,9 @@ msgstr "Fejlfindingsindstillinger"
 msgid "Default &local directory:"
 msgstr "Standardplacering af &lokalmappe:"
 
-#: ../src/interface/sitemanager_controls.cpp:1538
+#: ../src/interface/sitemanager_controls.cpp:1584
 msgid "Default (AWS/S3)"
 msgstr "Standard (AWS/S3)"
-
-#: ../src/engine/server.cpp:67
-msgid "Default (Autodetect)"
-msgstr "Standard (Automatisk registrering)"
 
 #: ../src/interface/settings/optionspage_edit.cpp:157
 msgid "Default editor not properly quoted."
@@ -3249,6 +3268,11 @@ msgid ""
 msgstr ""
 "Standard-fjernstien kunne ikke fortolkes. Sørg for, at det er en gyldig, "
 "absolut sti for den valgte servertype."
+
+#: ../src/interface/sitemanager_controls.cpp:1257
+msgid ""
+"Default remote path cannot be parsed. Make sure it is a valid absolute path."
+msgstr ""
 
 #: ../src/interface/settings/optionspage_language.cpp:68
 msgid "Default system language"
@@ -3319,7 +3343,7 @@ msgstr "Sletter symbolsk link"
 
 #: ../src/engine/sftp/delete.cpp:82
 msgid "Deletion succeeded."
-msgstr ""
+msgstr "Sletning lykkedes."
 
 #: ../src/interface/LocalTreeView.cpp:1055
 msgid "Desktop"
@@ -3330,7 +3354,7 @@ msgstr "Skrivebord"
 msgid "Details"
 msgstr "Detaljer"
 
-#: ../src/interface/sitemanager_dialog.cpp:725 ../src/interface/import.cpp:92
+#: ../src/interface/import.cpp:92 ../src/interface/sitemanager_dialog.cpp:725
 msgid "Detected newer version of FileZilla"
 msgstr "Der findes en nyere version af FileZilla"
 
@@ -3352,10 +3376,10 @@ msgstr "Adgangstilladelser for mappe"
 
 #: ../src/interface/settings/optionspage_filelists.cpp:64
 #: ../src/interface/view.cpp:116 ../src/interface/toolbar.cpp:112
-#: ../src/interface/sitemanager_controls.cpp:1161
-#: ../src/interface/sitemanager_dialog.cpp:284
 #: ../src/interface/filelistctrl.cpp:496 ../src/interface/Mainfrm.cpp:2457
 #: ../src/interface/Mainfrm.cpp:2477
+#: ../src/interface/sitemanager_dialog.cpp:284
+#: ../src/interface/sitemanager_controls.cpp:1161
 msgid "Directory comparison"
 msgstr "Mappesammenligning"
 
@@ -3367,13 +3391,13 @@ msgstr "Mappesammenligning mislykkedes"
 msgid "Directory containing the logfile does not exist or filename is invalid."
 msgstr "Mappe med logfilen findes ikke, eller filnavnet er ugyldigt."
 
-#: ../src/engine/sftp/mkd.cpp:72
+#: ../src/engine/sftp/mkd.cpp:73
 msgid "Directory creation succeeded."
-msgstr ""
+msgstr "Oprettelse af mappe lykkedes."
 
 #: ../src/engine/sftp/rmd.cpp:39
 msgid "Directory deletion succeeded."
-msgstr ""
+msgstr "Sletning af mappe lykkedes."
 
 #: ../src/interface/menu_bar.cpp:65
 msgid "Directory listing &filters..."
@@ -3417,12 +3441,12 @@ msgid "Disconnect from server"
 msgstr "Afbryd forbindelsen til serveren"
 
 #: ../src/engine/ftp/ftpcontrolsocket.cpp:69 ../src/engine/controlsocket.cpp:54
-#: ../src/engine/controlsocket.cpp:735 ../src/engine/controlsocket.cpp:834
+#: ../src/engine/controlsocket.cpp:746 ../src/engine/controlsocket.cpp:845
 #: ../src/interface/queue.cpp:400
 msgid "Disconnected from server"
 msgstr "Forbindelsen til serveren blev afbrudt"
 
-#: ../src/engine/controlsocket.cpp:858
+#: ../src/engine/controlsocket.cpp:869
 #, c-format
 msgid "Disconnected from server: %s"
 msgstr "Forbindelsen til serveren blev afbrudt: %s"
@@ -3567,7 +3591,7 @@ msgstr ""
 msgid "Drag&drop between different servers has not been implemented yet."
 msgstr "Træk og slip mellem forskellige servere er endnu ikke implementeret."
 
-#: ../src/interface/sitemanager_controls.cpp:1856
+#: ../src/interface/sitemanager_controls.cpp:1902
 msgid "Dropbox for Business:"
 msgstr "Dropbox for Business:"
 
@@ -3709,7 +3733,7 @@ msgstr "Skriv 0 for ubegrænset hastighed."
 
 #: ../src/interface/loginmanager.cpp:514
 msgid "Enter SSH keyfile password"
-msgstr ""
+msgstr "Angiv adgangskode til SSH-nøglefil"
 
 #: ../src/interface/QueueView.cpp:1903
 msgid "Enter command"
@@ -3830,18 +3854,18 @@ msgstr "Fejl ved indlæsning af kø"
 #: ../src/interface/filter_manager.cpp:570
 #: ../src/interface/osx_sandbox_userdirs.cpp:67
 #: ../src/interface/osx_sandbox_userdirs.cpp:138
-#: ../src/interface/wrapengine.cpp:946
+#: ../src/interface/wrapengine.cpp:946 ../src/interface/sitemanager.cpp:45
+#: ../src/interface/sitemanager.cpp:282 ../src/interface/sitemanager.cpp:359
+#: ../src/interface/sitemanager.cpp:447 ../src/interface/sitemanager.cpp:545
+#: ../src/interface/sitemanager.cpp:601 ../src/interface/search.cpp:1840
+#: ../src/interface/search.cpp:1874 ../src/interface/Options.cpp:155
 #: ../src/interface/sitemanager_dialog.cpp:718
 #: ../src/interface/sitemanager_dialog.cpp:778
-#: ../src/interface/sitemanager.cpp:45 ../src/interface/sitemanager.cpp:282
-#: ../src/interface/sitemanager.cpp:359 ../src/interface/sitemanager.cpp:447
-#: ../src/interface/sitemanager.cpp:545 ../src/interface/sitemanager.cpp:601
 #: ../src/interface/bookmarks_dialog.cpp:237
 #: ../src/interface/bookmarks_dialog.cpp:399
 #: ../src/interface/bookmarks_dialog.cpp:855
 #: ../src/interface/bookmarks_dialog.cpp:895
-#: ../src/interface/bookmarks_dialog.cpp:948 ../src/interface/search.cpp:1840
-#: ../src/interface/search.cpp:1874 ../src/interface/Options.cpp:155
+#: ../src/interface/bookmarks_dialog.cpp:948
 msgid "Error loading xml file"
 msgstr "Fejl ved indlæsning af XML-fil"
 
@@ -3851,21 +3875,20 @@ msgstr "Fejl ved gemning af kø"
 
 #: ../src/interface/verifyhostkeydialog.cpp:175
 msgid "Error saving trusted hostkeys"
-msgstr ""
+msgstr "Fejl ved lagring af pålidelige værtsnøgler"
 
 #: ../src/interface/storj_key_interface.cpp:53
 #: ../src/interface/storj_key_interface.cpp:68
 msgid "Error starting program"
 msgstr "Fejl ved start af program"
 
-#: ../src/interface/xmlfunctions.cpp:21
+#: ../src/interface/xmlfunctions.cpp:21 ../src/interface/sitemanager.cpp:331
+#: ../src/interface/sitemanager.cpp:424 ../src/interface/sitemanager.cpp:481
+#: ../src/interface/verifycertdialog.cpp:30 ../src/interface/Options.cpp:189
 #: ../src/interface/sitemanager_dialog.cpp:801
 #: ../src/interface/sitemanager_dialog.cpp:1972
-#: ../src/interface/sitemanager.cpp:331 ../src/interface/sitemanager.cpp:424
-#: ../src/interface/sitemanager.cpp:481
 #: ../src/interface/bookmarks_dialog.cpp:435
 #: ../src/interface/bookmarks_dialog.cpp:990
-#: ../src/interface/verifycertdialog.cpp:30 ../src/interface/Options.cpp:189
 msgid "Error writing xml file"
 msgstr "Fejl ved skrivning af XML-fil"
 
@@ -4038,7 +4061,7 @@ msgstr ""
 msgid "Failed to load panels, invalid resource files?"
 msgstr "Kunne ikke indlæse paneler - ugyldige ressourcefiler?"
 
-#: ../src/engine/controlsocket.cpp:353
+#: ../src/engine/controlsocket.cpp:324
 msgid "Failed to parse returned path."
 msgstr "Kunne ikke fortolke den returnerede sti."
 
@@ -4054,7 +4077,7 @@ msgstr "Kunne ikke hente mappeindholdsliste"
 msgid "Failed to retrieve external IP address, aborting."
 msgstr "Kunne ikke hente ekstern IP-adresse. Afbryder."
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:676
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:694
 msgid "Failed to retrieve external IP address, using local address"
 msgstr "Kunne ikke hente ekstern IP-adresse - anvender lokal adresse"
 
@@ -4062,7 +4085,7 @@ msgstr "Kunne ikke hente ekstern IP-adresse - anvender lokal adresse"
 msgid "Failed to retrieve local IP address, aborting."
 msgstr "Kunne ikke hente lokal IP-adresse. Afbryder."
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:689
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:707
 msgid "Failed to retrieve local IP address."
 msgstr "Kunne ikke hente lokal IP-adresse."
 
@@ -4361,7 +4384,7 @@ msgstr "Find &mapper"
 
 #: ../src/interface/settings/optionspage_connection_sftp.cpp:88
 msgid "Fingerprint"
-msgstr ""
+msgstr "Fingeraftryk"
 
 #: ../src/interface/verifycertdialog.cpp:295
 msgid "Fingerprint (SHA-1):"
@@ -4375,7 +4398,7 @@ msgstr "Fingeraftryk (SHA-256):"
 #: ../src/interface/verifyhostkeydialog.cpp:82
 #: ../src/interface/loginmanager.cpp:567
 msgid "Fingerprint:"
-msgstr ""
+msgstr "Fingeraftryk:"
 
 #: ../src/interface/netconfwizard.cpp:242
 msgid "Firewall and router configuration wizard"
@@ -4442,6 +4465,10 @@ msgstr "Fra %s til %s"
 msgid "Function %s failed"
 msgstr "Funktionen %s mislykkedes"
 
+#: ../src/engine/sftp/connect.cpp:189
+msgid "Further authentication required"
+msgstr "Yderligere autentificering påkrævet"
+
 #: ../src/interface/welcome_dialog.cpp:111
 msgid "Further documentation"
 msgstr "Yderligere dokumentation"
@@ -4485,11 +4512,13 @@ msgstr "GnuTLS:"
 msgid "Google Cloud Storage with Service Account"
 msgstr "Google Cloud Storage med Service Account"
 
-#: ../src/engine/sftp/filetransfer.cpp:447
+#: ../src/engine/sftp/filetransfer.cpp:445
 msgid ""
 "Got a short read not at the end of a file, this is not permissiable on "
 "normal files"
 msgstr ""
+"Stødte på slut på fil inden komplet læsning - dette er ikke tilladt for "
+"normale filer"
 
 #: ../src/interface/sitemanager.cpp:28
 msgid "Green"
@@ -4540,7 +4569,7 @@ msgstr "Værtsnøgle passer ikke"
 
 #: ../src/interface/verifyhostkeydialog.cpp:117
 msgid "Host key signature:"
-msgstr ""
+msgstr "Værtsnøglesignatur:"
 
 #. @translator: Keep short
 #: ../src/interface/sitemanager_controls.cpp:543
@@ -4556,11 +4585,11 @@ msgid "Host unreachable"
 msgstr "Vært kan ikke tilgås"
 
 #: ../src/interface/verifyhostkeydialog.cpp:78
-#: ../src/interface/loginmanager.cpp:34 ../src/interface/loginmanager.cpp:123
-#: ../src/interface/loginmanager.cpp:329 ../src/interface/loginmanager.cpp:544
 #: ../src/interface/verifycertdialog.cpp:352
 #: ../src/interface/verifycertdialog.cpp:628
 #: ../src/interface/verifycertdialog.cpp:698
+#: ../src/interface/loginmanager.cpp:34 ../src/interface/loginmanager.cpp:123
+#: ../src/interface/loginmanager.cpp:329 ../src/interface/loginmanager.cpp:544
 msgid "Host:"
 msgstr "Vært:"
 
@@ -4570,7 +4599,7 @@ msgstr "Algoritme for værtsnøgle:"
 
 #: ../src/engine/sftp/sftpcontrolsocket.cpp:108
 msgid "Hostkey is trusted"
-msgstr ""
+msgstr "Der er tillid til værtsnøglen"
 
 # scootergrisen: kan ses i Stedhåndtering > fanebladet Avanceret > "0 timer, 0 minutter"
 #: ../src/interface/sitemanager_controls.cpp:1173
@@ -4597,7 +4626,7 @@ msgstr "IPv6-adresser understøttes ikke med SOCKS4-proxy"
 msgid "Identity &host:"
 msgstr "&Identitetsvært:"
 
-#: ../src/interface/sitemanager_controls.cpp:1783
+#: ../src/interface/sitemanager_controls.cpp:1829
 msgid "Identity (Keystone):"
 msgstr "Identitet (Keystone):"
 
@@ -4811,6 +4840,10 @@ msgstr ""
 "Hvis din router bliver ved at ændre IP-adresse, kan du kontakte fabrikanten "
 "af din router."
 
+#: ../src/interface/sitemanager_controls.cpp:1523
+msgid "Ignore unknown flags while parsing attributes"
+msgstr ""
+
 #: ../src/interface/import.cpp:46
 msgid "Import Settings"
 msgstr "Importér indstillinger"
@@ -4870,7 +4903,7 @@ msgstr ""
 "Kunne ikke hente oplysninger om den seneste version af FileZilla. Prøv igen "
 "senere."
 
-#: ../src/interface/sitemanager_controls.cpp:1516
+#: ../src/interface/sitemanager_controls.cpp:1562
 msgid "Initial re&gion:"
 msgstr "Start-&region:"
 
@@ -4889,7 +4922,7 @@ msgstr "Usikker FTP-dataforbindelse"
 
 #: ../src/interface/verifyhostkeydialog.cpp:21
 msgid "Insecure SFTP server"
-msgstr ""
+msgstr "Usikker SFTP-server"
 
 #: ../src/interface/verifycertdialog.cpp:171
 msgid "Insecure algorithm!"
@@ -4901,9 +4934,9 @@ msgstr "Usikker server, understøtter ikke FTP over TLS."
 
 #: ../src/interface/loginmanager.cpp:230
 msgid "Instructions:"
-msgstr ""
+msgstr "Instruktioner:"
 
-#: ../src/engine/server.cpp:754 ../src/engine/server.cpp:784
+#: ../src/engine/server.cpp:759 ../src/engine/server.cpp:789
 msgid "Interactive"
 msgstr "Interaktiv"
 
@@ -4919,19 +4952,24 @@ msgstr "Mellemliggende certifikat"
 msgid "Interrupted by user"
 msgstr "Afbrudt af brugeren"
 
-#: ../src/engine/controlsocket.cpp:488
+#: ../src/engine/controlsocket.cpp:499
 msgid ""
 "Invalid character sequence received. Some or all files may not appear in "
 "directory listings. If the server you are connecting to does not support "
 "UTF-8, select a different character encoding in the Site Manager."
 msgstr ""
+"Modtog ugyldig sekvens af tegn. Nogle, eller alle, filer vises måske ikke i "
+"mappevisningen. Hvis den server, du har forbindelse til, ikke understøtter "
+"UTF-8, så vælg en anden tegnsætkodning i Stedhåndtering."
 
-#: ../src/engine/controlsocket.cpp:499
+#: ../src/engine/controlsocket.cpp:510
 #, c-format
 msgid ""
 "Invalid character sequence received. The server does not appear to use the "
 "custom character encoding (%s) you have configured in the Site Manager."
 msgstr ""
+"Modtog ugyldig sekvens af tegn. Serveren lader ikke til at bruge den "
+"tegnsætkodning (%s), du har konfigureret i Stedhåndtering."
 
 #: ../src/interface/netconfwizard.cpp:539
 #: ../src/interface/netconfwizard.cpp:549
@@ -4977,7 +5015,7 @@ msgstr "Ugyldig sti"
 
 #: ../src/interface/chmoddialog.cpp:169
 msgid "Invalid permissions"
-msgstr ""
+msgstr "Ugyldige tilladelser"
 
 #: ../src/commonui/site.cpp:180 ../src/commonui/site.cpp:303
 msgid "Invalid port given. The port has to be a value from 1 to 65535."
@@ -5068,7 +5106,7 @@ msgstr ""
 
 #: ../src/interface/loginmanager.cpp:556
 msgid "Key details"
-msgstr ""
+msgstr "Nøgledetaljer"
 
 #: ../src/interface/sftp_crypt_info_dlg.cpp:21
 msgid "Key exchange"
@@ -5079,7 +5117,7 @@ msgstr "Nøgleudveksling"
 msgid "Key exchange:"
 msgstr "Nøgleudveksling:"
 
-#: ../src/engine/server.cpp:751 ../src/engine/server.cpp:782
+#: ../src/engine/server.cpp:756 ../src/engine/server.cpp:787
 msgid "Key file"
 msgstr "Nøglefil"
 
@@ -5120,7 +5158,7 @@ msgstr "Lad være tom for at beholde eksisterende adgangskode."
 
 #: ../src/interface/aboutdialog.cpp:97
 msgid "License and copyright information"
-msgstr ""
+msgstr "Licens- og copyright-oplysninger"
 
 #: ../src/interface/settings/optionspage_transfer.cpp:55
 msgid "Limit for concurrent &downloads:"
@@ -5159,10 +5197,10 @@ msgstr "Liste:"
 msgid "Lo&west available port:"
 msgstr "La&veste tilgængelige port:"
 
-#: ../src/engine/sftp/connect.cpp:242
+#: ../src/engine/sftp/connect.cpp:294
 #, c-format
 msgid "Loaded %u distinct keys"
-msgstr ""
+msgstr "Indlæste %u unikke nøgler"
 
 #: ../src/interface/edithandler.cpp:1437 ../src/interface/edithandler.cpp:1685
 msgid "Local"
@@ -5228,7 +5266,7 @@ msgstr "Lokalitet:"
 msgid "Log file"
 msgstr "Logfil"
 
-#: ../src/engine/ftp/logon.cpp:447
+#: ../src/engine/ftp/logon.cpp:438
 msgid "Logged in"
 msgstr "Logget ind"
 
@@ -5273,7 +5311,7 @@ msgstr "Laveste"
 msgid "Lowest available port has to be a number between 1024 and 65535."
 msgstr "Laveste tilgængelige port, skal være et tal mellem 1024 og 65535."
 
-#: ../src/interface/sitemanager_controls.cpp:1565
+#: ../src/interface/sitemanager_controls.cpp:1611
 msgid "MFA D&evice Serial:"
 msgstr "Serienummer på MFA-&enhed:"
 
@@ -5374,13 +5412,13 @@ msgstr "Denne computer"
 msgid "My Documents"
 msgstr "Dokumenter"
 
+#: ../src/interface/sitemanager.cpp:204
 #: ../src/interface/sitemanager_dialog.cpp:704
 #: ../src/interface/sitemanager_dialog.cpp:707
-#: ../src/interface/sitemanager.cpp:204
 msgid "My Sites"
 msgstr "Mine steder"
 
-#: ../src/interface/sitemanager_controls.cpp:1524
+#: ../src/interface/sitemanager_controls.cpp:1570
 msgid "N&o encryption"
 msgstr "&Ingen kryptering"
 
@@ -5403,14 +5441,14 @@ msgstr "Navn findes allerede"
 msgid "Name of bookmark already exists."
 msgstr "Bogmærkenavn findes allerede."
 
-#: ../src/engine/server.cpp:947 ../src/engine/server.cpp:1009
+#: ../src/engine/server.cpp:963 ../src/engine/server.cpp:1025
 msgid "Name or email address"
 msgstr "Navn eller e-mail-adresse"
 
+#: ../src/interface/verifycertdialog.cpp:517
 #: ../src/interface/loginmanager.cpp:26 ../src/interface/loginmanager.cpp:119
 #: ../src/interface/loginmanager.cpp:226 ../src/interface/loginmanager.cpp:325
 #: ../src/interface/loginmanager.cpp:540
-#: ../src/interface/verifycertdialog.cpp:517
 msgid "Name:"
 msgstr "Navn:"
 
@@ -5430,7 +5468,7 @@ msgstr "Du skal indtaste en gyldig lokal sti"
 msgid "Need to enter valid remote path"
 msgstr "Du skal indtaste en gyldig fjernsti"
 
-#: ../src/interface/sitemanager_controls.cpp:1480
+#: ../src/interface/sitemanager_controls.cpp:1481
 msgid "Need to specify a character encoding"
 msgstr "Du skal angive en tegnkodning"
 
@@ -5459,8 +5497,8 @@ msgstr "Nyt &faneblad"
 msgid "New Book&mark"
 msgstr "Nyt bo&gmærke"
 
-#: ../src/interface/sitemanager_dialog.cpp:1889
 #: ../src/interface/sitemanager.cpp:390
+#: ../src/interface/sitemanager_dialog.cpp:1889
 #: ../src/interface/bookmarks_dialog.cpp:58
 #: ../src/interface/bookmarks_dialog.cpp:123
 #: ../src/interface/bookmarks_dialog.cpp:137
@@ -5498,8 +5536,8 @@ msgstr "Nyt filter"
 msgid "New folder"
 msgstr "Ny mappe"
 
-#: ../src/interface/sitemanager_dialog.cpp:1862
 #: ../src/interface/sitemanager.cpp:302 ../src/interface/sitemanager.cpp:316
+#: ../src/interface/sitemanager_dialog.cpp:1862
 msgid "New site"
 msgstr "Nyt sted"
 
@@ -5528,7 +5566,7 @@ msgstr "Ingen mappe tilføjet"
 msgid "No entries found matching '%s'."
 msgstr "Ingen indgange fundet, der svarer til '%s'."
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:649
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:667
 msgid "No external IP address set, trying default."
 msgstr "Ingen ekstern IP-adresse angivet - forsøger standard."
 
@@ -5551,9 +5589,9 @@ msgstr "Ingen vært angivet - indtast en vært."
 msgid "No images available"
 msgstr "Ingen tilgængelige billeder"
 
-#: ../src/engine/sftp/connect.cpp:197
+#: ../src/engine/sftp/connect.cpp:228 ../src/engine/sftp/connect.cpp:400
 msgid "No more authentication methods available"
-msgstr ""
+msgstr "Der er ikke flere metoder til autentificering til rådighed"
 
 #: ../src/interface/filter_manager.cpp:260
 #: ../src/interface/filter_manager.cpp:330
@@ -5621,7 +5659,7 @@ msgstr "Ingen"
 msgid "None selected yet"
 msgstr "Ingen er valgt endnu"
 
-#: ../src/engine/server.cpp:745 ../src/engine/server.cpp:778
+#: ../src/engine/server.cpp:750 ../src/engine/server.cpp:783
 #: ../src/interface/settings/optionspage_transfer.cpp:95
 #: ../src/interface/queue.cpp:1054 ../src/interface/queue.cpp:1116
 msgid "Normal"
@@ -5631,9 +5669,9 @@ msgstr "Normal"
 msgid "North America"
 msgstr "Nordamerika"
 
-#: ../src/engine/sftp/cwd.cpp:137
+#: ../src/engine/sftp/cwd.cpp:151
 msgid "Not a directory"
-msgstr ""
+msgstr "Ikke en mappe"
 
 #: ../src/commonui/xml_file.cpp:237
 #, c-format
@@ -5647,7 +5685,7 @@ msgstr "Kunne ikke sætte alle emner i kø igen."
 
 #: ../src/interface/settings/optionspage_connection_sftp.cpp:207
 msgid "Not available"
-msgstr ""
+msgstr "Ikke til rådighed"
 
 #: ../src/interface/state.cpp:228 ../src/interface/state.cpp:1484
 msgid "Not connected"
@@ -5912,9 +5950,9 @@ msgstr "Parameteren er ikke en gyldig URL"
 msgid "Parsing %d bytes of version information.\n"
 msgstr "Behandler %d byte versionsinformation.\n"
 
+#: ../src/interface/quickconnectbar.cpp:51
 #: ../src/interface/sitemanager_controls.cpp:202
 #: ../src/interface/sitemanager_controls.cpp:493
-#: ../src/interface/quickconnectbar.cpp:51
 msgid "Pass&word:"
 msgstr "&Adgangskode:"
 
@@ -5935,7 +5973,7 @@ msgstr "Passiv tilstand er blevet sat som standard-overførselstilstand."
 
 #: ../src/engine/ftp/logon.cpp:175
 msgid "Password"
-msgstr ""
+msgstr "Adgangskode"
 
 #: ../src/interface/settings/optionspage_passwords.cpp:49
 #: ../src/interface/settings/settingsdialog.cpp:139
@@ -5957,7 +5995,7 @@ msgstr "Sti kan ikke dannes for mappen %s og undermappen %s"
 msgid "Path not found:"
 msgstr "Sti ikke fundet:"
 
-#: ../src/engine/server.cpp:966 ../src/engine/server.cpp:978
+#: ../src/engine/server.cpp:982 ../src/engine/server.cpp:994
 msgid "Path of identity service"
 msgstr "Sti til identitetstjeneste"
 
@@ -5972,7 +6010,7 @@ msgstr "Afventer fjernelse"
 
 #: ../src/interface/verifyhostkeydialog.cpp:133
 msgid "Permanently &remember this choice"
-msgstr ""
+msgstr "&Husk dette valg permanent"
 
 #: ../src/interface/filter_conditions_dialog.cpp:112
 msgid "Permission"
@@ -6163,12 +6201,13 @@ msgstr "Indtast navnet på den fil, der skal oprettes:"
 
 #: ../src/interface/loginmanager.cpp:525
 msgid "Please enter the password of SSH private key file."
-msgstr ""
+msgstr "Angiv adgangskode til den private SSH-nøglefil."
 
 #: ../src/interface/loginmanager.cpp:522
 msgid ""
 "Please enter the password of the SSH private key file to log into the server."
 msgstr ""
+"Angiv adgangskode til den private SSH-nøglefil for at logge på serveren."
 
 #: ../src/interface/loginmanager.cpp:301
 msgid "Please enter username and password for this server:"
@@ -6346,8 +6385,8 @@ msgstr "Af&sæt plads inden download"
 msgid "Preallocation"
 msgstr "Afsat plads"
 
-#: ../src/interface/sitemanager_dialog.cpp:1539
 #: ../src/interface/sitemanager.cpp:203
+#: ../src/interface/sitemanager_dialog.cpp:1539
 msgid "Predefined Sites"
 msgstr "Foruddefinerede steder"
 
@@ -6411,7 +6450,7 @@ msgstr "Udfør &kø"
 msgid "Processed %s in %s."
 msgstr "Behandlede %s i %s."
 
-#: ../src/engine/server.cpp:760 ../src/engine/server.cpp:788
+#: ../src/engine/server.cpp:765 ../src/engine/server.cpp:793
 msgid "Profile"
 msgstr "Profil"
 
@@ -6422,7 +6461,7 @@ msgstr "Navn eller ID på projekt (eller tenant)"
 
 #: ../src/interface/loginmanager.cpp:237
 msgid "Prompt:"
-msgstr ""
+msgstr "Prompt:"
 
 #: ../src/interface/verifycertdialog.cpp:367
 msgid "Protocol:"
@@ -6628,11 +6667,11 @@ msgstr "Genstart nu"
 msgid "Rec&urse into subdirectories"
 msgstr "Rek&ursivt i undermapper"
 
-#: ../src/engine/directorylistingparser.cpp:3200
+#: ../src/engine/directorylistingparser.cpp:3312
 msgid "Received a directory listing which appears to be encoded in EBCDIC."
 msgstr "Modtog en mappevisning, som ser ud til at være kodet med EBCDIC."
 
-#: ../src/engine/directorylistingparser.cpp:2121
+#: ../src/engine/directorylistingparser.cpp:1982
 msgid "Received a line exceeding 10000 characters, aborting."
 msgstr "Modtog en linje med over 10000 tegn. Afbryder."
 
@@ -6642,15 +6681,15 @@ msgstr "Modtog en linje med over 10000 tegn. Afbryder."
 msgid "Received data tainted"
 msgstr "Modtog data der er forstyrret"
 
-#: ../src/engine/sftp/sftpcontrolsocket.cpp:330
+#: ../src/engine/sftp/sftpcontrolsocket.cpp:338
 #, c-format
 msgid "Received error %s with description '%s'"
-msgstr ""
+msgstr "Modtog fejl %s med beskrivelsen '%s'"
 
-#: ../src/engine/sftp/sftpcontrolsocket.cpp:327
+#: ../src/engine/sftp/sftpcontrolsocket.cpp:335
 #, c-format
 msgid "Received error %s without any further description"
-msgstr ""
+msgstr "Modtog fejl %s uden yderligere beskrivelse"
 
 #: ../src/commonui/updater.cpp:612
 msgid "Received invalid character in version information"
@@ -6713,7 +6752,7 @@ msgstr "Omdirigering til ugyldig eller ikke-understøttet adresse: %s"
 msgid "Refresh the file and folder lists"
 msgstr "Opdatér fil- og mappelisterne"
 
-#: ../src/interface/sitemanager_controls.cpp:1577
+#: ../src/interface/sitemanager_controls.cpp:1623
 msgid "Regio&n:"
 msgstr "Regio&n:"
 
@@ -6815,7 +6854,7 @@ msgstr "Omdøb de valgte filer og mapper"
 
 #: ../src/engine/sftp/rename.cpp:54
 msgid "Rename succeeded."
-msgstr ""
+msgstr "Omdøbning lykkedes."
 
 #: ../src/engine/ftp/rename.cpp:22 ../src/engine/sftp/rename.cpp:17
 #, c-format
@@ -6853,9 +6892,13 @@ msgstr "Forespørgsel afvist eller fejlet"
 msgid "Requesting %s"
 msgstr "Anmoder \"%s\""
 
-#: ../src/engine/sftp/connect.cpp:192
+#: ../src/engine/sftp/connect.cpp:237
+msgid "Requesting SFTP subsystem"
+msgstr "Anmoder om SFTP-undersystem"
+
+#: ../src/engine/sftp/connect.cpp:222
 msgid "Requesting keyboard-interactive authentication"
-msgstr ""
+msgstr "Anmoder om autentificering via tastatur"
 
 #: ../src/interface/sitemanager_controls.cpp:45
 msgid "Require explicit FTP over TLS"
@@ -6869,7 +6912,7 @@ msgstr "Forlang implicit FTP over TLS"
 msgid "Reset and requeue &all"
 msgstr "Nulstil og sæt &alle i kø igen"
 
-#: ../src/engine/controlsocket.cpp:883 ../src/engine/controlsocket.cpp:888
+#: ../src/engine/controlsocket.cpp:894 ../src/engine/controlsocket.cpp:899
 #, c-format
 msgid "Resolving address of %s"
 msgstr "Fortolker adressen %s"
@@ -6901,17 +6944,17 @@ msgstr ""
 "Genoptagelse af ASCII-filer kan give problemer, hvis serveren bruger et "
 "andet linjeskiftformat end klienten."
 
-#: ../src/engine/ftp/list.cpp:68 ../src/engine/sftp/list.cpp:36
+#: ../src/engine/ftp/list.cpp:66 ../src/engine/sftp/list.cpp:34
 #: ../src/engine/storj/list.cpp:26
 #, c-format
 msgid "Retrieving directory listing of \"%s\"..."
 msgstr "Henter mappevisning for \"%s\"..."
 
-#: ../src/engine/ftp/list.cpp:65 ../src/engine/sftp/list.cpp:33
+#: ../src/engine/ftp/list.cpp:63 ../src/engine/sftp/list.cpp:31
 msgid "Retrieving directory listing..."
 msgstr "Henter mappevisning..."
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:664
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:682
 #: ../src/interface/netconfwizard.cpp:872
 #, c-format
 msgid "Retrieving external IP address from %s"
@@ -6921,11 +6964,11 @@ msgstr "Henter ekstern IP-adresse fra %s"
 msgid "Retrying..."
 msgstr "Prøver igen ..."
 
-#: ../src/interface/sitemanager_controls.cpp:1563
+#: ../src/interface/sitemanager_controls.cpp:1609
 msgid "Ro&le ARN:"
 msgstr "Ro&lle-ARN:"
 
-#: ../src/interface/sitemanager_controls.cpp:1579
+#: ../src/interface/sitemanager_controls.cpp:1625
 msgid "Ro&le name:"
 msgstr "Ro&llenavn:"
 
@@ -6968,13 +7011,17 @@ msgstr "S&top systemet midlertidigt én gang"
 msgid "S&ynchronized browsing"
 msgstr "S&ynkroniseret gennemgang"
 
-#: ../src/interface/sitemanager_controls.cpp:1572
+#: ../src/interface/sitemanager_controls.cpp:1618
 msgid "S3 via IAM Identity Center (formerly SSO):"
 msgstr "S3 via IAM Identity Center (tidligere SSO):"
 
 #: ../src/interface/settings/settingsdialog.cpp:130
 msgid "SFTP"
 msgstr "SFTP"
+
+#: ../src/engine/sftp/connect.cpp:251
+msgid "SFTP subsystem initialized"
+msgstr "SFTP-undersystem initialiseret"
 
 #: ../src/engine/proxy.cpp:169
 #, c-format
@@ -7064,7 +7111,7 @@ msgstr "Søgningstype:"
 msgid "Secret Access &Key:"
 msgstr "Hemmelig adgangs&nøgle:"
 
-#: ../src/interface/sitemanager_controls.cpp:1558
+#: ../src/interface/sitemanager_controls.cpp:1604
 msgid "Security Token Service:"
 msgstr "Security Token Service:"
 
@@ -7136,7 +7183,7 @@ msgstr "Vælg fil til eksporteret kø"
 msgid "Select file for exported settings"
 msgstr "Vælg fil til eksporterede indstillinger"
 
-#: ../src/interface/sitemanager_dialog.cpp:1932 ../src/interface/export.cpp:58
+#: ../src/interface/export.cpp:58 ../src/interface/sitemanager_dialog.cpp:1932
 msgid "Select file for exported sites"
 msgstr "Vælg fil til eksporterede steder"
 
@@ -7273,13 +7320,17 @@ msgid "Send custom command to the server otherwise not available"
 msgstr ""
 "Send brugerdefineret kommando til serveren, der ellers ikke er tilgængelige"
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:749
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:767
 msgid "Sending keep-alive command"
 msgstr "Sender keep-alive-kommando"
 
-#: ../src/engine/sftp/connect.cpp:184 ../src/engine/sftp/connect.cpp:292
+#: ../src/engine/sftp/connect.cpp:213 ../src/engine/sftp/connect.cpp:340
 msgid "Sending password"
-msgstr ""
+msgstr "Sender adgangskode"
+
+#: ../src/engine/sftp/connect.cpp:406
+msgid "Sending password as response"
+msgstr "Sender adgangskode som svar"
 
 #: ../src/interface/verifycertdialog.cpp:515
 msgid "Serial number:"
@@ -7291,13 +7342,13 @@ msgstr "Serienr.:"
 
 #: ../src/interface/loginmanager.cpp:110 ../src/interface/loginmanager.cpp:531
 msgid "Server"
-msgstr ""
+msgstr "Server"
 
 #: ../src/interface/sitemanager_controls.cpp:1120
 msgid "Server &type:"
 msgstr "Server&type:"
 
-#: ../src/interface/sitemanager_controls.cpp:1522
+#: ../src/interface/sitemanager_controls.cpp:1568
 msgid "Server Side Encryption:"
 msgstr "Kryptering på serveren:"
 
@@ -7307,19 +7358,19 @@ msgstr "Server-certifikat"
 
 #: ../src/engine/sftp/chmod.cpp:51
 msgid "Server did not return old permissions to update"
-msgstr ""
+msgstr "Serveren returnerede ikke gamle tilladelser til opdatering"
 
-#: ../src/engine/ftp/logon.cpp:428 ../src/engine/ftp/logon.cpp:487
+#: ../src/engine/ftp/logon.cpp:414 ../src/engine/ftp/logon.cpp:466
 msgid "Server does not support non-ASCII characters."
 msgstr "Serveren understøtter ikke tegn uden for ASCII-tegnsættet."
 
-#: ../src/engine/ftp/filetransfer.cpp:209
+#: ../src/engine/ftp/filetransfer.cpp:207
 #, c-format
 msgid "Server does not support resume of files > %d GB."
 msgstr ""
 "Serveren understøtter ikke genoptagelse af filer som er større end %d GB."
 
-#: ../src/engine/ftp/filetransfer.cpp:206
+#: ../src/engine/ftp/filetransfer.cpp:204
 #, c-format
 msgid ""
 "Server does not support resume of files > %d GB. End transfer since file "
@@ -7328,12 +7379,12 @@ msgstr ""
 "Serveren understøtter ikke genoptagelse af filer som er større end %d GB. "
 "Afslut overførslen, da filstørrelserne er ens."
 
-#: ../src/engine/ftp/filetransfer.cpp:462
+#: ../src/engine/ftp/filetransfer.cpp:460
 msgid "Server does not support resume of files > 2GB."
 msgstr ""
 "Serveren understøtter ikke genoptagelse af filer som er større end 2 GB."
 
-#: ../src/engine/ftp/filetransfer.cpp:458
+#: ../src/engine/ftp/filetransfer.cpp:456
 msgid "Server does not support resume of files > 4GB."
 msgstr ""
 "Serveren understøtter ikke genoptagelse af filer som er større end 4 GB."
@@ -7342,7 +7393,7 @@ msgstr ""
 msgid "Server host key"
 msgstr "Serverens værtsnøgle"
 
-#: ../src/engine/ftp/filetransfer.cpp:217
+#: ../src/engine/ftp/filetransfer.cpp:215
 #, c-format
 msgid ""
 "Server may not support resume of files > %d GB. End transfer since file "
@@ -7359,7 +7410,7 @@ msgstr ""
 "Serveren kræver muligvis en konto. Prøv at angiv en konto med "
 "stedhåndteringen"
 
-#: ../src/engine/controlsocket.cpp:350
+#: ../src/engine/controlsocket.cpp:316
 msgid "Server returned empty path."
 msgstr "Serveren returnerede en tom sti."
 
@@ -7419,11 +7470,11 @@ msgstr "Sæt &prioritet"
 
 #: ../src/interface/chmoddialog.cpp:96
 msgid "Set group-ID"
-msgstr ""
+msgstr "Angiv gruppe-ID"
 
 #: ../src/interface/chmoddialog.cpp:94
 msgid "Set-user-ID"
-msgstr ""
+msgstr "Angiv bruger-ID"
 
 #: ../src/engine/ftp/chmod.cpp:18 ../src/engine/sftp/chmod.cpp:21
 #, c-format
@@ -7501,6 +7552,9 @@ msgstr "Stedhåndtering"
 msgid "Site Manager - Cannot remember password"
 msgstr "Stedhåndtering - kan ikke huske adgangskode"
 
+#: ../src/interface/sitemanager_dialog.cpp:938
+#: ../src/interface/sitemanager_dialog.cpp:947
+#: ../src/interface/sitemanager_dialog.cpp:954
 #: ../src/interface/sitemanager_controls.cpp:706
 #: ../src/interface/sitemanager_controls.cpp:717
 #: ../src/interface/sitemanager_controls.cpp:775
@@ -7510,17 +7564,14 @@ msgstr "Stedhåndtering - kan ikke huske adgangskode"
 #: ../src/interface/sitemanager_controls.cpp:864
 #: ../src/interface/sitemanager_controls.cpp:888
 #: ../src/interface/sitemanager_controls.cpp:913
-#: ../src/interface/sitemanager_controls.cpp:1257
-#: ../src/interface/sitemanager_controls.cpp:1270
-#: ../src/interface/sitemanager_controls.cpp:1480
-#: ../src/interface/sitemanager_controls.cpp:1488
-#: ../src/interface/sitemanager_controls.cpp:1709
-#: ../src/interface/sitemanager_controls.cpp:1721
-#: ../src/interface/sitemanager_controls.cpp:1735
-#: ../src/interface/sitemanager_controls.cpp:1759
-#: ../src/interface/sitemanager_dialog.cpp:938
-#: ../src/interface/sitemanager_dialog.cpp:947
-#: ../src/interface/sitemanager_dialog.cpp:954
+#: ../src/interface/sitemanager_controls.cpp:1258
+#: ../src/interface/sitemanager_controls.cpp:1271
+#: ../src/interface/sitemanager_controls.cpp:1481
+#: ../src/interface/sitemanager_controls.cpp:1489
+#: ../src/interface/sitemanager_controls.cpp:1755
+#: ../src/interface/sitemanager_controls.cpp:1767
+#: ../src/interface/sitemanager_controls.cpp:1781
+#: ../src/interface/sitemanager_controls.cpp:1805
 msgid "Site Manager - Invalid data"
 msgstr "Stedhåndtering - ugyldige data"
 
@@ -7568,14 +7619,14 @@ msgstr "Størrelse ukendt"
 msgid "Skip file"
 msgstr "Spring fil over"
 
-#: ../src/engine/controlsocket.cpp:968 ../src/engine/controlsocket.cpp:985
-#: ../src/engine/controlsocket.cpp:1011 ../src/engine/controlsocket.cpp:1074
+#: ../src/engine/controlsocket.cpp:979 ../src/engine/controlsocket.cpp:996
+#: ../src/engine/controlsocket.cpp:1022 ../src/engine/controlsocket.cpp:1085
 #, c-format
 msgid "Skipping download of %s"
 msgstr "Springer download af %s over"
 
-#: ../src/engine/controlsocket.cpp:971 ../src/engine/controlsocket.cpp:988
-#: ../src/engine/controlsocket.cpp:1014 ../src/engine/controlsocket.cpp:1077
+#: ../src/engine/controlsocket.cpp:982 ../src/engine/controlsocket.cpp:999
+#: ../src/engine/controlsocket.cpp:1025 ../src/engine/controlsocket.cpp:1088
 #, c-format
 msgid "Skipping upload of %s"
 msgstr "Springer upload af %s over"
@@ -7654,7 +7705,7 @@ msgstr "Kun stabile versioner"
 msgid "Stable, beta and nightly versions"
 msgstr "Stabile, beta- og daglige versioner"
 
-#: ../src/interface/sitemanager_controls.cpp:1581
+#: ../src/interface/sitemanager_controls.cpp:1627
 msgid "Start &URL:"
 msgstr "Start-&URL:"
 
@@ -7702,7 +7753,7 @@ msgstr "Status:"
 
 #: ../src/interface/chmoddialog.cpp:98
 msgid "Sticky bit"
-msgstr ""
+msgstr "Sticky bit"
 
 #: ../src/interface/QueueView.cpp:1800
 msgid "Stop and remove &all"
@@ -7809,7 +7860,7 @@ msgstr "TLS-forbindelse etableret."
 msgid "TLS options"
 msgstr "TLS-valgmuligheder"
 
-#: ../src/engine/ftp/ftpcontrolsocket.cpp:456
+#: ../src/engine/ftp/ftpcontrolsocket.cpp:474
 msgid ""
 "TLS session resumption on data connection failed. Closing control connection "
 "to start over."
@@ -7857,7 +7908,7 @@ msgstr "Test afsluttet med succes"
 msgid "Test results"
 msgstr "Testresultater"
 
-#: ../src/engine/ftp/filetransfer.cpp:221
+#: ../src/engine/ftp/filetransfer.cpp:219
 msgid "Testing resume capabilities of server"
 msgstr "Tester serverens formåenheder for genoptagelse"
 
@@ -7871,6 +7922,9 @@ msgid ""
 "proceed, your login credentials and any data exchanged with this server "
 "could get compromised."
 msgstr ""
+"Den SFTP-server, du opretter forbindelse til, anvender algoritmer, der ikke "
+"er sikre. Hvis du fortsætter, vil dine login-detaljer og data, der udveksles "
+"med denne server, kunne bliver kompromitteret."
 
 #: ../src/interface/sitemanager_dialog.cpp:717
 msgid "The Site Manager cannot be used unless the file gets repaired."
@@ -7912,6 +7966,13 @@ msgstr "Bogmærket kunne ikke tilføjes."
 msgid "The bookmarks could not be cleared."
 msgstr "Bogmærkerne kunne ikke ryddes."
 
+#: ../src/engine/ftp/logon.cpp:418
+#, c-format
+msgid ""
+"The configured server type %s cannot be used on a server that identifies "
+"itself of type %s (via TVFS support)"
+msgstr ""
+
 #: ../src/interface/statusbar.cpp:504
 msgid "The connection is encrypted. Click icon for details."
 msgstr "Forbindelsen er krypteret. Klik på ikonet for flere oplysninger."
@@ -7949,13 +8010,15 @@ msgstr "Standard-editor for denne filtype er:"
 
 #: ../src/interface/chmoddialog.cpp:169
 msgid "The entered chmod is invalid"
-msgstr ""
+msgstr "Den angivne chmod er ugyldig"
 
-#: ../src/interface/sitemanager_controls.cpp:1488
+#: ../src/interface/sitemanager_controls.cpp:1489
 msgid ""
 "The entered encoding is not valid. Please enter a valid encoding name, such "
 "as CP1252, ISO8859-1, SHIFT-JIS, ..."
 msgstr ""
+"Den angivne indkodning er ikke gyldig. Angiv en gyldig indkodningstype, "
+"f.eks. CP1252, ISO8859-1, SHIFT-JIS, ..."
 
 #: ../src/interface/filteredit.cpp:221 ../src/interface/filteredit.cpp:292
 #: ../src/interface/filteredit.cpp:333
@@ -8019,12 +8082,12 @@ msgstr ""
 "Filen '%s' kunne ikke åbnes:\n"
 "Den tilknyttede kommando mislykkedes"
 
-#: ../src/engine/sftp/connect.cpp:101
+#: ../src/engine/sftp/connect.cpp:104
 #, c-format
 msgid "The file '%s' does not contain any private keys"
-msgstr ""
+msgstr "Filen '%s' indeholder ingen private nøgler"
 
-#: ../src/interface/sitemanager_dialog.cpp:724 ../src/interface/import.cpp:91
+#: ../src/interface/import.cpp:91 ../src/interface/sitemanager_dialog.cpp:724
 #, c-format
 msgid ""
 "The file '%s' has been created by a more recent version of FileZilla.\n"
@@ -8038,7 +8101,7 @@ msgstr ""
 
 #: ../src/interface/settings/optionspage_connection_sftp.cpp:171
 msgid "The file does not contain a valid or recognized private key"
-msgstr ""
+msgstr "Filen indeholder ikke en gyldig eller genkendt privatnøgle"
 
 #: ../src/interface/settings/optionspage_edit.cpp:161
 msgid "The file selected as default editor does not exist."
@@ -8162,11 +8225,32 @@ msgstr "Den valgte fil er stadig åben i et andet program - luk den."
 msgid "The server could not be added."
 msgstr "Serveren kunne ikke tilføjes."
 
+#: ../src/engine/sftp/connect.cpp:405
+msgid ""
+"The server does not support password authentication, but sent a single "
+"keyboard-interactive prompt named \"Password\". Sending password as "
+"response. Select interactive login type to force an interactive prompt."
+msgstr ""
+"Serveren understøtter ikke autentificering via adgangskode, men sendte et "
+"enkelt prompt, der skal besvares med tastaturet, med navnet \"Password\". "
+"Sender adgangskode som svar. Vælg interaktiv login-type for at gennemtvinge "
+"interaktivt prompt."
+
+#: ../src/engine/sftp/connect.cpp:399
+msgid ""
+"The server sent a single keyboard-interactive prompt named \"Password\", but "
+"we already have sent the password. Select interactive login type to force an "
+"interactive prompt."
+msgstr ""
+"Serveren sendte et enkelt prompt, der skal besvares med tastaturet, med "
+"navnet \"Password\", men vi har allerede sendt adgangskoden. Vælg interaktiv "
+"login-type for at gennemtvinge interaktivt prompt."
+
 #: ../src/interface/netconfwizard.cpp:759
 msgid "The server sent an unexpected or unrecognized reply."
 msgstr "Serveren sendte et uventet svar eller et, der ikke kan genkendes."
 
-#: ../src/interface/sitemanager_controls.cpp:1421
+#: ../src/interface/sitemanager_controls.cpp:1422
 msgid "The server uses following charset encoding for filenames:"
 msgstr "Serveren anvender følgende tegnsætkodning til filnavne:"
 
@@ -8451,8 +8535,8 @@ msgstr "Be&handl filer uden filtypenavn som ASCII-filer"
 msgid "Treat the &following filetypes as ASCII files:"
 msgstr "Behandl &følgende filtyper som ASCII-filer:"
 
-#: ../src/engine/directorylistingparser.cpp:764
-#: ../src/engine/directorylistingparser.cpp:823
+#: ../src/engine/directorylistingparser.cpp:594
+#: ../src/engine/directorylistingparser.cpp:662
 #, c-format
 msgid ""
 "Truncating directory listing to %u items, you can increase this limit in the "
@@ -8524,7 +8608,7 @@ msgstr "Enhed:"
 msgid "Unknown"
 msgstr "Ukendt"
 
-#: ../src/engine/ftp/logon.cpp:784
+#: ../src/engine/ftp/logon.cpp:763
 msgid "Unknown FTP proxy type, cannot generate login sequence."
 msgstr "Ukendt FTP-proxy-type, kan ikke generere login-sekvens."
 
@@ -8671,7 +8755,7 @@ msgstr "Uploader og fortryder redigering"
 msgid "Us&e system defaults for current language"
 msgstr "Bru&g systemets standard for aktuelt sprog"
 
-#: ../src/interface/sitemanager_controls.cpp:1424
+#: ../src/interface/sitemanager_controls.cpp:1425
 msgid "Use &custom charset"
 msgstr "Brug &brugerdefineret tegnsæt"
 
@@ -8688,7 +8772,7 @@ msgstr "Brug &standardredigeringsprogram til tekstfiler"
 msgid "Use &synchronized browsing"
 msgstr "Brug &synkroniseret gennemgang"
 
-#: ../src/interface/sitemanager_controls.cpp:1858
+#: ../src/interface/sitemanager_controls.cpp:1904
 msgid "Use &team root namespace"
 msgstr "Anvend &teamets rod-navnerum"
 
@@ -8696,7 +8780,7 @@ msgstr "Anvend &teamets rod-navnerum"
 msgid "Use Regular Expressions"
 msgstr "Brug regulære udtryk"
 
-#: ../src/interface/sitemanager_controls.cpp:1519
+#: ../src/interface/sitemanager_controls.cpp:1565
 msgid "Use a&ccelerated endpoint"
 msgstr "Anvend a&ccelereret slutpunkt"
 
@@ -8753,6 +8837,12 @@ msgstr ""
 "kontakter ovennævnte server for hver session, første gang du anvender aktiv "
 "tilstand. Kun oplysninger om din version af FileZilla sendes til serveren."
 
+#: ../src/interface/sitemanager_controls.cpp:1525
+msgid "Use with caution, compatibility flags may degrade connection security"
+msgstr ""
+"Vær forsigtig ved anvendelse - kompatibilitetsflag kan forringe "
+"forbindelsens sikkerhed"
+
 #: ../src/interface/loginmanager.cpp:43 ../src/interface/loginmanager.cpp:127
 #: ../src/interface/loginmanager.cpp:333 ../src/interface/loginmanager.cpp:548
 msgid "User:"
@@ -8775,7 +8865,7 @@ msgstr "Brug af almindelig %s er usikkert."
 msgid "Using secure HTTPS"
 msgstr "Bruger sikker HTTPS"
 
-#: ../src/interface/sitemanager_controls.cpp:1433
+#: ../src/interface/sitemanager_controls.cpp:1434
 msgid ""
 "Using the wrong charset can result in filenames not displaying properly."
 msgstr "Brug af forkert tegnsæt kan bevirke, at filnavne vises forkert."
@@ -8789,7 +8879,7 @@ msgstr "Gyldighedsperiode:"
 msgid "Very high"
 msgstr "Meget høj"
 
-#: ../src/engine/ftp/list.cpp:127
+#: ../src/engine/ftp/list.cpp:125
 msgid "View hidden option set, but unsupported by server"
 msgstr ""
 "Vis skjult valgmulighed som er sat, men som ikke understøttes af serveren"
@@ -8968,6 +9058,8 @@ msgstr "Du kan downloade den seneste version fra FileZillas websted:"
 msgid ""
 "You can enter a textual mode change (chmod), or the new mode bits in octal."
 msgstr ""
+"Du kan angive en modusændring som tekst (chmod) eller de nye modus-bits som "
+"oktaltal."
 
 #: ../src/commonui/site.cpp:182
 msgid "You can leave the port field empty to use the default port."
@@ -9061,7 +9153,7 @@ msgstr "Du skal indtaste en skrivbar lokalmappe."
 msgid "You have to enter an account name"
 msgstr "Du skal indtaste et kontonavn"
 
-#: ../src/interface/sitemanager_controls.cpp:1759
+#: ../src/interface/sitemanager_controls.cpp:1805
 msgid "You have to enter both role name and start URL."
 msgstr "Du skal angive både rollenavn og start-URL."
 
@@ -9125,7 +9217,7 @@ msgstr ""
 "Du skal både indtaste en lokal sti og en fjernsti for at aktivere "
 "synkroniseret gennemgang for dette bogmærke."
 
-#: ../src/interface/sitemanager_controls.cpp:1270
+#: ../src/interface/sitemanager_controls.cpp:1271
 msgid ""
 "You need to enter both a local and a remote path to enable synchronized "
 "browsing for this site."
@@ -9218,7 +9310,7 @@ msgstr "fil"
 
 #: ../src/interface/aboutdialog.cpp:88
 msgid "fzssh:"
-msgstr ""
+msgstr "fzssh:"
 
 #: ../src/engine/storj/connect.cpp:116
 msgid "fzstorj belongs to a different version of FileZilla"
@@ -9278,7 +9370,7 @@ msgstr "mindre end"
 
 #: ../src/interface/aboutdialog.cpp:86
 msgid "libfilezilla:"
-msgstr ""
+msgstr "libfilezilla:"
 
 #: ../src/interface/filter_conditions_dialog.cpp:65
 msgid "matches regex"
@@ -9319,6 +9411,28 @@ msgstr "globalt skrivbar"
 #: ../src/interface/aboutdialog.cpp:90
 msgid "wxWidgets:"
 msgstr "wxWidgets:"
+
+#, c-format
+#~ msgid "Could not open remote file, server sent error %s. Description: %s"
+#~ msgstr ""
+#~ "Kunne ikke åbne fil på fjernsted, serveren sendte fejl %s. Beskrivelse: %s"
+
+#, c-format
+#~ msgid ""
+#~ "Could not read from remote file, server sent error %s. Description: %s"
+#~ msgstr ""
+#~ "Kunne ikke læse fra fil på fjernsted, serveren sendt fejl %s. "
+#~ "Beskrivelse: %s"
+
+#, c-format
+#~ msgid ""
+#~ "Could not write to remote file, server sent error %s. Description: %s"
+#~ msgstr ""
+#~ "Kunne ikke skrive til fil på fjernsted, serveren sendte fejl %s. "
+#~ "Beskrivelse: %s"
+
+#~ msgid "Default (Autodetect)"
+#~ msgstr "Standard (Automatisk registrering)"
 
 #~ msgid "&Autodetect"
 #~ msgstr "&Automatisk registrering"

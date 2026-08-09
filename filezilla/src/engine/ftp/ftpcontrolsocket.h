@@ -52,9 +52,11 @@ protected:
 	virtual void Push(std::unique_ptr<COpData> && pNewOpData) override;
 
 	virtual int ResetOperation(int nErrorCode) override;
+	virtual int DoClose(int nErrorCode = FZ_REPLY_DISCONNECTED | FZ_REPLY_ERROR) override;
 
 	// Implicit FZ_REPLY_CONTINUE
 	virtual void Connect(CServer const& server, Credentials const& credentials) override;
+	virtual int Disconnect() override;
 	virtual void List(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), int flags = 0) override;
 	void ChangeDir(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), bool link_discovery = false);
 	virtual void FileTransfer(CFileTransferCommand const& cmd) override;

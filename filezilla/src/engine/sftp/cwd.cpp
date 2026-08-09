@@ -26,9 +26,7 @@ int CSftpChangeDirOpData::Send()
 	switch (opState)
 	{
 	case cwd_init:
-		if (path_.GetType() == DEFAULT) {
-			path_.SetType(currentServer_.GetType());
-		}
+		path_.SetType(currentServer_.GetType());
 
 		if (path_.empty()) {
 			if (currentPath_.empty()) {
@@ -113,6 +111,7 @@ CSftpOpData::continuation CSftpChangeDirOpData::process_name(fz::ssh::sftp::entr
 		trigger_reset(FZ_REPLY_ERROR);
 		return continuation::next;
 	}
+	log(logmsg::debug_info, L"Canonicalized path: %s"sv, name);
 
 	target_ = controlSocket_.ParsePath(name);
 	if (target_.empty()) {
@@ -143,6 +142,12 @@ CSftpOpData::continuation CSftpChangeDirOpData::process_name(fz::ssh::sftp::entr
 CSftpOpData::continuation CSftpChangeDirOpData::process_attributes(fz::ssh::sftp::attributes & attrs)
 {
 	if (!attrs.perms_ || !attrs.is_directory()) {
+		if (attrs.perms_) {
+			log(fz::logmsg::debug_warning, "Mode bits of permissions in received attributes: 0%o", *attrs.perms_ & 0170000);
+		}
+		else {
+			log(fz::logmsg::debug_warning, "Received attributes do not have SSH_FILEXFER_ATTR_PERMISSIONS");
+		}
 		log(fz::logmsg::error, _("Not a directory"));
 		if (link_discovery_) {
 			log(logmsg::debug_info, L"Symlink does not link to a directory, probably a file");

@@ -188,7 +188,7 @@ bool Site::ParseUrl(std::wstring const& host, std::wstring const& port, std::wst
 
 bool Site::ParseUrl(std::wstring host, unsigned int port, std::wstring user, std::wstring pass, std::wstring &error, CServerPath &path, ServerProtocol const hint)
 {
-	server.SetType(DEFAULT);
+	server.SetType(UNIX);
 
 	if (host.empty()) {
 		error = fztranslate("No host given, please enter a host.");

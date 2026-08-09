@@ -97,6 +97,13 @@ bool CSiteManagerSite::Load(wxWindow* parent, bool with_comments_and_color)
 	}
 
 	{
+		sftpPage_ = new wxPanel(this);
+		AddPage(sftpPage_, L"SFTP");
+		auto * main = lay.createMain(sftpPage_, 1);
+		controls_.emplace_back(std::make_unique<SftpSiteControls>(*sftpPage_, lay, *main));
+	}
+
+	{
 		s3Page_ = new wxPanel(this);
 		AddPage(s3Page_, L"S3");
 		auto * main = lay.createMain(s3Page_, 1);
@@ -174,6 +181,20 @@ void CSiteManagerSite::SetControlVisibility(ServerProtocol protocol, LogonType t
 			int const charsetPageIndex = FindPage(charsetPage_);
 			if (charsetPageIndex != wxNOT_FOUND) {
 				RemovePage(charsetPageIndex);
+			}
+		}
+	}
+
+	if (sftpPage_) {
+		if (protocol == SFTP) {
+			if (FindPage(sftpPage_) == wxNOT_FOUND) {
+				AddPage(sftpPage_, L"SFTP");
+			}
+		}
+		else {
+			int const sftpPageIndex = FindPage(sftpPage_);
+			if (sftpPageIndex != wxNOT_FOUND) {
+				RemovePage(sftpPageIndex);
 			}
 		}
 	}

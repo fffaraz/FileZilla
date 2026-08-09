@@ -1,5 +1,4 @@
 #include "../filezilla.h"
-
 #include "../../include/engine_options.h"
 #include <fzssh/agent.hpp>
 
@@ -51,6 +50,10 @@ int CSftpConnectOpData::Send()
 				if (c == ' ' || c == '-') {
 					c = '_';
 				}
+			}
+
+			if (currentServer_.GetExtraParameter("allow_non_crlf_identification_string"sv) == L"1") {
+				params.compatibility_flags_ |= fz::ssh::compatibility_flags::identification_string_not_terminated_by_crlf;
 			}
 
 			std::string user = (controlSocket_.credentials_.logonType_ == LogonType::anonymous) ? "anonymous" : fz::to_utf8(currentServer_.GetUser());
@@ -111,10 +114,18 @@ bool CSftpConnectOpData::load_keys()
 		}
 	}
 
-	agent_ = std::make_unique<fz::ssh::agent_connection>(engine_.GetThreadPool(), *this, controlSocket_.logger_);
+#ifndef USE_MAC_SANDBOX
+	fz::ssh::agent_compatibility_flags flags{};
+	if (currentServer_.GetExtraParameter("allow_agent_keys_of_unknown_type"sv) == L"1") {
+		flags |= fz::ssh::agent_compatibility_flags::allow_keys_with_unknown_types;
+	}
+	agent_ = std::make_unique<fz::ssh::agent_connection>(engine_.GetThreadPool(), *this, controlSocket_.logger_, flags);
 	agent_->get_keys(*this);
-
 	return true;
+#else
+	set_keys_loaded();
+	return false;
+#endif
 }
 
 bool CSftpConnectOpData::auth_with_key()
@@ -124,6 +135,8 @@ bool CSftpConnectOpData::auth_with_key()
 	}
 
 	while (!keys_.empty()) {
+		method_ = "publickey"sv;
+
 		auto & key = keys_.back();
 
 		if (key.pubkey_) {
@@ -154,10 +167,16 @@ void CSftpConnectOpData::on_auth_requested(fz::ssh::session*, std::string const&
 	if (!is_continuation) {
 		if (tried_key_ || tried_pw_ || tried_interactive_) {
 			log(logmsg::reply, _("Authentication failed"));
-			if (tried_key_ && !keys_.empty()) {
+			if (tried_interactive_ && method_ == "keyboard-interactive"sv) {
+				if (++retry_counter_ < 3) {
+					tried_pw_ = tried_key_ = tried_interactive_ = false;
+					log(logmsg::debug_warning, L"Server rejected entered response. Starting over authentication from scratch."sv);
+				}
+			}
+			else if (tried_key_ && !keys_.empty()) {
 				keys_.pop_back();
 				if (!keys_.empty()) {
-					log(logmsg::debug_info, L"Starting over authentication with next available public key");
+					log(logmsg::debug_info, L"Starting over authentication with next available public key"sv);
 					tried_pw_ = tried_key_ = tried_interactive_ = false;
 				}
 			}
@@ -192,6 +211,7 @@ void CSftpConnectOpData::next_auth()
 		else if (!controlSocket_.credentials_.GetPass().empty()) {
 			tried_pw_ = true;
 			log(logmsg::command, _("Sending password"));
+			method_ = "password"sv;
 			controlSocket_.ssh_->auth_with_password(fz::to_utf8(controlSocket_.credentials_.GetPass()));
 			return;
 		}
@@ -200,6 +220,7 @@ void CSftpConnectOpData::next_auth()
 	if (controlSocket_.credentials_.logonType_ != LogonType::anonymous && method_available(methods_, "keyboard-interactive"sv) && !tried_interactive_) {
 		tried_interactive_ = true;
 		log(logmsg::command, _("Requesting keyboard-interactive authentication"));
+		method_ = "keyboard-interactive"sv;
 		controlSocket_.ssh_->auth_keyboard_interactive();
 		return;
 	}
@@ -216,7 +237,13 @@ void CSftpConnectOpData::on_auth_done(fz::ssh::session*)
 	log(logmsg::command, _("Requesting SFTP subsystem"));
 
 	auto si = controlSocket_.ssh_->open_channel(fz::ssh::channel_type::subsystem, "sftp"sv);
-	sftp_ = std::make_unique<fz::ssh::sftp::sftp_client>(std::move(si), controlSocket_, controlSocket_.logger_);
+
+	fz::ssh::sftp::compatibility_flags flags{};
+	if (currentServer_.GetExtraParameter("ignore_unknown_flags_in_attributes"sv) == L"1") {
+		flags |= fz::ssh::sftp::compatibility_flags::ignore_unknown_flags_in_attributes;
+	}
+
+	sftp_ = std::make_unique<fz::ssh::sftp::sftp_client>(std::move(si), controlSocket_, controlSocket_.logger_, flags);
 }
 
 void CSftpConnectOpData::on_sftp_ready(fz::ssh::sftp::sftp_client*)
@@ -252,15 +279,21 @@ void CSftpConnectOpData::on_agent_keys(fz::ssh::agent_connection* conn, std::vec
 		keys_.emplace_back(std::move(i));
 	}
 
-	used_keys_.clear();
+	set_keys_loaded();
+	next_auth();
+}
 
+void CSftpConnectOpData::set_keys_loaded()
+{
+	if (keys_loaded_) {
+		return;
+	}
+
+	keys_loaded_ = true;
+	used_keys_.clear();
 	log(logmsg::debug_info, _("Loaded %u distinct keys"), keys_.size());
 
 	std::reverse(keys_.begin(), keys_.end());
-
-	keys_loaded_ = true;
-
-	next_auth();
 }
 
 void CSftpConnectOpData::on_auth_pubkey_ok(fz::ssh::session*)
@@ -305,6 +338,7 @@ void CSftpConnectOpData::set_password(std::string const& pw)
 {
 	tried_pw_ = true;
 	log(logmsg::command, _("Sending password"));
+	method_ = "password"sv;
 	controlSocket_.ssh_->auth_with_password(pw);
 }
 

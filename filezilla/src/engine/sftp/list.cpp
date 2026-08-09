@@ -22,9 +22,7 @@ int CSftpListOpData::Send()
 	}
 
 	if (opState == list_init) {
-		if (path_.GetType() == DEFAULT) {
-			path_.SetType(currentServer_.GetType());
-		}
+		path_.SetType(currentServer_.GetType());
 		refresh_ = (flags_ & LIST_FLAG_REFRESH) != 0;
 		fallback_to_current_ = !path_.empty() && (flags_ & LIST_FLAG_FALLBACK_CURRENT) != 0;
 
@@ -169,13 +167,13 @@ CSftpOpData::continuation CSftpListOpData::process_name(fz::ssh::sftp::entry & e
 	}
 
 	std::optional<int> flags;
-	if (longname.empty() && e.perms_) {
+	if (e.perms_) {
 		flags.emplace();
 		if (e.is_directory()) {
 			*flags |= CDirentry::flag_dir;
 		}
 		if (e.is_symlink()) {
-			*flags |= CDirentry::flag_link;
+			*flags |= CDirentry::flag_dir | CDirentry::flag_link;
 		}
 	}
 

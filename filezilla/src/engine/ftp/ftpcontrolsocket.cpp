@@ -334,6 +334,24 @@ void CFtpControlSocket::List(CServerPath const& path, std::wstring const& subDir
 	Push(std::make_unique<CFtpListOpData>(*this, path, subDir, flags));
 }
 
+int CFtpControlSocket::Disconnect()
+{
+	if (operations_.empty() && send_buffer_.empty() && active_layer_ && active_layer_->get_state() == fz::socket_state::connected) {
+		active_layer_->shutdown();
+	}
+
+	return CRealControlSocket::Disconnect();
+}
+
+int CFtpControlSocket::DoClose(int nErrorCode)
+{
+	// Also consider whether there is a data connnection before shutdown
+	if ((nErrorCode & FZ_REPLY_PASSWORDFAILED) && send_buffer_.empty() && active_layer_ && active_layer_->get_state() == fz::socket_state::connected) {
+		active_layer_->shutdown();
+	}
+	return CRealControlSocket::DoClose(nErrorCode);
+}
+
 int CFtpControlSocket::ResetOperation(int nErrorCode)
 {
  	log(logmsg::debug_verbose, L"CFtpControlSocket::ResetOperation(%d)", nErrorCode);

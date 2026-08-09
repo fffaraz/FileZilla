@@ -399,12 +399,30 @@ bool GetServer(pugi::xml_node node, Site & site)
 	}
 	site.server.SetProtocol(static_cast<ServerProtocol>(protocol));
 
-	int type = GetTextElementInt(node, "Type");
-	if (type < 0 || type >= SERVERTYPE_MAX) {
-		return false;
+	if (site.server.HasFeature(ProtocolFeature::ServerType)) {
+		int type = GetTextElementInt(node, "Type");
+		if (type < 0 || static_cast<unsigned int>(type) > SERVERTYPE_MAX) {
+			return false;
+		}
+		if (type) {
+			--type;
+		}
+		else {
+			// See if we can recover type from a stored remote path
+			std::wstring p = GetTextElement(node, "RemoteDir");
+			if (p.empty()) {
+				p = GetTextElement(node, "RemotePath");
+			}
+			size_t pos = p.find(' ');
+			if (pos != std::string::npos) {
+				auto v = fz::to_integral<unsigned int>(p.substr(0, pos));
+				if (v > 0 && v <= SERVERTYPE_MAX) {
+					type = --v;
+				}
+			}
+		}
+		site.server.SetType(static_cast<ServerType>(type));
 	}
-
-	site.server.SetType(static_cast<ServerType>(type));
 
 	int logonType = GetTextElementInt(node, "Logontype");
 	if (logonType < 0 || logonType >= static_cast<int>(LogonType::count)) {

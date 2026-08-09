@@ -55,9 +55,7 @@ int CSftpFileTransferOpData::Send()
 
 		opState = filetransfer_waitcwd;
 
-		if (remotePath_.GetType() == DEFAULT) {
-			remotePath_.SetType(currentServer_.GetType());
-		}
+		remotePath_.SetType(currentServer_.GetType());
 
 		controlSocket_.ChangeDir(remotePath_);
 		return FZ_REPLY_CONTINUE;
@@ -485,12 +483,12 @@ CSftpOpData::continuation CSftpFileTransferOpData::do_process_status(fz::ssh::sf
 				finalize();
 			}
 			else {
-				log(logmsg::error, fztranslate("Could not read from remote file, server sent error %s. Description: %s"), fz::ssh::sftp::to_string(code), msg);
+				log(logmsg::error, fztranslate("Could not read from remote file: %s"), msg);
 				trigger_reset(FZ_REPLY_ERROR);
 			}
 		}
 		else {
-			log(logmsg::error, fztranslate("Could not open remote file, server sent error %s. Description: %s"), fz::ssh::sftp::to_string(code), msg);
+			log(logmsg::error, fztranslate("Could not open remote file: %s"), msg);
 			trigger_reset(FZ_REPLY_ERROR);
 		}
 	}
@@ -503,11 +501,11 @@ CSftpOpData::continuation CSftpFileTransferOpData::do_process_status(fz::ssh::sf
 			return continuation::next;
 		}
 		else if (handle_.empty() && !finalizing_) {
-			log(logmsg::error, fztranslate("Could not open remote file, server sent error %s. Description: %s"), fz::ssh::sftp::to_string(code), msg);
+			log(logmsg::error, fztranslate("Could not open remote file: %s"), msg);
 			trigger_reset(FZ_REPLY_ERROR);
 		}
 		else {
-			log(logmsg::error, fztranslate("Could not write to remote file, server sent error %s. Description: %s"), fz::ssh::sftp::to_string(code), msg);
+			log(logmsg::error, fztranslate("Could not write to remote file: %s"), msg);
 			trigger_reset(FZ_REPLY_ERROR);
 		}
 	}

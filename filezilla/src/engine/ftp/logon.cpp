@@ -386,20 +386,6 @@ int CFtpLogonOpData::ParseResponse()
 			CServerCapabilities::SetCapability(currentServer_, syst_command, no);
 		}
 
-		if (currentServer_.GetType() == DEFAULT && code == 2) {
-			if (response.size() > 7 && response.substr(3, 4) == L" MVS") {
-				currentServer_.SetType(MVS);
-			}
-			else if (response.size() > 12 && fz::str_toupper_ascii(response.substr(3, 9)) == L" NONSTOP ") {
-				currentServer_.SetType(HPNONSTOP);
-			}
-
-			if (!controlSocket_.m_MultilineResponseLines.empty() && fz::str_tolower_ascii(controlSocket_.m_MultilineResponseLines.front().substr(4, 4)) == L"z/vm") {
-				CServerCapabilities::SetCapability(currentServer_, syst_command, yes, controlSocket_.m_MultilineResponseLines.front().substr(4) + L" " + response.substr(4));
-				currentServer_.SetType(ZVM);
-			}
-		}
-
 		if (response.find(L"FileZilla") != std::wstring::npos) {
 			neededCommands[LOGON_CLNT] = 0;
 			neededCommands[LOGON_OPTSUTF8] = 0;
@@ -426,6 +412,11 @@ int CFtpLogonOpData::ParseResponse()
 		const CharsetEncoding encoding = currentServer_.GetEncodingType();
 		if (encoding == ENCODING_UTF8 && CServerCapabilities::GetCapability(currentServer_, utf8_command) != yes) {
 			log(logmsg::status, _("Server does not support non-ASCII characters."));
+		}
+
+		if (CServerCapabilities::GetCapability(currentServer_, tvfs_support) == yes && currentServer_.GetType() != ServerType::UNIX) {
+			log(logmsg::error, _("The configured server type %s cannot be used on a server that identifies itself of type %s (via TVFS support)"), CServer::GetNameFromServerType(currentServer_.GetType()), CServer::GetNameFromServerType(UNIX));
+			return FZ_REPLY_CRITICALERROR;
 		}
 	}
 	else if (opState == LOGON_PROT) {
@@ -459,18 +450,6 @@ int CFtpLogonOpData::ParseResponse()
 				break;
 			}
 			else if (cap == yes) {
-				if (currentServer_.GetType() == DEFAULT) {
-					if (system.substr(0, 3) == L"MVS") {
-						currentServer_.SetType(MVS);
-					}
-					else if (fz::str_toupper_ascii(system.substr(0, 4)) == L"Z/VM") {
-						currentServer_.SetType(ZVM);
-					}
-					else if (fz::str_toupper_ascii(system.substr(0, 8)) == L"NONSTOP ") {
-						currentServer_.SetType(HPNONSTOP);
-					}
-				}
-
 				if (system.find(L"FileZilla") != std::wstring::npos) {
 					neededCommands[LOGON_CLNT] = 0;
 					neededCommands[LOGON_OPTSUTF8] = 0;

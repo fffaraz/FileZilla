@@ -17,7 +17,6 @@ struct CServerTypeTraits
 };
 
 static const CServerTypeTraits traits[SERVERTYPE_MAX] = {
-	{ L"/",   true,     0,    0,    false, 0, 0,   true,  false }, // Failsafe
 	{ L"/",   true,     0,    0,    false, 0, 0,   true,  false },
 	{ L".",   false,  '[',  ']',    false, 0, '^', false, false },
 	{ L"\\/", false,    0,    0,    false, 0, 0,   true,  false }, // DOS with backslashes
@@ -44,7 +43,7 @@ bool CServerPathData::operator==(CServerPathData const& cmp) const
 }
 
 CServerPath::CServerPath()
-	: m_type(DEFAULT)
+	: m_type(UNIX)
 {
 }
 
@@ -77,47 +76,46 @@ bool CServerPath::SetPath(std::wstring newPath)
 	return SetPath(newPath, false);
 }
 
+ServerType CServerPath::GuessType(std::wstring_view const& path, bool isFile)
+{
+	size_t pos1 = path.find(L":[");
+	if (pos1 != std::wstring::npos) {
+		size_t pos2 = path.rfind(']');
+		if (pos2 != std::string::npos && pos2 == (path.size() - 1) && !isFile) {
+			return VMS;
+		}
+		else if (isFile && pos2 > pos1) {
+			return VMS;
+		}
+	}
+	else if (path.size() >= 3 &&
+		((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
+		path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
+	{
+		return DOS;
+	}
+	else if (path[0] == FTP_MVS_DOUBLE_QUOTE && path.back() == FTP_MVS_DOUBLE_QUOTE) {
+		return MVS;
+	}
+	else if (path[0] == ':' && (pos1 = path.find(':'), 2) != std::wstring::npos) {
+		size_t slash = path.find('/');
+		if (slash == std::wstring::npos || slash > pos1) {
+			return VXWORKS;
+		}
+	}
+	else if (path[0] == '\\') {
+		return DOS_VIRTUAL;
+	}
+
+	return UNIX;
+}
+
 bool CServerPath::SetPath(std::wstring &newPath, bool isFile)
 {
 	std::wstring path = newPath;
 
 	if (path.empty()) {
 		return false;
-	}
-
-	if (m_type == DEFAULT) {
-		size_t pos1 = path.find(L":[");
-		if (pos1 != std::wstring::npos) {
-			size_t pos2 = path.rfind(']');
-			if (pos2 != std::string::npos && pos2 == (path.size() - 1) && !isFile) {
-				m_type = VMS;
-			}
-			else if (isFile && pos2 > pos1) {
-				m_type = VMS;
-			}
-		}
-		else if (path.size() >= 3 &&
-			((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) &&
-			path[1] == ':' && (path[2] == '\\' || path[2] == '/'))
-		{
-			m_type = DOS;
-		}
-		else if (path[0] == FTP_MVS_DOUBLE_QUOTE && path.back() == FTP_MVS_DOUBLE_QUOTE) {
-			m_type = MVS;
-		}
-		else if (path[0] == ':' && (pos1 = path.find(':'), 2) != std::wstring::npos) {
-			size_t slash = path.find('/');
-			if (slash == std::wstring::npos || slash > pos1) {
-				m_type = VXWORKS;
-			}
-		}
-		else if (path[0] == '\\') {
-			m_type = DOS_VIRTUAL;
-		}
-
-		if (m_type == DEFAULT) {
-			m_type = UNIX;
-		}
 	}
 
 	m_data.clear();
@@ -311,7 +309,8 @@ std::wstring CServerPath::GetSafePath() const
 	wchar_t * const start = &safepath[0];
 	wchar_t * t = &safepath[0];
 
-	t = fast_sprint_number(t, m_type);
+	// Historically, 0 was DEFAULT
+	t = fast_sprint_number(t, m_type + 1);
 	*(t++) = ' ';
 	t = fast_sprint_number(t, data.m_prefix ? data.m_prefix->size() : 0);
 
@@ -359,7 +358,7 @@ bool CServerPath::DoSetSafePath(std::wstring const& path)
 
 	wchar_t const* p = begin;
 
-	int type = 0;
+	size_t type = 0;
 	do {
 		if (*p < '0' || *p > '9') {
 			return false;
@@ -367,11 +366,16 @@ bool CServerPath::DoSetSafePath(std::wstring const& path)
 		type *= 10;
 		type += *p - '0';
 
-		if (type >= SERVERTYPE_MAX) {
+		if (type > SERVERTYPE_MAX) {
 			return false;
 		}
 		++p;
 	} while (*p != ' ');
+
+	// Historically 0 was 'DEFAULT'
+	if (type) {
+		--type;
+	}
 
 	m_type = static_cast<ServerType>(type);
 	++p;
@@ -444,7 +448,10 @@ bool CServerPath::DoSetSafePath(std::wstring const& path)
 
 bool CServerPath::SetType(ServerType type)
 {
-	if (!empty() && m_type != DEFAULT && m_type != type) {
+	if (type >= SERVERTYPE_MAX) {
+		return false;
+	}
+	if (!empty() && m_type != type) {
 		return false;
 	}
 

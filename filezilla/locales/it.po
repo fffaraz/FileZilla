@@ -1,9 +1,9 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: FileZilla italian translation v. 20.03.2026\n"
+"Project-Id-Version: FileZilla italian translation v. 17.04.2026\n"
 "Report-Msgid-Bugs-To: https://trac.filezilla-project.org/\n"
-"POT-Creation-Date: 2026-04-09 09:56+0200\n"
-"PO-Revision-Date: 2026-03-19 20:45+0100\n"
+"POT-Creation-Date: 2026-05-06 15:45+0200\n"
+"PO-Revision-Date: 2026-04-17 08:10+0200\n"
 "Last-Translator: bovirus <bovirus@gmail.comn>\n"
 "Language-Team: bovirus - Andrea Sanavia - Vincenzo Reale - Riccardo Vianello "
 "<bovirus@gmail.com>\n"
@@ -182,7 +182,7 @@ msgstr "%u - Nome utente"
 msgid "%w - Proxy password"
 msgstr "%w - Password proxy"
 
-#: ../src/interface/sitemanager_controls.cpp:1527
+#: ../src/interface/sitemanager_controls.cpp:1567
 msgid "&AWS S3 encryption"
 msgstr "Criptazione &AW S3"
 
@@ -312,9 +312,9 @@ msgstr "&Sfoglia"
 
 #: ../src/interface/settings/optionspage_edit.cpp:71
 #: ../src/interface/edithandler.cpp:1792
-#: ../src/interface/sitemanager_controls.cpp:1144
 #: ../src/interface/sitemanager_dialog.cpp:278
 #: ../src/interface/bookmarks_dialog.cpp:95 ../src/interface/search.cpp:1344
+#: ../src/interface/sitemanager_controls.cpp:1144
 msgid "&Browse..."
 msgstr "&Sfoglia..."
 
@@ -452,7 +452,7 @@ msgstr ""
 msgid "&Display size in bytes"
 msgstr "Visualizza dimensione in b&yte"
 
-#: ../src/interface/sitemanager_controls.cpp:1791
+#: ../src/interface/sitemanager_controls.cpp:1831
 msgid "&Domain:"
 msgstr "&Dominio:"
 
@@ -645,9 +645,9 @@ msgstr "&Massima"
 msgid "&Highest available port:"
 msgstr "&Massima porta disponibile:"
 
+#: ../src/interface/quickconnectbar.cpp:40
 #: ../src/interface/sitemanager_controls.cpp:139
 #: ../src/interface/sitemanager_controls.cpp:489
-#: ../src/interface/quickconnectbar.cpp:40
 msgid "&Host:"
 msgstr "&Host:"
 
@@ -802,13 +802,13 @@ msgstr "&Normale"
 #: ../src/interface/dialogex.cpp:305
 #: ../src/interface/sitemanager_dialog.cpp:347
 #: ../src/interface/bookmarks_dialog.cpp:340
-#: ../src/interface/loginmanager.cpp:68 ../src/interface/loginmanager.cpp:157
-#: ../src/interface/loginmanager.cpp:257 ../src/interface/loginmanager.cpp:380
-#: ../src/interface/loginmanager.cpp:469 ../src/interface/loginmanager.cpp:600
 #: ../src/interface/fileexistsdlg.cpp:102
 #: ../src/interface/verifycertdialog.cpp:638
 #: ../src/interface/verifycertdialog.cpp:708
-#: ../src/interface/chmoddialog.cpp:145
+#: ../src/interface/chmoddialog.cpp:145 ../src/interface/loginmanager.cpp:68
+#: ../src/interface/loginmanager.cpp:157 ../src/interface/loginmanager.cpp:257
+#: ../src/interface/loginmanager.cpp:380 ../src/interface/loginmanager.cpp:469
+#: ../src/interface/loginmanager.cpp:600
 msgid "&OK"
 msgstr "&OK"
 
@@ -833,8 +833,8 @@ msgstr "&Password:"
 msgid "&Play sound"
 msgstr "&Riproduci suono"
 
-#: ../src/interface/sitemanager_controls.cpp:146
 #: ../src/interface/quickconnectbar.cpp:56
+#: ../src/interface/sitemanager_controls.cpp:146
 msgid "&Port:"
 msgstr "&Porta:"
 
@@ -983,7 +983,7 @@ msgstr "&Trova"
 msgid "&Search remote files..."
 msgstr "&Cerca i file remoti..."
 
-#: ../src/interface/sitemanager_controls.cpp:1536
+#: ../src/interface/sitemanager_controls.cpp:1576
 msgid "&Select a key:"
 msgstr "&Seleziona una chiave:"
 
@@ -1150,10 +1150,10 @@ msgstr "&Usa l'indirizzo IP esterno del server"
 msgid "&Use thousands separator"
 msgstr "Usa &separatore delle migliaia"
 
+#: ../src/interface/loginmanager.cpp:344
 #: ../src/interface/sitemanager_controls.cpp:190
 #: ../src/interface/sitemanager_controls.cpp:492
 #: ../src/interface/sitemanager_controls.cpp:610
-#: ../src/interface/loginmanager.cpp:344
 msgid "&User:"
 msgstr "&Utente:"
 
@@ -1166,7 +1166,7 @@ msgstr "Nome &utente:"
 msgid "&Version %s"
 msgstr "&Versione %s"
 
-#: ../src/interface/sitemanager_controls.cpp:1785
+#: ../src/interface/sitemanager_controls.cpp:1825
 msgid "&Version 3"
 msgstr "&Versione 3"
 
@@ -1524,7 +1524,7 @@ msgstr "Chiave API:"
 msgid "ASCII"
 msgstr "ASCII"
 
-#: ../src/interface/sitemanager_controls.cpp:1530
+#: ../src/interface/sitemanager_controls.cpp:1570
 msgid "AWS &KMS encryption"
 msgstr "Criptazione AVM &KMS"
 
@@ -1553,7 +1553,7 @@ msgstr "L'accesso ad alcune cartelle locali non può essere ripristinato:"
 msgid "Acco&unt ID:"
 msgstr "ID acco&unt:"
 
-#: ../src/engine/server.cpp:757 ../src/engine/server.cpp:786
+#: ../src/engine/server.cpp:761 ../src/engine/server.cpp:790
 msgid "Account"
 msgstr "Account"
 
@@ -1689,11 +1689,19 @@ msgstr ""
 "Permetti il passaggio ad altra modalità di tras&ferimento in caso di "
 "fallimento"
 
+#: ../src/interface/sitemanager_controls.cpp:1519
+msgid "Allow SSH agent keys of unknown type"
+msgstr ""
+
 #: ../src/interface/netconfwizard.cpp:113
 msgid "Allow fallback to other transfer mode on failure"
 msgstr ""
 "Permetti il passaggio ad altra modalità di trasferimento in caso di "
 "fallimento"
+
+#: ../src/interface/sitemanager_controls.cpp:1517
+msgid "Allow peer identification string not terminated by CRLF"
+msgstr ""
 
 #: ../src/interface/verifyhostkeydialog.cpp:124
 msgid "Allow use of the insecure algorithms with this server."
@@ -1761,7 +1769,7 @@ msgstr ""
 "Un oggetto con lo stesso nome del oggetto trascinato già esiste nel percorso "
 "destinazione."
 
-#: ../src/engine/server.cpp:792
+#: ../src/engine/server.cpp:796
 msgid "Anonymous"
 msgstr "Anonimo"
 
@@ -1796,7 +1804,7 @@ msgstr "App&lica solo alle cartelle"
 msgid "Application &Key:"
 msgstr "C&hiave applicazione:"
 
-#: ../src/engine/server.cpp:763 ../src/engine/server.cpp:790
+#: ../src/engine/server.cpp:767 ../src/engine/server.cpp:794
 msgid "Application Default Credentials"
 msgstr "Credenziali predefinite applicazione"
 
@@ -1826,7 +1834,7 @@ msgstr "Come scheda nel pannello coda trasferimento"
 msgid "Ask for action"
 msgstr "Richiedi un'azione"
 
-#: ../src/engine/server.cpp:748 ../src/engine/server.cpp:780
+#: ../src/engine/server.cpp:752 ../src/engine/server.cpp:784
 msgid "Ask for password"
 msgstr "Richiedi password"
 
@@ -1858,13 +1866,21 @@ msgstr "A questo punto tutte le informazioni richieste sono state raccolte."
 msgid "Attribute"
 msgstr "Attributo"
 
-#: ../src/interface/loginmanager.cpp:189
+#: ../src/engine/sftp/connect.cpp:140
+msgid "Authenticating with public key"
+msgstr "Autenticazione con chiave pubblica"
+
+#: ../src/engine/sftp/connect.cpp:164
+msgid "Authentication failed"
+msgstr "Autenticazione non riuscita"
+
+#: ../src/engine/sftp/connect.cpp:174 ../src/interface/loginmanager.cpp:189
 msgid "Authentication required"
 msgstr "Richiesta autenticazione"
 
-#: ../src/engine/sftp/connect.cpp:205
-msgid "Authentication successful, requesting SFTP subsystem"
-msgstr "Autenticazione completata, richiesta sottosistema SFTP"
+#: ../src/engine/sftp/connect.cpp:223
+msgid "Authentication successful"
+msgstr "Autenticazione completata"
 
 #: ../src/interface/settings/optionspage_themes.cpp:149
 msgid "Author:"
@@ -1886,7 +1902,7 @@ msgstr "B <Simbolo d'unità per i byte. Traduci solo la prima lettera>"
 msgid "B&ypass proxy"
 msgstr "I&gnora proxy"
 
-#: ../src/engine/sftp/connect.cpp:141
+#: ../src/engine/sftp/connect.cpp:150
 msgid "Bad key info"
 msgstr "Info chiave errate"
 
@@ -1981,7 +1997,7 @@ msgstr "C&opia le URL con le password negli Appunti"
 msgid "C&ustom"
 msgstr "&Personalizza"
 
-#: ../src/interface/sitemanager_controls.cpp:1542
+#: ../src/interface/sitemanager_controls.cpp:1582
 msgid "C&ustom KMS ARN:"
 msgstr "KMS ARN personali&zzata:"
 
@@ -2011,14 +2027,14 @@ msgstr "Calcolo scostamento fuso orario del server..."
 #: ../src/interface/dialogex.cpp:309
 #: ../src/interface/sitemanager_dialog.cpp:350
 #: ../src/interface/bookmarks_dialog.cpp:344
-#: ../src/interface/loginmanager.cpp:72 ../src/interface/loginmanager.cpp:161
-#: ../src/interface/loginmanager.cpp:261 ../src/interface/loginmanager.cpp:384
-#: ../src/interface/loginmanager.cpp:474 ../src/interface/loginmanager.cpp:604
 #: ../src/interface/listctrlex.cpp:744 ../src/interface/fileexistsdlg.cpp:106
 #: ../src/interface/verifycertdialog.cpp:395
 #: ../src/interface/verifycertdialog.cpp:645
 #: ../src/interface/verifycertdialog.cpp:715
-#: ../src/interface/chmoddialog.cpp:150
+#: ../src/interface/chmoddialog.cpp:150 ../src/interface/loginmanager.cpp:72
+#: ../src/interface/loginmanager.cpp:161 ../src/interface/loginmanager.cpp:261
+#: ../src/interface/loginmanager.cpp:384 ../src/interface/loginmanager.cpp:474
+#: ../src/interface/loginmanager.cpp:604
 msgid "Cancel"
 msgstr "Annulla"
 
@@ -2065,7 +2081,7 @@ msgstr ""
 "Impossibile comparare le cartelle. Sono abilitati filtri differenti per le "
 "cartelle locali e remote"
 
-#: ../src/engine/controlsocket.cpp:516
+#: ../src/engine/controlsocket.cpp:527
 #, c-format
 msgid ""
 "Cannot convert to the server's character set. You can only use characters "
@@ -2203,6 +2219,8 @@ msgid ""
 "Characters that are not supported by the local operating system in filenames "
 "are replaced if downloading such a file."
 msgstr ""
+"Se si scarica un file di questo tipo vengono sostituiti i caratteri non "
+"supportati dal sistema operativo locale nei nomi dei file."
 
 #: ../src/interface/sitemanager_site.cpp:90
 msgid "Charset"
@@ -2432,6 +2450,10 @@ msgstr "Soglia di confron&to (in minuti):"
 msgid "Comparison threshold needs to be between 0 and 1440 minutes."
 msgstr "La soglia di confronto deve essere tra 0 e 1440 minuti."
 
+#: ../src/interface/sitemanager_controls.cpp:1516
+msgid "Compatibility flags:"
+msgstr ""
+
 #: ../src/interface/aboutdialog.cpp:56
 msgid "Compiled for:"
 msgstr "Compilata per:"
@@ -2523,12 +2545,12 @@ msgstr "Connessione"
 msgid "Connecting to %s"
 msgstr "Connessione a %s"
 
-#: ../src/engine/ftp/logon.cpp:99 ../src/engine/controlsocket.cpp:873
+#: ../src/engine/ftp/logon.cpp:99 ../src/engine/controlsocket.cpp:884
 #, c-format
 msgid "Connecting to %s through %s proxy"
 msgstr "Connessione a %s attraverso proxy %s"
 
-#: ../src/engine/storj/connect.cpp:33 ../src/engine/controlsocket.cpp:814
+#: ../src/engine/storj/connect.cpp:33 ../src/engine/controlsocket.cpp:825
 #, c-format
 msgid "Connecting to %s..."
 msgstr "Connessione a %s..."
@@ -2541,14 +2563,14 @@ msgstr "Connessione"
 msgid "Connection attempt failed"
 msgstr "Tentativo di connessione non riuscito"
 
-#: ../src/engine/controlsocket.cpp:773
+#: ../src/engine/controlsocket.cpp:784
 #, c-format
 msgid "Connection attempt failed with \"%s\", trying next address."
 msgstr ""
 "Tentativo di connessione con \"%s\" non riuscito, prova l'indirizzo "
 "successivo."
 
-#: ../src/engine/controlsocket.cpp:779
+#: ../src/engine/controlsocket.cpp:790
 #, c-format
 msgid "Connection attempt failed with \"%s\"."
 msgstr "Tentativo di connessione con \"%s\" non riuscito."
@@ -2589,7 +2611,7 @@ msgstr "Connessione non permessa dalle regole"
 msgid "Connection refused"
 msgstr "Connessione rifiutata"
 
-#: ../src/engine/controlsocket.cpp:533
+#: ../src/engine/controlsocket.cpp:544
 #, c-format
 msgid "Connection timed out after %d second of inactivity"
 msgid_plural "Connection timed out after %d seconds of inactivity"
@@ -2665,7 +2687,7 @@ msgstr "Impossibile completare l'operazione"
 msgid "Could not connect to server"
 msgstr "Impossibile collegarsi al server"
 
-#: ../src/engine/controlsocket.cpp:909
+#: ../src/engine/controlsocket.cpp:920
 #, c-format
 msgid "Could not connect to server: %s"
 msgstr "Impossibile collegarsi al server: %s"
@@ -2765,7 +2787,7 @@ msgstr "Impossibile generare sequenza accesso personalizzata."
 msgid "Could not generate key"
 msgstr "Impossibile generare la chiave"
 
-#: ../src/engine/sftp/cwd.cpp:186 ../src/engine/sftp/cwd.cpp:195
+#: ../src/engine/sftp/cwd.cpp:211
 #, c-format
 msgid "Could not get directory information: %s"
 msgstr "Impossibile ottenere le informazioni sulla cartella: %s"
@@ -2779,7 +2801,7 @@ msgstr "Impossibile ottenere gli attributi del file: %s"
 msgid "Could not get full remote path."
 msgstr "Impossibile analizzare il percorso remoto."
 
-#: ../src/engine/sftp/cwd.cpp:181
+#: ../src/engine/sftp/cwd.cpp:199
 #, c-format
 msgid "Could not get initial directory: %s"
 msgstr "Impossibile ottenere la cartella iniziale: %s"
@@ -2929,7 +2951,7 @@ msgstr ""
 msgid "Could not read from socket: %s"
 msgstr "Impossibile leggere dal socket: %s"
 
-#: ../src/engine/sftp/connect.cpp:95
+#: ../src/engine/sftp/connect.cpp:99
 #, c-format
 msgid "Could not read key file '%s'."
 msgstr "Impossibile leggere il file chiave '%s'."
@@ -2941,7 +2963,7 @@ msgstr "Impossibile ricevere dati dal server."
 #: ../src/engine/sftp/rename.cpp:40
 #, c-format
 msgid "Could not rename file or directory: %s"
-msgstr ""
+msgstr "Impossibile rinominare il file o la cartellla: %s"
 
 #: ../src/engine/sftp/rmd.cpp:35
 #, c-format
@@ -3011,7 +3033,7 @@ msgstr ""
 "Impossibile scrivere nel file remoto, il server ha segnalato l'errore %s. "
 "Descrizione: %s"
 
-#: ../src/engine/controlsocket.cpp:734 ../src/engine/controlsocket.cpp:832
+#: ../src/engine/controlsocket.cpp:745 ../src/engine/controlsocket.cpp:843
 #, c-format
 msgid "Could not write to socket: %s"
 msgstr "Impossibile scrivere nel socket: %s"
@@ -3124,15 +3146,15 @@ msgstr "Trasferimento attuale impostato su trasferimento binario."
 msgid "Cus&tom"
 msgstr "&Personalizza"
 
-#: ../src/interface/sitemanager_controls.cpp:1545
+#: ../src/interface/sitemanager_controls.cpp:1585
 msgid "Cus&tomer encryption"
 msgstr "Crip&tazione utente"
 
-#: ../src/interface/sitemanager_controls.cpp:1539
+#: ../src/interface/sitemanager_controls.cpp:1579
 msgid "Custom KMS ARN"
 msgstr "KMS ARN personalizzata"
 
-#: ../src/interface/sitemanager_controls.cpp:1709
+#: ../src/interface/sitemanager_controls.cpp:1749
 msgid "Custom KMS ARN id cannot be empty."
 msgstr "ID KMS ARN personale non può essere vuoto."
 
@@ -3140,11 +3162,11 @@ msgstr "ID KMS ARN personale non può essere vuoto."
 msgid "Custom filter set"
 msgstr "Set di filtri personalizzato"
 
-#: ../src/interface/sitemanager_controls.cpp:1721
+#: ../src/interface/sitemanager_controls.cpp:1761
 msgid "Custom key cannot be empty."
 msgstr "La chiave personale non può essere vuota."
 
-#: ../src/interface/sitemanager_controls.cpp:1735
+#: ../src/interface/sitemanager_controls.cpp:1775
 msgid "Custom key length must be 256-bit."
 msgstr "La lunghezza della chiave personale deve essere 256 bit."
 
@@ -3153,7 +3175,7 @@ msgstr "La lunghezza della chiave personale deve essere 256 bit."
 msgid "Custom server"
 msgstr "Server personalizzato"
 
-#: ../src/interface/sitemanager_controls.cpp:1550
+#: ../src/interface/sitemanager_controls.cpp:1590
 msgid "Customer Ke&y:"
 msgstr "Chiave utente:"
 
@@ -3233,7 +3255,7 @@ msgstr "Impostazioni debug"
 msgid "Default &local directory:"
 msgstr "Cartella &locale predefinita:"
 
-#: ../src/interface/sitemanager_controls.cpp:1538
+#: ../src/interface/sitemanager_controls.cpp:1578
 msgid "Default (AWS/S3)"
 msgstr "Predefinita (AWS/S3)"
 
@@ -3332,7 +3354,7 @@ msgstr "Elimina collegamento simbolico"
 
 #: ../src/engine/sftp/delete.cpp:82
 msgid "Deletion succeeded."
-msgstr ""
+msgstr "Eliminazione completata."
 
 #: ../src/interface/LocalTreeView.cpp:1055
 msgid "Desktop"
@@ -3365,10 +3387,10 @@ msgstr "Permessi accesso cartella"
 
 #: ../src/interface/settings/optionspage_filelists.cpp:64
 #: ../src/interface/view.cpp:116 ../src/interface/toolbar.cpp:112
-#: ../src/interface/sitemanager_controls.cpp:1161
 #: ../src/interface/sitemanager_dialog.cpp:284
 #: ../src/interface/filelistctrl.cpp:496 ../src/interface/Mainfrm.cpp:2457
 #: ../src/interface/Mainfrm.cpp:2477
+#: ../src/interface/sitemanager_controls.cpp:1161
 msgid "Directory comparison"
 msgstr "Comparazione cartelle"
 
@@ -3384,11 +3406,11 @@ msgstr ""
 
 #: ../src/engine/sftp/mkd.cpp:72
 msgid "Directory creation succeeded."
-msgstr ""
+msgstr "Creazione cartella completata."
 
 #: ../src/engine/sftp/rmd.cpp:39
 msgid "Directory deletion succeeded."
-msgstr ""
+msgstr "Eliminazione cartella completata."
 
 #: ../src/interface/menu_bar.cpp:65
 msgid "Directory listing &filters..."
@@ -3432,12 +3454,12 @@ msgid "Disconnect from server"
 msgstr "Disconnetti dal server"
 
 #: ../src/engine/ftp/ftpcontrolsocket.cpp:69 ../src/engine/controlsocket.cpp:54
-#: ../src/engine/controlsocket.cpp:735 ../src/engine/controlsocket.cpp:834
+#: ../src/engine/controlsocket.cpp:746 ../src/engine/controlsocket.cpp:845
 #: ../src/interface/queue.cpp:400
 msgid "Disconnected from server"
 msgstr "Disconnesso dal server"
 
-#: ../src/engine/controlsocket.cpp:858
+#: ../src/engine/controlsocket.cpp:869
 #, c-format
 msgid "Disconnected from server: %s"
 msgstr "Disconnesso dal server: %s"
@@ -3582,7 +3604,7 @@ msgstr ""
 "La funzione &Trascina e rilascia tra diversi server non è stata ancora "
 "implementata."
 
-#: ../src/interface/sitemanager_controls.cpp:1856
+#: ../src/interface/sitemanager_controls.cpp:1896
 msgid "Dropbox for Business:"
 msgstr "Dropbox for Business:"
 
@@ -4059,7 +4081,7 @@ msgid "Failed to load panels, invalid resource files?"
 msgstr ""
 "Non è stato possibile caricare il menu principale. File risorse non valido?"
 
-#: ../src/engine/controlsocket.cpp:353
+#: ../src/engine/controlsocket.cpp:324
 msgid "Failed to parse returned path."
 msgstr "Impossibile analizzare il percorso ritornato."
 
@@ -4472,6 +4494,10 @@ msgstr "Da %s a %s"
 msgid "Function %s failed"
 msgstr "Funzione %s non riuscita"
 
+#: ../src/engine/sftp/connect.cpp:178
+msgid "Further authentication required"
+msgstr "È necessaria un'ulteriore autenticazione"
+
 #: ../src/interface/welcome_dialog.cpp:111
 msgid "Further documentation"
 msgstr "Altra documentazione"
@@ -4590,11 +4616,11 @@ msgid "Host unreachable"
 msgstr "Host non raggiungibile"
 
 #: ../src/interface/verifyhostkeydialog.cpp:78
-#: ../src/interface/loginmanager.cpp:34 ../src/interface/loginmanager.cpp:123
-#: ../src/interface/loginmanager.cpp:329 ../src/interface/loginmanager.cpp:544
 #: ../src/interface/verifycertdialog.cpp:352
 #: ../src/interface/verifycertdialog.cpp:628
 #: ../src/interface/verifycertdialog.cpp:698
+#: ../src/interface/loginmanager.cpp:34 ../src/interface/loginmanager.cpp:123
+#: ../src/interface/loginmanager.cpp:329 ../src/interface/loginmanager.cpp:544
 msgid "Host:"
 msgstr "Host:"
 
@@ -4630,7 +4656,7 @@ msgstr "Gli indirizzi IPv6 non sono supportati con il proxy SOCKS4"
 msgid "Identity &host:"
 msgstr "&Host identità:"
 
-#: ../src/interface/sitemanager_controls.cpp:1783
+#: ../src/interface/sitemanager_controls.cpp:1823
 msgid "Identity (Keystone):"
 msgstr "Identità (chiave):"
 
@@ -4905,7 +4931,7 @@ msgstr ""
 "Informazioni sulla versione aggiornata di FileZilla non disponibili. Riprova "
 "più tardi."
 
-#: ../src/interface/sitemanager_controls.cpp:1516
+#: ../src/interface/sitemanager_controls.cpp:1556
 msgid "Initial re&gion:"
 msgstr "Re&gione iniziale:"
 
@@ -4938,7 +4964,7 @@ msgstr "Server non sicuro. Non supporta FTP su TLS."
 msgid "Instructions:"
 msgstr "Istruzioni:"
 
-#: ../src/engine/server.cpp:754 ../src/engine/server.cpp:784
+#: ../src/engine/server.cpp:758 ../src/engine/server.cpp:788
 msgid "Interactive"
 msgstr "Interattivo"
 
@@ -4954,7 +4980,7 @@ msgstr "Certificato intermedio"
 msgid "Interrupted by user"
 msgstr "Interrotto dall'utente"
 
-#: ../src/engine/controlsocket.cpp:488
+#: ../src/engine/controlsocket.cpp:499
 msgid ""
 "Invalid character sequence received. Some or all files may not appear in "
 "directory listings. If the server you are connecting to does not support "
@@ -4965,7 +4991,7 @@ msgstr ""
 "server a cui ci si sta connettendo non supporta UTF-8, seleziona in Gestione "
 "siti una diversa codifica caratteri."
 
-#: ../src/engine/controlsocket.cpp:499
+#: ../src/engine/controlsocket.cpp:510
 #, c-format
 msgid ""
 "Invalid character sequence received. The server does not appear to use the "
@@ -5128,7 +5154,7 @@ msgstr "Scambio chiave"
 msgid "Key exchange:"
 msgstr "Scambio chiave:"
 
-#: ../src/engine/server.cpp:751 ../src/engine/server.cpp:782
+#: ../src/engine/server.cpp:755 ../src/engine/server.cpp:786
 msgid "Key file"
 msgstr "File chiave"
 
@@ -5208,7 +5234,7 @@ msgstr "Elenco:"
 msgid "Lo&west available port:"
 msgstr "P&orta più bassa disponibile:"
 
-#: ../src/engine/sftp/connect.cpp:242
+#: ../src/engine/sftp/connect.cpp:265
 #, c-format
 msgid "Loaded %u distinct keys"
 msgstr "%u chiavi distinte caricate"
@@ -5319,7 +5345,7 @@ msgid "Lowest available port has to be a number between 1024 and 65535."
 msgstr ""
 "La minima porta disponibile deve essere un numero compreso tra 1024 e 65535."
 
-#: ../src/interface/sitemanager_controls.cpp:1565
+#: ../src/interface/sitemanager_controls.cpp:1605
 msgid "MFA D&evice Serial:"
 msgstr "S&eriale dispositivo MFA:"
 
@@ -5421,7 +5447,7 @@ msgstr "Documenti"
 msgid "My Sites"
 msgstr "I miei siti"
 
-#: ../src/interface/sitemanager_controls.cpp:1524
+#: ../src/interface/sitemanager_controls.cpp:1564
 msgid "N&o encryption"
 msgstr "Nessuna criptazi&one"
 
@@ -5444,14 +5470,14 @@ msgstr "Nome già presente"
 msgid "Name of bookmark already exists."
 msgstr "Nome del segnalibro già presente."
 
-#: ../src/engine/server.cpp:947 ../src/engine/server.cpp:1009
+#: ../src/engine/server.cpp:961 ../src/engine/server.cpp:1023
 msgid "Name or email address"
 msgstr "Nome o indirizzo email"
 
+#: ../src/interface/verifycertdialog.cpp:517
 #: ../src/interface/loginmanager.cpp:26 ../src/interface/loginmanager.cpp:119
 #: ../src/interface/loginmanager.cpp:226 ../src/interface/loginmanager.cpp:325
 #: ../src/interface/loginmanager.cpp:540
-#: ../src/interface/verifycertdialog.cpp:517
 msgid "Name:"
 msgstr "Nome:"
 
@@ -5589,7 +5615,7 @@ msgstr "Nessun host fornito, inserisci un host."
 msgid "No images available"
 msgstr "Nessuna immagine disponibile"
 
-#: ../src/engine/sftp/connect.cpp:197
+#: ../src/engine/sftp/connect.cpp:215 ../src/engine/sftp/connect.cpp:374
 msgid "No more authentication methods available"
 msgstr "Non sono disponibili altri metodi di autenticazione"
 
@@ -5658,7 +5684,7 @@ msgstr "Nessuno"
 msgid "None selected yet"
 msgstr "Nessun elemento selezionato"
 
-#: ../src/engine/server.cpp:745 ../src/engine/server.cpp:778
+#: ../src/engine/server.cpp:749 ../src/engine/server.cpp:782
 #: ../src/interface/settings/optionspage_transfer.cpp:95
 #: ../src/interface/queue.cpp:1054 ../src/interface/queue.cpp:1116
 msgid "Normal"
@@ -5668,7 +5694,7 @@ msgstr "Normale"
 msgid "North America"
 msgstr "America del Nord"
 
-#: ../src/engine/sftp/cwd.cpp:137
+#: ../src/engine/sftp/cwd.cpp:153
 msgid "Not a directory"
 msgstr "Non una directory"
 
@@ -5952,9 +5978,9 @@ msgstr "Il parametro non è una URL valida"
 msgid "Parsing %d bytes of version information.\n"
 msgstr "Analisi %d byte informazione versione.\n"
 
+#: ../src/interface/quickconnectbar.cpp:51
 #: ../src/interface/sitemanager_controls.cpp:202
 #: ../src/interface/sitemanager_controls.cpp:493
-#: ../src/interface/quickconnectbar.cpp:51
 msgid "Pass&word:"
 msgstr "Pass&word:"
 
@@ -6001,7 +6027,7 @@ msgstr ""
 msgid "Path not found:"
 msgstr "Percorso non trovato:"
 
-#: ../src/engine/server.cpp:966 ../src/engine/server.cpp:978
+#: ../src/engine/server.cpp:980 ../src/engine/server.cpp:992
 msgid "Path of identity service"
 msgstr "Percorso servizio identità"
 
@@ -6450,7 +6476,7 @@ msgstr "Elabora co&da"
 msgid "Processed %s in %s."
 msgstr "Elaborato %s in %s."
 
-#: ../src/engine/server.cpp:760 ../src/engine/server.cpp:788
+#: ../src/engine/server.cpp:764 ../src/engine/server.cpp:792
 msgid "Profile"
 msgstr "Profilo"
 
@@ -6670,11 +6696,11 @@ msgstr "Riavvia adesso"
 msgid "Rec&urse into subdirectories"
 msgstr "&Includi sottocartelle"
 
-#: ../src/engine/directorylistingparser.cpp:3200
+#: ../src/engine/directorylistingparser.cpp:3217
 msgid "Received a directory listing which appears to be encoded in EBCDIC."
 msgstr "Ricevuto un elenco di cartella che appare codificato in EBCDIC."
 
-#: ../src/engine/directorylistingparser.cpp:2121
+#: ../src/engine/directorylistingparser.cpp:2138
 msgid "Received a line exceeding 10000 characters, aborting."
 msgstr "Ricevuta una linea eccedente i 10000 caratteri, interruzione."
 
@@ -6684,12 +6710,12 @@ msgstr "Ricevuta una linea eccedente i 10000 caratteri, interruzione."
 msgid "Received data tainted"
 msgstr "Ricevuti dati corrotti"
 
-#: ../src/engine/sftp/sftpcontrolsocket.cpp:330
+#: ../src/engine/sftp/sftpcontrolsocket.cpp:338
 #, c-format
 msgid "Received error %s with description '%s'"
 msgstr "Ricevuto errore %s con la descrizione '%s'"
 
-#: ../src/engine/sftp/sftpcontrolsocket.cpp:327
+#: ../src/engine/sftp/sftpcontrolsocket.cpp:335
 #, c-format
 msgid "Received error %s without any further description"
 msgstr "Ricevuto errore %s senza ulteriore descrizione"
@@ -6755,7 +6781,7 @@ msgstr "Ridirezione a un indirizzo non valido o non supportato: %s"
 msgid "Refresh the file and folder lists"
 msgstr "Aggiorna l'elenco file e cartelle"
 
-#: ../src/interface/sitemanager_controls.cpp:1577
+#: ../src/interface/sitemanager_controls.cpp:1617
 msgid "Regio&n:"
 msgstr "Region&e:"
 
@@ -6858,7 +6884,7 @@ msgstr "Rinomina i file e cartelle selezionate"
 
 #: ../src/engine/sftp/rename.cpp:54
 msgid "Rename succeeded."
-msgstr ""
+msgstr "Rinomina completata."
 
 #: ../src/engine/ftp/rename.cpp:22 ../src/engine/sftp/rename.cpp:17
 #, c-format
@@ -6895,7 +6921,11 @@ msgstr "Richiesta rifiutata o fallita"
 msgid "Requesting %s"
 msgstr "Richiesta di %s"
 
-#: ../src/engine/sftp/connect.cpp:192
+#: ../src/engine/sftp/connect.cpp:224
+msgid "Requesting SFTP subsystem"
+msgstr "Richiesta sottosistema SFTP"
+
+#: ../src/engine/sftp/connect.cpp:210
 msgid "Requesting keyboard-interactive authentication"
 msgstr "Richiesta di autenticazione interattiva da tastiera"
 
@@ -6911,7 +6941,7 @@ msgstr "Richiedi FTP implicito su TLS"
 msgid "Reset and requeue &all"
 msgstr "Ripristina e rimetti in cod&a tutti i file"
 
-#: ../src/engine/controlsocket.cpp:883 ../src/engine/controlsocket.cpp:888
+#: ../src/engine/controlsocket.cpp:894 ../src/engine/controlsocket.cpp:899
 #, c-format
 msgid "Resolving address of %s"
 msgstr "Risoluzione dell'indirizzo IP %s in corso"
@@ -6963,11 +6993,11 @@ msgstr "È in corso la lettura dell'indirizzo IP esterno da %s"
 msgid "Retrying..."
 msgstr "Nuovo tentativo..."
 
-#: ../src/interface/sitemanager_controls.cpp:1563
+#: ../src/interface/sitemanager_controls.cpp:1603
 msgid "Ro&le ARN:"
 msgstr "Ruo&lo ARN:"
 
-#: ../src/interface/sitemanager_controls.cpp:1579
+#: ../src/interface/sitemanager_controls.cpp:1619
 msgid "Ro&le name:"
 msgstr "Nome ruo&lo:"
 
@@ -7009,13 +7039,17 @@ msgstr "S&ospendi il sistema"
 msgid "S&ynchronized browsing"
 msgstr "Navigazione s&incronizzata"
 
-#: ../src/interface/sitemanager_controls.cpp:1572
+#: ../src/interface/sitemanager_controls.cpp:1612
 msgid "S3 via IAM Identity Center (formerly SSO):"
 msgstr "S3 tramite IAM Identity Center (in precedenza SSO):"
 
 #: ../src/interface/settings/settingsdialog.cpp:130
 msgid "SFTP"
 msgstr "SFTP"
+
+#: ../src/engine/sftp/connect.cpp:232
+msgid "SFTP subsystem initialized"
+msgstr "Sottosistema SFTP inizializzato"
 
 #: ../src/engine/proxy.cpp:169
 #, c-format
@@ -7105,7 +7139,7 @@ msgstr "Tipo ricerca::"
 msgid "Secret Access &Key:"
 msgstr "C&hiave segreta accesso:"
 
-#: ../src/interface/sitemanager_controls.cpp:1558
+#: ../src/interface/sitemanager_controls.cpp:1598
 msgid "Security Token Service:"
 msgstr "Servizio token sicurezza:"
 
@@ -7316,9 +7350,13 @@ msgstr "Invia al server un comando personalizzato altrimenti non disponibile"
 msgid "Sending keep-alive command"
 msgstr "Invia comando per mantenere connessione attiva"
 
-#: ../src/engine/sftp/connect.cpp:184 ../src/engine/sftp/connect.cpp:292
+#: ../src/engine/sftp/connect.cpp:202 ../src/engine/sftp/connect.cpp:315
 msgid "Sending password"
 msgstr "Invio password"
+
+#: ../src/engine/sftp/connect.cpp:380
+msgid "Sending password as response"
+msgstr "Invio password come risposta"
 
 #: ../src/interface/verifycertdialog.cpp:515
 msgid "Serial number:"
@@ -7336,7 +7374,7 @@ msgstr "Server"
 msgid "Server &type:"
 msgstr "&Tipo server:"
 
-#: ../src/interface/sitemanager_controls.cpp:1522
+#: ../src/interface/sitemanager_controls.cpp:1562
 msgid "Server Side Encryption:"
 msgstr "Criptazione lato server:"
 
@@ -7394,7 +7432,7 @@ msgid ""
 msgstr ""
 "Il server richiede un account. Specifica un account usando Gestione siti"
 
-#: ../src/engine/controlsocket.cpp:350
+#: ../src/engine/controlsocket.cpp:316
 msgid "Server returned empty path."
 msgstr "Il server ha ritornato un percorso vuoto."
 
@@ -7536,6 +7574,9 @@ msgstr "Gestione siti"
 msgid "Site Manager - Cannot remember password"
 msgstr "Gestione siti - non memorizzare le password"
 
+#: ../src/interface/sitemanager_dialog.cpp:938
+#: ../src/interface/sitemanager_dialog.cpp:947
+#: ../src/interface/sitemanager_dialog.cpp:954
 #: ../src/interface/sitemanager_controls.cpp:706
 #: ../src/interface/sitemanager_controls.cpp:717
 #: ../src/interface/sitemanager_controls.cpp:775
@@ -7549,13 +7590,10 @@ msgstr "Gestione siti - non memorizzare le password"
 #: ../src/interface/sitemanager_controls.cpp:1270
 #: ../src/interface/sitemanager_controls.cpp:1480
 #: ../src/interface/sitemanager_controls.cpp:1488
-#: ../src/interface/sitemanager_controls.cpp:1709
-#: ../src/interface/sitemanager_controls.cpp:1721
-#: ../src/interface/sitemanager_controls.cpp:1735
-#: ../src/interface/sitemanager_controls.cpp:1759
-#: ../src/interface/sitemanager_dialog.cpp:938
-#: ../src/interface/sitemanager_dialog.cpp:947
-#: ../src/interface/sitemanager_dialog.cpp:954
+#: ../src/interface/sitemanager_controls.cpp:1749
+#: ../src/interface/sitemanager_controls.cpp:1761
+#: ../src/interface/sitemanager_controls.cpp:1775
+#: ../src/interface/sitemanager_controls.cpp:1799
 msgid "Site Manager - Invalid data"
 msgstr "Gestione siti - dati non validi"
 
@@ -7604,14 +7642,14 @@ msgstr "Dimensione sconosciuta"
 msgid "Skip file"
 msgstr "Ignora file"
 
-#: ../src/engine/controlsocket.cpp:968 ../src/engine/controlsocket.cpp:985
-#: ../src/engine/controlsocket.cpp:1011 ../src/engine/controlsocket.cpp:1074
+#: ../src/engine/controlsocket.cpp:979 ../src/engine/controlsocket.cpp:996
+#: ../src/engine/controlsocket.cpp:1022 ../src/engine/controlsocket.cpp:1085
 #, c-format
 msgid "Skipping download of %s"
 msgstr "Salta il download di %s"
 
-#: ../src/engine/controlsocket.cpp:971 ../src/engine/controlsocket.cpp:988
-#: ../src/engine/controlsocket.cpp:1014 ../src/engine/controlsocket.cpp:1077
+#: ../src/engine/controlsocket.cpp:982 ../src/engine/controlsocket.cpp:999
+#: ../src/engine/controlsocket.cpp:1025 ../src/engine/controlsocket.cpp:1088
 #, c-format
 msgid "Skipping upload of %s"
 msgstr "Salta l'invio di %s"
@@ -7691,7 +7729,7 @@ msgstr "Solo versioni stabili"
 msgid "Stable, beta and nightly versions"
 msgstr "Versioni stabili, beta e build notturne"
 
-#: ../src/interface/sitemanager_controls.cpp:1581
+#: ../src/interface/sitemanager_controls.cpp:1621
 msgid "Start &URL:"
 msgstr "&URL iniziale:"
 
@@ -8061,7 +8099,7 @@ msgstr ""
 "Non è stato possibile aprire il file '%s':\n"
 "Il comando associato è fallito"
 
-#: ../src/engine/sftp/connect.cpp:101
+#: ../src/engine/sftp/connect.cpp:105
 #, c-format
 msgid "The file '%s' does not contain any private keys"
 msgstr "Il file '%s' non contiene chiavi private"
@@ -8206,6 +8244,27 @@ msgstr "Il file selezionato è in uso da un'altra applicazione."
 #: ../src/interface/sitemanager.cpp:281
 msgid "The server could not be added."
 msgstr "Il server non può essere aggiunto."
+
+#: ../src/engine/sftp/connect.cpp:379
+msgid ""
+"The server does not support password authentication, but sent a single "
+"keyboard-interactive prompt named \"Password\". Sending password as "
+"response. Select interactive login type to force an interactive prompt."
+msgstr ""
+"Il server non supporta l'autenticazione della password, ma ha inviato un "
+"singolo prompt interattivo da tastiera denominato \"Password\". Invio "
+"password come risposta. Per forzare un prompt interattivo seleziona il tipo "
+"di accesso interattivo."
+
+#: ../src/engine/sftp/connect.cpp:373
+msgid ""
+"The server sent a single keyboard-interactive prompt named \"Password\", but "
+"we already have sent the password. Select interactive login type to force an "
+"interactive prompt."
+msgstr ""
+"Il server ha inviato un unico messaggio interattivo da tastiera denominato "
+"\"Password\", ma è già stata inviata la password. Per forzare un prompt "
+"interattivo seleziona il tipo di accesso interattivo."
 
 #: ../src/interface/netconfwizard.cpp:759
 msgid "The server sent an unexpected or unrecognized reply."
@@ -8504,7 +8563,7 @@ msgid "Treat the &following filetypes as ASCII files:"
 msgstr "I seguenti tipi di &file saranno interpretati come file ASCII:"
 
 #: ../src/engine/directorylistingparser.cpp:764
-#: ../src/engine/directorylistingparser.cpp:823
+#: ../src/engine/directorylistingparser.cpp:831
 #, c-format
 msgid ""
 "Truncating directory listing to %u items, you can increase this limit in the "
@@ -8741,7 +8800,7 @@ msgstr "Usa programma pre&definito per i file di testo"
 msgid "Use &synchronized browsing"
 msgstr "Usa navigazione &sincronizzata"
 
-#: ../src/interface/sitemanager_controls.cpp:1858
+#: ../src/interface/sitemanager_controls.cpp:1898
 msgid "Use &team root namespace"
 msgstr "Usa nome spazio root &team"
 
@@ -8749,7 +8808,7 @@ msgstr "Usa nome spazio root &team"
 msgid "Use Regular Expressions"
 msgstr "Usa un'espressione regolare"
 
-#: ../src/interface/sitemanager_controls.cpp:1519
+#: ../src/interface/sitemanager_controls.cpp:1559
 msgid "Use a&ccelerated endpoint"
 msgstr "Usa un endpoint a&ccelerato"
 
@@ -8807,6 +8866,10 @@ msgstr ""
 "contatterà il server specificato una volta ogni sessione, quando sarà "
 "richiesta una connessione in modalità attiva. L'unica informazione che viene "
 "trasmessa è la versione di FileZilla."
+
+#: ../src/interface/sitemanager_controls.cpp:1521
+msgid "Use with caution, compatibility flags may degrade connection security"
+msgstr ""
 
 #: ../src/interface/loginmanager.cpp:43 ../src/interface/loginmanager.cpp:127
 #: ../src/interface/loginmanager.cpp:333 ../src/interface/loginmanager.cpp:548
@@ -9118,7 +9181,7 @@ msgstr "Inserisci il nome di una cartella locale scrivibile."
 msgid "You have to enter an account name"
 msgstr "Inserisci un nome account"
 
-#: ../src/interface/sitemanager_controls.cpp:1759
+#: ../src/interface/sitemanager_controls.cpp:1799
 msgid "You have to enter both role name and start URL."
 msgstr "Devi inserire sia il nome del ruolo che l'URL iniziale."
 
@@ -9373,6 +9436,9 @@ msgstr "scrivibile per gli altri"
 #: ../src/interface/aboutdialog.cpp:90
 msgid "wxWidgets:"
 msgstr "wxWidgets:"
+
+#~ msgid "Authentication successful, requesting SFTP subsystem"
+#~ msgstr "Autenticazione completata, richiesta sottosistema SFTP"
 
 #~ msgid "Enable invalid character &filtering"
 #~ msgstr "Abilita &filtro caratteri non validi"

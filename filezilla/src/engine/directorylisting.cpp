@@ -52,6 +52,8 @@ bool CDirentry::operator==(const CDirentry &op) const
 		}
 	}
 
+	// Intentionally not considering target
+
 	return true;
 }
 

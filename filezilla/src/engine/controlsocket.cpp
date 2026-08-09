@@ -522,7 +522,7 @@ std::string CControlSocket::ConvToServer(std::wstring const& str)
 	}
 
 	std::string ret = engine_.GetEncodingConverter().toServer(currentServer_.GetCustomEncoding(), str.c_str(), str.size());
-	if (!ret.empty()) {
+	if (ret.empty()) {
 		if (!shown_encoding_error_) {
 			log(logmsg::error, _("Cannot convert to the server's character set. You can only use characters that can be encoded using the custom character encoding (%s) you have configured in the Site Manager."), currentServer_.GetCustomEncoding());
 			shown_encoding_error_ = true;

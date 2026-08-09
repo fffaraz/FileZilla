@@ -1228,12 +1228,12 @@ void AdvancedSiteControls::SetControlVisibility(ServerProtocol protocol, LogonTy
 
 bool AdvancedSiteControls::UpdateSite(Site & site, bool silent)
 {
-	ServerType serverType = DEFAULT;
+	ServerType serverType = UNIX;
 	if (!site.m_default_bookmark.m_remoteDir.empty()) {
 		if (site.server.HasFeature(ProtocolFeature::ServerType)) {
 			serverType = site.m_default_bookmark.m_remoteDir.GetType();
 		}
-		else if (site.m_default_bookmark.m_remoteDir.GetType() != DEFAULT && site.m_default_bookmark.m_remoteDir.GetType() != UNIX) {
+		else if (site.m_default_bookmark.m_remoteDir.GetType() != UNIX) {
 			site.m_default_bookmark.m_remoteDir = CServerPath();
 		}
 	}
@@ -1254,7 +1254,8 @@ bool AdvancedSiteControls::UpdateSite(Site & site, bool silent)
 			if (!site.m_default_bookmark.m_remoteDir.SetPath(remotePathRaw)) {
 				if (!silent) {
 					impl_->remote_dir_->SetFocus();
-					wxMessageBoxEx(_("Default remote path cannot be parsed. Make sure it is a valid absolute path for the selected server type."), _("Site Manager - Invalid data"), wxICON_EXCLAMATION, wxGetTopLevelParent(&parent_));
+					auto msg = site.server.HasFeature(ProtocolFeature::ServerType) ? _("Default remote path cannot be parsed. Make sure it is a valid absolute path for the selected server type.") : _("Default remote path cannot be parsed. Make sure it is a valid absolute path.");
+					wxMessageBoxEx(msg, _("Site Manager - Invalid data"), wxICON_EXCLAMATION, wxGetTopLevelParent(&parent_));
 				}
 				return false;
 			}
@@ -1502,6 +1503,51 @@ bool CharsetSiteControls::UpdateSite(Site & site, bool silent)
 
 	return true;
 }
+
+struct SftpSiteControls::impl final
+{
+	wxCheckBox* allow_non_crlf_identification_{};
+	wxCheckBox* allow_unknown_agent_keys_{};
+	wxCheckBox* ignore_unknown_flags_in_attributes_{};
+};
+
+SftpSiteControls::SftpSiteControls(wxWindow & parent, DialogLayout const& lay, wxFlexGridSizer & sizer)
+	: SiteControls(parent)
+	, impl_(std::make_unique<impl>())
+{
+	sizer.Add(new wxStaticText(&parent, nullID, _("Compatibility flags:")));
+	impl_->allow_non_crlf_identification_ = new wxCheckBox(&parent, nullID, _("Allow peer identification string not terminated by CRLF"));
+	sizer.Add(impl_->allow_non_crlf_identification_, 0, wxLEFT, lay.indent);
+	impl_->allow_unknown_agent_keys_ = new wxCheckBox(&parent, nullID, _("Allow SSH agent keys of unknown type"));
+	sizer.Add(impl_->allow_unknown_agent_keys_, 0, wxLEFT, lay.indent);
+	impl_->ignore_unknown_flags_in_attributes_ = new wxCheckBox(&parent, nullID, _("Ignore unknown flags while parsing attributes"));
+	sizer.Add(impl_->ignore_unknown_flags_in_attributes_, 0, wxLEFT, lay.indent);
+	sizer.Add(new wxStaticText(&parent, nullID, _("Use with caution, compatibility flags may degrade connection security")), 0, wxLEFT, lay.indent);
+}
+
+SftpSiteControls::~SftpSiteControls()
+{
+}
+
+void SftpSiteControls::SetSite(Site const& site, bool predefined)
+{
+	impl_->allow_non_crlf_identification_->SetValue(site.server.GetExtraParameter("allow_non_crlf_identification_string"sv) == L"1"sv);
+	impl_->allow_unknown_agent_keys_->SetValue(site.server.GetExtraParameter("allow_agent_keys_of_unknown_type"sv) == L"1"sv);
+	impl_->ignore_unknown_flags_in_attributes_->SetValue(site.server.GetExtraParameter("ignore_unknown_flags_in_attributes"sv) == L"1"sv);
+}
+
+void SftpSiteControls::SetControlVisibility(ServerProtocol, LogonType)
+{
+}
+
+bool SftpSiteControls::UpdateSite(Site & site, bool /*silent*/)
+{
+	site.server.SetExtraParameter("allow_non_crlf_identification_string"sv, impl_->allow_non_crlf_identification_->GetValue() ? L"1"s : L""s);
+	site.server.SetExtraParameter("allow_agent_keys_of_unknown_type"sv, impl_->allow_unknown_agent_keys_->GetValue() ? L"1"s : L""s);
+	site.server.SetExtraParameter("ignore_unknown_flags_in_attributes"sv, impl_->ignore_unknown_flags_in_attributes_->GetValue() ? L"1"s : L""s);
+	return true;
+}
+
 
 S3SiteControls::S3SiteControls(wxWindow & parent, DialogLayout const& lay, wxFlexGridSizer & sizer)
     : SiteControls(parent)

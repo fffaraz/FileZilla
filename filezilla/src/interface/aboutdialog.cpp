@@ -106,7 +106,7 @@ bool CAboutDialog::Create(wxWindow* parent)
 				"GnuTLS - Copyright (C) 2000-2023 Free Software Foundation - LGPLv2.1 or later\n\n"
 				"Nettle - Copyright (C) 2001-2025 Niels Möller, and others - GPLv2 or later, LGPLv3 or later\n\n"
 				"GMP - Copyright 1991, 1996, 1999, 2000, 2007 Free Software Foundation, Inc. - GPLv2 or later, LGPLv3 or later\n\n"
-				"pugixml - Copyright (C) 2006-2026 Arseny Kapoulkine - MIT\n\n"
+				"pugixml - Copyright (C) 2006-2026 Arseny Kapoulkine - MIT\n\n",
 				L"Third-party library copyright and license information");
 		});
 

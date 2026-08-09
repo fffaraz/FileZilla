@@ -21,7 +21,7 @@ class FZC_PUBLIC_SYMBOL CServerPath final
 {
 public:
 	CServerPath();
-	explicit CServerPath(std::wstring const& path, ServerType type = DEFAULT);
+	explicit CServerPath(std::wstring const& path, ServerType type = UNIX);
 	CServerPath(CServerPath const& path, std::wstring subdir); // Ignores parent on absolute subdir
 	CServerPath(CServerPath const& path) = default;
 	CServerPath(CServerPath && path) noexcept = default;
@@ -79,6 +79,8 @@ public:
 	size_t SegmentCount() const;
 
 	static CServerPath GetChanged(CServerPath const& oldPath, CServerPath const& newPath, std::wstring const& newSubdir);
+
+	static ServerType GuessType(std::wstring_view const& path, bool isFile);
 private:
 	bool FZC_PRIVATE_SYMBOL IsSeparator(wchar_t c) const;
 

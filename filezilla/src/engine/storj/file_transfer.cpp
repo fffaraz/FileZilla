@@ -43,9 +43,7 @@ int CStorjFileTransferOpData::Send()
 			log(logmsg::status, _("Starting upload of %s"), localName_);
 		}
 
-		if (remotePath_.GetType() == DEFAULT) {
-			remotePath_.SetType(currentServer_.GetType());
-		}
+		remotePath_.SetType(currentServer_.GetType());
 
 		bool needs_listing = false;
 

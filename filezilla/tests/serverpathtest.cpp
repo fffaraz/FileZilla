@@ -47,23 +47,23 @@ void CServerPathTest::testGetPath()
 	CPPUNIT_ASSERT(unix3.GetPath() == L"/foo/bar");
 
 
-	const CServerPath vms1(L"FOO:[BAR]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
 	CPPUNIT_ASSERT(vms1.GetPath() == L"FOO:[BAR]");
 
-	const CServerPath vms2(L"FOO:[BAR.TEST]");
+	const CServerPath vms2(L"FOO:[BAR.TEST]", VMS);
 	CPPUNIT_ASSERT(vms2.GetPath() == L"FOO:[BAR.TEST]");
 
-	const CServerPath vms3(L"FOO:[BAR^.TEST]");
+	const CServerPath vms3(L"FOO:[BAR^.TEST]", VMS);
 	CPPUNIT_ASSERT(vms3.GetPath() == L"FOO:[BAR^.TEST]");
 
-	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]");
+	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]", VMS);
 	CPPUNIT_ASSERT(vms4.GetPath() == L"FOO:[BAR^.TEST.SOMETHING]");
 
 
-	const CServerPath dos1(L"C:\\");
+	const CServerPath dos1(L"C:\\", DOS);
 	CPPUNIT_ASSERT(dos1.GetPath() == L"C:\\");
 
-	const CServerPath dos2(L"C:\\FOO");
+	const CServerPath dos2(L"C:\\FOO", DOS);
 	CPPUNIT_ASSERT(dos2.GetPath() == L"C:\\FOO");
 
 	const CServerPath dos3(L"md:\\", DOS);
@@ -72,7 +72,7 @@ void CServerPathTest::testGetPath()
 	const CServerPath dos4(L"C:", DOS);
 	CPPUNIT_ASSERT(dos4.GetPath() == L"C:\\");
 
-	const CServerPath dos5(L"C:\\FOO\\");
+	const CServerPath dos5(L"C:\\FOO\\", DOS);
 	CPPUNIT_ASSERT(dos5.GetPath() == L"C:\\FOO");
 
 
@@ -88,13 +88,13 @@ void CServerPathTest::testGetPath()
 	const CServerPath mvs4(L"'FOO.BAR.'", MVS);
 	CPPUNIT_ASSERT(mvs4.GetPath() == L"'FOO.BAR.'");
 
-	const CServerPath vxworks1(L":foo:");
+	const CServerPath vxworks1(L":foo:", VXWORKS);
 	CPPUNIT_ASSERT(vxworks1.GetPath() == L":foo:");
 
-	const CServerPath vxworks2(L":foo:bar");
+	const CServerPath vxworks2(L":foo:bar", VXWORKS);
 	CPPUNIT_ASSERT(vxworks2.GetPath() == L":foo:bar");
 
-	const CServerPath vxworks3(L":foo:bar/test");
+	const CServerPath vxworks3(L":foo:bar/test", VXWORKS);
 	CPPUNIT_ASSERT(vxworks3.GetPath() == L":foo:bar/test");
 
 	// ZVM is same as Unix, only makes difference in directory
@@ -117,13 +117,13 @@ void CServerPathTest::testGetPath()
 	const CServerPath hpnonstop3(L"\\mysys.$myvol.mysubvol", HPNONSTOP);
 	CPPUNIT_ASSERT(hpnonstop3.GetPath() == L"\\mysys.$myvol.mysubvol");
 
-	const CServerPath dos_virtual1(L"\\");
+	const CServerPath dos_virtual1(L"\\", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual1.GetPath() == L"\\");
 
-	const CServerPath dos_virtual2(L"\\foo");
+	const CServerPath dos_virtual2(L"\\foo", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual2.GetPath() == L"\\foo");
 
-	const CServerPath dos_virtual3(L"\\foo\\bar");
+	const CServerPath dos_virtual3(L"\\foo\\bar", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual3.GetPath() == L"\\foo\\bar");
 
 	const CServerPath cygwin1(L"/", CYGWIN);
@@ -166,22 +166,22 @@ void CServerPathTest::testHasParent()
 	const CServerPath unix3(L"/foo/bar");
 	CPPUNIT_ASSERT(unix3.HasParent());
 
-	const CServerPath vms1(L"FOO:[BAR]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
 	CPPUNIT_ASSERT(!vms1.HasParent());
 
-	const CServerPath vms2(L"FOO:[BAR.TEST]");
+	const CServerPath vms2(L"FOO:[BAR.TEST]", VMS);
 	CPPUNIT_ASSERT(vms2.HasParent());
 
-	const CServerPath vms3(L"FOO:[BAR^.TEST]");
+	const CServerPath vms3(L"FOO:[BAR^.TEST]", VMS);
 	CPPUNIT_ASSERT(!vms3.HasParent());
 
-	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]");
+	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]", VMS);
 	CPPUNIT_ASSERT(vms4.HasParent());
 
-	const CServerPath dos1(L"C:\\");
+	const CServerPath dos1(L"C:\\", DOS);
 	CPPUNIT_ASSERT(!dos1.HasParent());
 
-	const CServerPath dos2(L"C:\\FOO");
+	const CServerPath dos2(L"C:\\FOO", DOS);
 	CPPUNIT_ASSERT(dos2.HasParent());
 
 	const CServerPath mvs1(L"'FOO'", MVS);
@@ -196,13 +196,13 @@ void CServerPathTest::testHasParent()
 	const CServerPath mvs4(L"'FOO.BAR.'", MVS);
 	CPPUNIT_ASSERT(mvs4.HasParent());
 
-	const CServerPath vxworks1(L":foo:");
+	const CServerPath vxworks1(L":foo:", VXWORKS);
 	CPPUNIT_ASSERT(!vxworks1.HasParent());
 
-	const CServerPath vxworks2(L":foo:bar");
+	const CServerPath vxworks2(L":foo:bar", VXWORKS);
 	CPPUNIT_ASSERT(vxworks2.HasParent());
 
-	const CServerPath vxworks3(L":foo:bar/test");
+	const CServerPath vxworks3(L":foo:bar/test", VXWORKS);
 	CPPUNIT_ASSERT(vxworks3.HasParent());
 
 	// ZVM is same as Unix, only makes difference in directory
@@ -225,13 +225,13 @@ void CServerPathTest::testHasParent()
 	const CServerPath hpnonstop3(L"\\mysys.$myvol.mysubvol", HPNONSTOP);
 	CPPUNIT_ASSERT(hpnonstop3.HasParent());
 
-	const CServerPath dos_virtual1(L"\\");
+	const CServerPath dos_virtual1(L"\\", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(!dos_virtual1.HasParent());
 
-	const CServerPath dos_virtual2(L"\\foo");
+	const CServerPath dos_virtual2(L"\\foo", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual2.HasParent());
 
-	const CServerPath dos_virtual3(L"\\foo\\bar");
+	const CServerPath dos_virtual3(L"\\foo\\bar", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual3.HasParent());
 
 	const CServerPath cygwin1(L"/", CYGWIN);
@@ -269,15 +269,15 @@ void CServerPathTest::testGetParent()
 	CPPUNIT_ASSERT(unix2.GetParent() == unix1);
 	CPPUNIT_ASSERT(unix3.GetParent() == unix2);
 
-	const CServerPath vms1(L"FOO:[BAR]");
-	const CServerPath vms2(L"FOO:[BAR.TEST]");
-	const CServerPath vms3(L"FOO:[BAR^.TEST]");
-	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
+	const CServerPath vms2(L"FOO:[BAR.TEST]", VMS);
+	const CServerPath vms3(L"FOO:[BAR^.TEST]", VMS);
+	const CServerPath vms4(L"FOO:[BAR^.TEST.SOMETHING]", VMS);
 	CPPUNIT_ASSERT(vms2.GetParent() == vms1);
 	CPPUNIT_ASSERT(vms4.GetParent() == vms3);
 
-	const CServerPath dos1(L"C:\\");
-	const CServerPath dos2(L"C:\\FOO");
+	const CServerPath dos1(L"C:\\", DOS);
+	const CServerPath dos2(L"C:\\FOO", DOS);
 	CPPUNIT_ASSERT(dos2.GetParent() == dos1);
 
 	const CServerPath mvs1(L"'FOO'", MVS);
@@ -287,9 +287,9 @@ void CServerPathTest::testGetParent()
 	CPPUNIT_ASSERT(mvs3.GetParent() == mvs2);
 	CPPUNIT_ASSERT(mvs4.GetParent() == mvs2);
 
-	const CServerPath vxworks1(L":foo:");
-	const CServerPath vxworks2(L":foo:bar");
-	const CServerPath vxworks3(L":foo:bar/test");
+	const CServerPath vxworks1(L":foo:", DOS_VIRTUAL);
+	const CServerPath vxworks2(L":foo:bar", DOS_VIRTUAL);
+	const CServerPath vxworks3(L":foo:bar/test", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(vxworks2.GetParent() == vxworks1);
 	CPPUNIT_ASSERT(vxworks3.GetParent() == vxworks2);
 
@@ -307,9 +307,9 @@ void CServerPathTest::testGetParent()
 	CPPUNIT_ASSERT(hpnonstop2.GetParent() == hpnonstop1);
 	CPPUNIT_ASSERT(hpnonstop3.GetParent() == hpnonstop2);
 
-	const CServerPath dos_virtual1(L"\\");
-	const CServerPath dos_virtual2(L"\\foo");
-	const CServerPath dos_virtual3(L"\\foo\\bar");
+	const CServerPath dos_virtual1(L"\\", DOS_VIRTUAL);
+	const CServerPath dos_virtual2(L"\\foo", DOS_VIRTUAL);
+	const CServerPath dos_virtual3(L"\\foo\\bar", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual2.GetParent() == dos_virtual1);
 	CPPUNIT_ASSERT(dos_virtual3.GetParent() == dos_virtual2);
 
@@ -347,17 +347,17 @@ void CServerPathTest::testGetCommonParent()
 	CPPUNIT_ASSERT(unix1.GetCommonParent(unix1) == unix1);
 	CPPUNIT_ASSERT(unix1.GetCommonParent(unix3) == unix1);
 
-	const CServerPath vms1(L"FOO:[BAR]");
-	const CServerPath vms2(L"FOO:[BAR.TEST]");
-	const CServerPath vms3(L"GOO:[BAR");
-	const CServerPath vms4(L"GOO:[BAR^.TEST.SOMETHING]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
+	const CServerPath vms2(L"FOO:[BAR.TEST]", VMS);
+	const CServerPath vms3(L"GOO:[BAR", VMS);
+	const CServerPath vms4(L"GOO:[BAR^.TEST.SOMETHING]", VMS);
 	CPPUNIT_ASSERT(vms2.GetCommonParent(vms1) == vms1);
 	CPPUNIT_ASSERT(vms3.GetCommonParent(vms1) == CServerPath());
 
 	{
-		const CServerPath dos1(L"C:\\");
-		const CServerPath dos2(L"C:\\FOO");
-		const CServerPath dos3(L"D:\\FOO");
+		const CServerPath dos1(L"C:\\", DOS);
+		const CServerPath dos2(L"C:\\FOO", DOS);
+		const CServerPath dos3(L"D:\\FOO", DOS);
 		CPPUNIT_ASSERT(dos1.GetCommonParent(dos2) == dos1);
 		CPPUNIT_ASSERT(dos2.GetCommonParent(dos3) == CServerPath());
 	}
@@ -378,10 +378,10 @@ void CServerPathTest::testGetCommonParent()
 	CPPUNIT_ASSERT(mvs6.GetCommonParent(mvs4) == mvs4);
 	CPPUNIT_ASSERT(mvs6.GetCommonParent(mvs3) == mvs2);
 
-	const CServerPath vxworks1(L":foo:");
-	const CServerPath vxworks2(L":foo:bar");
-	const CServerPath vxworks3(L":foo:baz");
-	const CServerPath vxworks4(L":baz:bar");
+	const CServerPath vxworks1(L":foo:", VXWORKS);
+	const CServerPath vxworks2(L":foo:bar", VXWORKS);
+	const CServerPath vxworks3(L":foo:baz", VXWORKS);
+	const CServerPath vxworks4(L":baz:bar", VXWORKS);
 	CPPUNIT_ASSERT(vxworks1.GetCommonParent(vxworks2) == vxworks1);
 	CPPUNIT_ASSERT(vxworks2.GetCommonParent(vxworks3) == vxworks1);
 	CPPUNIT_ASSERT(vxworks4.GetCommonParent(vxworks2) == CServerPath());
@@ -402,9 +402,9 @@ void CServerPathTest::testGetCommonParent()
 	CPPUNIT_ASSERT(hpnonstop1.GetCommonParent(hpnonstop1) == hpnonstop1);
 	CPPUNIT_ASSERT(hpnonstop2.GetCommonParent(hpnonstop4) == CServerPath());
 
-	const CServerPath dos_virtual1(L"\\foo");
-	const CServerPath dos_virtual2(L"\\foo\\baz");
-	const CServerPath dos_virtual3(L"\\foo\\bar");
+	const CServerPath dos_virtual1(L"\\foo", DOS_VIRTUAL);
+	const CServerPath dos_virtual2(L"\\foo\\baz", DOS_VIRTUAL);
+	const CServerPath dos_virtual3(L"\\foo\\bar", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual2.GetCommonParent(dos_virtual3) == dos_virtual1);
 	CPPUNIT_ASSERT(dos_virtual1.GetCommonParent(dos_virtual1) == dos_virtual1);
 
@@ -439,12 +439,12 @@ void CServerPathTest::testFormatFilename()
 	CPPUNIT_ASSERT(unix1.FormatFilename(L"bar", false) == L"/bar");
 	CPPUNIT_ASSERT(unix2.FormatFilename(L"bar", false) == L"/foo/bar");
 
-	const CServerPath vms1(L"FOO:[BAR]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
 	CPPUNIT_ASSERT(vms1.FormatFilename(L"BAZ", false) == L"FOO:[BAR]BAZ");
 
 	{
-		const CServerPath dos1(L"C:\\");
-		const CServerPath dos2(L"C:\\foo");
+		const CServerPath dos1(L"C:\\", DOS);
+		const CServerPath dos2(L"C:\\foo", DOS);
 		CPPUNIT_ASSERT(dos1.FormatFilename(L"bar", false) == L"C:\\bar");
 		CPPUNIT_ASSERT(dos2.FormatFilename(L"bar", false) == L"C:\\foo\\bar");
 	}
@@ -454,9 +454,9 @@ void CServerPathTest::testFormatFilename()
 	CPPUNIT_ASSERT(mvs1.FormatFilename(L"BAZ", false) == L"'FOO.BAR(BAZ)'");
 	CPPUNIT_ASSERT(mvs2.FormatFilename(L"BAZ", false) == L"'FOO.BAR.BAZ'");
 
-	const CServerPath vxworks1(L":foo:");
-	const CServerPath vxworks2(L":foo:bar");
-	const CServerPath vxworks3(L":foo:bar/test");
+	const CServerPath vxworks1(L":foo:", VXWORKS);
+	const CServerPath vxworks2(L":foo:bar", VXWORKS);
+	const CServerPath vxworks3(L":foo:bar/test", VXWORKS);
 	CPPUNIT_ASSERT(vxworks1.FormatFilename(L"baz", false) == L":foo:baz");
 	CPPUNIT_ASSERT(vxworks2.FormatFilename(L"baz", false) == L":foo:bar/baz");
 	CPPUNIT_ASSERT(vxworks3.FormatFilename(L"baz", false) == L":foo:bar/test/baz");
@@ -475,10 +475,10 @@ void CServerPathTest::testFormatFilename()
 	CPPUNIT_ASSERT(hpnonstop2.FormatFilename(L"foo", false) == L"\\mysys.$myvol.foo");
 	CPPUNIT_ASSERT(hpnonstop3.FormatFilename(L"foo", false) == L"\\mysys.$myvol.mysubvol.foo");
 
-	const CServerPath dos_virtual1(L"/");
-	const CServerPath dos_virtual2(L"/foo");
-	CPPUNIT_ASSERT(dos_virtual1.FormatFilename(L"bar", false) == L"/bar");
-	CPPUNIT_ASSERT(dos_virtual2.FormatFilename(L"bar", false) == L"/foo/bar");
+	const CServerPath dos_virtual1(L"\\", DOS_VIRTUAL);
+	const CServerPath dos_virtual2(L"\\foo", DOS_VIRTUAL);
+	CPPUNIT_ASSERT(dos_virtual1.FormatFilename(L"bar", false) == L"\\bar");
+	CPPUNIT_ASSERT(dos_virtual2.FormatFilename(L"bar", false) == L"\\foo\\bar");
 
 	const CServerPath cygwin1(L"/", CYGWIN);
 	const CServerPath cygwin2(L"/foo", CYGWIN);
@@ -514,16 +514,16 @@ void CServerPathTest::testChangePath()
 	sub = L"bar/";
 	CPPUNIT_ASSERT(!unix4.ChangePath(sub, true));
 
-	const CServerPath vms1(L"FOO:[BAR]");
-	CServerPath vms2(L"FOO:[BAR]");
-	CServerPath vms3(L"FOO:[BAR.BAZ]");
-	CServerPath vms4(L"FOO:[BAR]");
-	CServerPath vms5(L"FOO:[BAR.BAZ.BAR]");
-	CServerPath vms6(L"FOO:[BAR]");
-	CServerPath vms7(L"FOO:[BAR]");
-	CServerPath vms8(L"FOO:[BAR]");
-	CServerPath vms9(L"FOO:[BAZ.BAR]");
-	CServerPath vms10(L"DOO:[BAZ.BAR]");
+	const CServerPath vms1(L"FOO:[BAR]", VMS);
+	CServerPath vms2(L"FOO:[BAR]", VMS);
+	CServerPath vms3(L"FOO:[BAR.BAZ]", VMS);
+	CServerPath vms4(L"FOO:[BAR]", VMS);
+	CServerPath vms5(L"FOO:[BAR.BAZ.BAR]", VMS);
+	CServerPath vms6(L"FOO:[BAR]", VMS);
+	CServerPath vms7(L"FOO:[BAR]", VMS);
+	CServerPath vms8(L"FOO:[BAR]", VMS);
+	CServerPath vms9(L"FOO:[BAZ.BAR]", VMS);
+	CServerPath vms10(L"DOO:[BAZ.BAR]", VMS);
 	CPPUNIT_ASSERT(vms2.ChangePath(L"BAZ") && vms2 == vms3);
 	CPPUNIT_ASSERT(vms4.ChangePath(L"BAZ.BAR") && vms4 == vms5);
 	sub = L"BAZ.BAR";
@@ -534,15 +534,15 @@ void CServerPathTest::testChangePath()
 	CPPUNIT_ASSERT(vms10.ChangePath(L"FOO:[BAR]") && vms10 == vms1);
 
 	{
-		const CServerPath dos1(L"c:\\bar");
-		CServerPath dos2(L"c:\\bar");
-		CServerPath dos3(L"c:\\bar\\baz");
-		CServerPath dos4(L"c:\\bar");
-		CServerPath dos5(L"c:\\bar\\baz\\bar");
-		CServerPath dos6(L"c:\\bar\\baz\\");
-		CServerPath dos7(L"d:\\bar");
-		CServerPath dos8(L"c:\\bar\\baz");
-		CServerPath dos9(L"c:\\bar\\");
+		const CServerPath dos1(L"c:\\bar", DOS);
+		CServerPath dos2(L"c:\\bar", DOS);
+		CServerPath dos3(L"c:\\bar\\baz", DOS);
+		CServerPath dos4(L"c:\\bar", DOS);
+		CServerPath dos5(L"c:\\bar\\baz\\bar", DOS);
+		CServerPath dos6(L"c:\\bar\\baz\\", DOS);
+		CServerPath dos7(L"d:\\bar", DOS);
+		CServerPath dos8(L"c:\\bar\\baz", DOS);
+		CServerPath dos9(L"c:\\bar\\", DOS);
 		CServerPath dos10(L"md:\\bar\\", DOS);
 		CPPUNIT_ASSERT(dos2.ChangePath(L"baz") && dos2 == dos3);
 		CPPUNIT_ASSERT(dos4.ChangePath(L"baz\\bar") && dos4 == dos5);
@@ -583,15 +583,15 @@ void CServerPathTest::testChangePath()
 	sub = L"(FOO)";
 	CPPUNIT_ASSERT(mvs11.ChangePath(sub, true) && mvs11 == mvs12 && sub == L"FOO");
 
-	const CServerPath vxworks1(L":foo:bar");
-	CServerPath vxworks2(L":foo:bar");
-	CServerPath vxworks3(L":foo:bar/baz");
-	CServerPath vxworks4(L":foo:bar");
-	CServerPath vxworks5(L":foo:bar/baz/bar");
-	CServerPath vxworks6(L":foo:bar/baz/");
-	CServerPath vxworks7(L":bar:bar");
-	CServerPath vxworks8(L":foo:bar/baz");
-	CServerPath vxworks9(L":foo:bar/baz/bar");
+	const CServerPath vxworks1(L":foo:bar", VXWORKS);
+	CServerPath vxworks2(L":foo:bar", VXWORKS);
+	CServerPath vxworks3(L":foo:bar/baz", VXWORKS);
+	CServerPath vxworks4(L":foo:bar", VXWORKS);
+	CServerPath vxworks5(L":foo:bar/baz/bar", VXWORKS);
+	CServerPath vxworks6(L":foo:bar/baz/", VXWORKS);
+	CServerPath vxworks7(L":bar:bar", VXWORKS);
+	CServerPath vxworks8(L":foo:bar/baz", VXWORKS);
+	CServerPath vxworks9(L":foo:bar/baz/bar", VXWORKS);
 	CPPUNIT_ASSERT(vxworks2.ChangePath(L"baz") && vxworks2 == vxworks3);
 	CPPUNIT_ASSERT(vxworks4.ChangePath(L"baz/bar") && vxworks4 == vxworks5);
 	CPPUNIT_ASSERT(vxworks6.ChangePath(L"../.././foo/../bar") && vxworks6 == vxworks1);
@@ -629,11 +629,11 @@ void CServerPathTest::testChangePath()
 	sub = L"bar.";
 	CPPUNIT_ASSERT(!hpnonstop4.ChangePath(sub, true));
 
-	CServerPath dos_virtual1(L"\\foo\\bar");
-	CServerPath dos_virtual2(L"\\foo\\bar\\baz");
-	CServerPath dos_virtual3(L"\\foo\\baz");
-	CServerPath dos_virtual4(L"\\foo\\bar\\baz");
-	CServerPath dos_virtual5(L"\\foo");
+	CServerPath dos_virtual1(L"\\foo\\bar", DOS_VIRTUAL);
+	CServerPath dos_virtual2(L"\\foo\\bar\\baz", DOS_VIRTUAL);
+	CServerPath dos_virtual3(L"\\foo\\baz", DOS_VIRTUAL);
+	CServerPath dos_virtual4(L"\\foo\\bar\\baz", DOS_VIRTUAL);
+	CServerPath dos_virtual5(L"\\foo", DOS_VIRTUAL);
 	CPPUNIT_ASSERT(dos_virtual1.ChangePath(L"baz") && dos_virtual1 == dos_virtual2);
 	CPPUNIT_ASSERT(dos_virtual2.ChangePath(L"..\\..\\baz") && dos_virtual2 == dos_virtual3);
 	CPPUNIT_ASSERT(dos_virtual3.ChangePath(L"\\foo\\bar\\baz") && dos_virtual3 == dos_virtual4);

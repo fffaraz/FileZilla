@@ -27,6 +27,7 @@ private:
 	wxNotebookPage *advancedPage_{};
 	wxNotebookPage *charsetPage_{};
 	wxNotebookPage *transferPage_{};
+	wxNotebookPage *sftpPage_{};
 	wxNotebookPage *s3Page_{};
 	wxNotebookPage *dropboxPage_{};
 	wxNotebookPage *swiftPage_{};

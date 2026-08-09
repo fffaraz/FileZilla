@@ -64,7 +64,6 @@ static std::vector<ServerProtocol> const defaultProtocols = {
 };
 
 static char const* const typeNames[SERVERTYPE_MAX] = {
-	fztranslate_mark("Default (Autodetect)"),
 	"Unix",
 	"VMS",
 	"DOS with backslash separators",
@@ -667,7 +666,9 @@ bool CServer::ProtocolHasFeature(ServerProtocol const protocol, ProtocolFeature 
 
 std::wstring CServer::GetNameFromServerType(ServerType type)
 {
-	assert(type != SERVERTYPE_MAX);
+	if (type >= SERVERTYPE_MAX) {
+		return {};
+	}
 	return fz::translate(typeNames[type]);
 }
 
@@ -680,7 +681,7 @@ ServerType CServer::GetServerTypeFromName(std::wstring const& name)
 		}
 	}
 
-	return DEFAULT;
+	return UNIX;
 }
 
 void CServer::ClearExtraParameters()
@@ -940,6 +941,17 @@ std::vector<ParameterTraits> const& ExtraServerParameterTraits(ServerProtocol pr
 			static std::vector<ParameterTraits> const ret = []() {
 				std::vector<ParameterTraits> ret;
 				ret.emplace_back(ParameterTraits{"otp_code", ParameterSection::credentials, ParameterTraits::optional | ParameterTraits::custom, std::wstring(), std::wstring()});
+				return ret;
+			}();
+			return ret;
+		}
+	case SFTP:
+		{
+			static std::vector<ParameterTraits> const ret = []() {
+				std::vector<ParameterTraits> ret;
+				ret.emplace_back(ParameterTraits{"allow_non_crlf_identification_string", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"allow_agent_keys_of_unknown_type", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"ignore_unknown_flags_in_attributes", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom, std::wstring(), std::wstring()});
 				return ret;
 			}();
 			return ret;

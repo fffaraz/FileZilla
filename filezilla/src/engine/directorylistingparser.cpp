@@ -6,21 +6,20 @@
 #include <libfilezilla/format.hpp>
 
 #include <algorithm>
+#include <array>
+#include <map>
 #include <vector>
 #include <limits>
 
 #include <assert.h>
-#include <string.h>
 
 using namespace std::literals;
-
-std::map<std::wstring, int> CDirectoryListingParser::m_MonthNamesMap;
 
 //#define LISTDEBUG_MVS
 //#define LISTDEBUG
 #ifdef LISTDEBUG
-static char const data[][150]={
-	"" // Has to be terminated with empty string
+static std::string_view const data[] = {
+	""sv // Has to be terminated with empty string
 };
 
 #endif
@@ -28,33 +27,55 @@ static char const data[][150]={
 namespace {
 struct ObjectCache
 {
-	fz::shared_value<std::wstring> const& get(std::wstring_view const& v)
+	fz::shared_value<std::wstring> get(std::wstring_view const& v)
 	{
 		fz::scoped_lock l(m_);
 		auto it = std::lower_bound(cache.begin(), cache.end(), v, [&](auto const& a, auto const& b) { return *a < b; });
 
-		if (it == cache.end() || !(**it == v)) {
-			it = cache.emplace(it, std::wstring(v));
+		if (it != cache.end() && **it == v) {
+			return *it;
 		}
-		return *it;
+
+		auto ret = *cache.emplace(it, std::wstring(v));
+		prune();
+		return ret;
 	}
 
-	fz::shared_value<std::wstring> const& get(std::wstring && v)
+	fz::shared_value<std::wstring> get(std::wstring && v)
 	{
 		fz::scoped_lock l(m_);
 		auto it = std::lower_bound(cache.begin(), cache.end(), v);
 
-		if (it == cache.end() || !(*it == v)) {
-			it = cache.emplace(it, std::move(v));
+		if (it != cache.end() && *it == v) {
+			return *it;
 		}
-		return *it;
+
+		auto ret = *cache.emplace(it, std::move(v));
+		prune();
+		return ret;
 	}
 
 private:
+	void prune()
+	{
+		constexpr size_t threshold = 5000;
+		constexpr size_t target = threshold - 1000;
+
+		if (cache.size() > threshold) {
+			cache.erase(
+				std::remove_if(cache.begin(), cache.end(), [&](auto &e) {
+					return e.use_count() <= 1;
+				}),	cache.end());
+
+			if (cache.size() > threshold) {
+				cache.erase(cache.begin(), cache.begin() + (cache.size() - target));
+			}
+		}
+	}
+
 	fz::mutex m_{false};
 	// Vector coupled with binary search and sorted insertion is fastest
 	// alternative as we expect a relatively low amount of inserts.
-	// Note that we cannot use set, as it it cannot search based on a different type.
 	std::vector<fz::shared_value<std::wstring>> cache;
 };
 
@@ -69,16 +90,24 @@ bool CToken::IsNumeric(t_numberBase base)
 	case decimal:
 	default:
 		if (!(flags_ & (numeric | non_numeric))) {
-			flags_ |= numeric;
-			for (size_t i = 0; i < data_.size(); ++i) {
-				if (data_[i] < '0' || data_[i] > '9') {
-					flags_ ^= numeric | non_numeric;
-					break;
+			if (data_.empty()) {
+				flags_ |= non_numeric;
+			}
+			else {
+				flags_ |= numeric;
+				for (size_t i = 0; i < data_.size(); ++i) {
+					if (data_[i] < '0' || data_[i] > '9') {
+						flags_ ^= numeric | non_numeric;
+						break;
+					}
 				}
 			}
 		}
 		return flags_ & numeric;
 	case hex:
+		if (data_.empty()) {
+			return false;
+		}
 		for (size_t i = 0; i < data_.size(); ++i) {
 			auto const c = data_[i];
 			if ((c < '0' || c > '9') && (c < 'A' || c > 'F') && (c < 'a' || c > 'f')) {
@@ -91,7 +120,13 @@ bool CToken::IsNumeric(t_numberBase base)
 
 bool CToken::IsNumeric(size_t start, size_t len)
 {
-	for (size_t i = start; i < std::min(start + len, data_.size()); ++i) {
+	if (start >= data_.size()) {
+		return false;
+	}
+	if (!len || data_.size() - start < len) {
+		return false;
+	}
+	for (size_t i = start; i < start + len; ++i) {
 		if (data_[i] < '0' || data_[i] > '9') {
 			return false;
 		}
@@ -152,32 +187,99 @@ int CToken::Find(wchar_t chr, size_t start) const
 	return -1;
 }
 
+int64_t CToken::GetNumber(std::wstring_view s, t_numberBase base, bool trailingDataIsError)
+{
+	if (s.empty()) {
+		return -1;
+	}
+	constexpr int64_t max = std::numeric_limits<int64_t>::max();
+
+	int64_t v{};
+
+	switch (base) {
+	default:
+	case decimal:
+		{
+			constexpr int64_t max10 = max / 10;
+			for (size_t i = 0; i < s.size(); ++i) {
+				auto const c = s[i];
+				if (c < '0' || c > '9') {
+					if (!i || trailingDataIsError) {
+						return -1;
+					}
+					break;
+				}
+
+				if (v > max10) {
+					return -1;
+				}
+				v *= 10;
+				auto digit = c - '0';
+				if (max - digit < v) {
+					return -1;
+				}
+				v += c - '0';
+			}
+			return v;
+		}
+	case hex:
+		{
+			constexpr int64_t max = std::numeric_limits<int64_t>::max();
+			constexpr int64_t max16 = max / 16;
+			for (size_t i = 0; i < s.size(); ++i) {
+				auto const c = s[i];
+
+				int64_t digit;
+				if (c >= '0' && c <= '9') {
+					digit = c - '0';
+				}
+				else if (c >= 'a' && c <= 'f') {
+					digit= c - 'a' + 10;
+				}
+				else if (c >= 'A' && c <= 'F') {
+					digit = c - 'A' + 10;
+				}
+				else {
+					if (!i || trailingDataIsError) {
+						return -1;
+					}
+					break;
+				}
+
+				if (v > max16) {
+					return -1;
+				}
+				v *= 16;
+				if (max - digit < v) {
+					return -1;
+				}
+				v += digit;
+			}
+			return v;
+		}
+	}
+
+	return -1;
+}
+
 int64_t CToken::GetNumber(size_t start, int len)
 {
+	if (start >= data_.size()) {
+		return -1;
+	}
+
 	if (len == -1) {
 		len = data_.size() - start;
 	}
-	if (len < 1) {
+	else if (len < 1) {
 		return -1;
 	}
-
-	if (start + static_cast<size_t>(len) > data_.size()) {
-		return -1;
-	}
-
-	if (data_[start] < '0' || data_[start] > '9') {
-		return -1;
-	}
-
-	int64_t number = 0;
-	for (size_t i = start; i < (start + len); ++i) {
-		if (data_[i] < '0' || data_[i] > '9') {
-			break;
+	else {
+		if (data_.size() - start < static_cast<size_t>(len)) {
+			return -1;
 		}
-		number *= 10;
-		number += data_[i] - '0';
 	}
-	return number;
+	return GetNumber(data_.substr(start, static_cast<size_t>(len)), decimal);
 }
 
 int64_t CToken::GetNumber(t_numberBase base)
@@ -186,69 +288,26 @@ int64_t CToken::GetNumber(t_numberBase base)
 	default:
 	case decimal:
 		if (m_number == std::numeric_limits<int64_t>::min()) {
-			constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 9) / 10;
 			if (IsNumeric() || IsLeftNumeric()) {
-				m_number = 0;
-				for (size_t i = 0; i < data_.size(); ++i) {
-					if (data_[i] < '0' || data_[i] > '9') {
-						break;
-					}
-					if (m_number > max) {
-						m_number = -1;
-						break;
-					}
-					m_number *= 10;
-					m_number += data_[i] - '0';
-				}
+				m_number = GetNumber(data_, base);
 			}
 			else if (IsRightNumeric()) {
 				m_number = 0;
 				size_t start = data_.size() - 1;
+				// start-1 cannot underflow, as otherwise IsNumeric() would have been true.
 				while (data_[start - 1] >= '0' && data_[start - 1] <= '9') {
 					--start;
 				}
-				for (size_t i = start; i < data_.size(); ++i) {
-					if (m_number > max) {
-						m_number = -1;
-						break;
-					}
-					m_number *= 10;
-					m_number += data_[i] - '0';
-				}
+				m_number = GetNumber(data_.substr(start));
 			}
 		}
 		return m_number;
 	case hex:
-		{
-			constexpr int64_t max = (std::numeric_limits<int64_t>::max() - 15) / 16;
-			int64_t number = 0;
-			for (size_t i = 0; i < data_.size(); ++i) {
-				if (number > max) {
-					return -1;
-				}
-				wchar_t const& c = data_[i];
-				if (c >= '0' && c <= '9') {
-					number *= 16;
-					number += c - '0';
-				}
-				else if (c >= 'a' && c <= 'f') {
-					number *= 16;
-					number += c - '0' + 10;
-				}
-				else if (c >= 'A' && c <= 'F') {
-					number *= 16;
-					number += c - 'A' + 10;
-				}
-				else {
-					return -1;
-				}
-			}
-			return number;
-		}
+		return GetNumber(data_, base, true);
 	}
 }
 
-CLine::CLine(std::wstring && line, size_t trailing_whitespace)
+CLine::CLine(std::wstring_view const& line, size_t trailing_whitespace)
 	: line_(line)
 	, trailing_whitespace_(trailing_whitespace)
 {
@@ -267,7 +326,7 @@ CToken CLine::GetToken(unsigned int n)
 	size_t start = m_parsePos;
 	while (m_parsePos < line_.size()) {
 		if (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t') {
-			m_Tokens.emplace_back(line_.c_str() + start, m_parsePos - start);
+			m_Tokens.emplace_back(line_.substr(start, m_parsePos - start));
 
 			while (m_parsePos < line_.size() && (line_[m_parsePos] == ' ' || line_[m_parsePos] == '\t')) {
 				++m_parsePos;
@@ -282,7 +341,7 @@ CToken CLine::GetToken(unsigned int n)
 		++m_parsePos;
 	}
 	if (m_parsePos != start) {
-		m_Tokens.emplace_back(line_.c_str() + start, m_parsePos - start);
+		m_Tokens.emplace_back(line_.substr(start, m_parsePos - start));
 	}
 
 	if (m_Tokens.size() > n) {
@@ -306,15 +365,15 @@ CToken CLine::GetEndToken(unsigned int n, bool include_whitespace)
 		}
 		wchar_t const* p = ref.data() + ref.size() + 1;
 
-		if (static_cast<size_t>(p - line_.c_str()) >= line_.size()) {
+		if (static_cast<size_t>(p - line_.data()) >= line_.size()) {
 			return CToken();
 		}
 
-		auto newLen = line_.size() - (p - line_.c_str());
+		auto newLen = line_.size() - (p - line_.data());
 		return CToken(p, newLen);
 	}
 
-	if (trailing_whitespace_ == std::string::npos) {
+	if (trailing_whitespace_ == std::string::npos && !line_.empty()) {
 		trailing_whitespace_ = 0;
 		size_t i = line_.size() - 1;
 		while (i < line_.size() && (line_[i] == ' ' || line_[i] == '\t')) {
@@ -329,293 +388,64 @@ CToken CLine::GetEndToken(unsigned int n, bool include_whitespace)
 		return {};
 	}
 
-	size_t len = line_.size() - trailing_whitespace_ - (t.data() - line_.c_str());
+	size_t len = line_.size() - trailing_whitespace_ - (t.data() - line_.data());
 	return CToken(t.data(), len);
 }
-
-CLine CLine::Concat(CLine const& line) const
-{
-	std::wstring n;
-	n.reserve(line_.size() + line.line_.size() + 1);
-	n = line_;
-	n += ' ';
-	n += line.line_;
-	return CLine(std::move(n), line.trailing_whitespace_);
-}
-
 
 CDirectoryListingParser::CDirectoryListingParser(CControlSocket* pControlSocket, const CServer& server, listingEncoding::type encoding)
 	: m_pControlSocket(pControlSocket)
 	, m_server(server)
 	, m_listingEncoding(encoding)
 {
-	if (m_MonthNamesMap.empty()) {
-		//Fill the month names map
-
-		//English month names
-		m_MonthNamesMap[L"jan"] = 1;
-		m_MonthNamesMap[L"feb"] = 2;
-		m_MonthNamesMap[L"mar"] = 3;
-		m_MonthNamesMap[L"apr"] = 4;
-		m_MonthNamesMap[L"may"] = 5;
-		m_MonthNamesMap[L"jun"] = 6;
-		m_MonthNamesMap[L"june"] = 6;
-		m_MonthNamesMap[L"jul"] = 7;
-		m_MonthNamesMap[L"july"] = 7;
-		m_MonthNamesMap[L"aug"] = 8;
-		m_MonthNamesMap[L"sep"] = 9;
-		m_MonthNamesMap[L"sept"] = 9;
-		m_MonthNamesMap[L"oct"] = 10;
-		m_MonthNamesMap[L"nov"] = 11;
-		m_MonthNamesMap[L"dec"] = 12;
-
-		//Numerical values for the month
-		m_MonthNamesMap[L"1"] = 1;
-		m_MonthNamesMap[L"01"] = 1;
-		m_MonthNamesMap[L"2"] = 2;
-		m_MonthNamesMap[L"02"] = 2;
-		m_MonthNamesMap[L"3"] = 3;
-		m_MonthNamesMap[L"03"] = 3;
-		m_MonthNamesMap[L"4"] = 4;
-		m_MonthNamesMap[L"04"] = 4;
-		m_MonthNamesMap[L"5"] = 5;
-		m_MonthNamesMap[L"05"] = 5;
-		m_MonthNamesMap[L"6"] = 6;
-		m_MonthNamesMap[L"06"] = 6;
-		m_MonthNamesMap[L"7"] = 7;
-		m_MonthNamesMap[L"07"] = 7;
-		m_MonthNamesMap[L"8"] = 8;
-		m_MonthNamesMap[L"08"] = 8;
-		m_MonthNamesMap[L"9"] = 9;
-		m_MonthNamesMap[L"09"] = 9;
-		m_MonthNamesMap[L"10"] = 10;
-		m_MonthNamesMap[L"11"] = 11;
-		m_MonthNamesMap[L"12"] = 12;
-
-		//German month names
-		m_MonthNamesMap[L"mrz"] = 3;
-		m_MonthNamesMap[L"m\xe4r"] = 3;
-		m_MonthNamesMap[L"m\xe4rz"] = 3;
-		m_MonthNamesMap[L"mai"] = 5;
-		m_MonthNamesMap[L"juni"] = 6;
-		m_MonthNamesMap[L"juli"] = 7;
-		m_MonthNamesMap[L"okt"] = 10;
-		m_MonthNamesMap[L"dez"] = 12;
-
-		//Austrian month names
-		m_MonthNamesMap[L"j\xe4n"] = 1;
-
-		//French month names
-		m_MonthNamesMap[L"janv"] = 1;
-		m_MonthNamesMap[L"f\xe9" L"b"] = 1;
-		m_MonthNamesMap[L"f\xe9v"] = 2;
-		m_MonthNamesMap[L"fev"] = 2;
-		m_MonthNamesMap[L"f\xe9vr"] = 2;
-		m_MonthNamesMap[L"fevr"] = 2;
-		m_MonthNamesMap[L"mars"] = 3;
-		m_MonthNamesMap[L"mrs"] = 3;
-		m_MonthNamesMap[L"avr"] = 4;
-		m_MonthNamesMap[L"avril"] = 4;
-		m_MonthNamesMap[L"juin"] = 6;
-		m_MonthNamesMap[L"juil"] = 7;
-		m_MonthNamesMap[L"jui"] = 7;
-		m_MonthNamesMap[L"ao\xfb"] = 8;
-		m_MonthNamesMap[L"ao\xfbt"] = 8;
-		m_MonthNamesMap[L"aout"] = 8;
-		m_MonthNamesMap[L"d\xe9" L"c"] = 12;
-		m_MonthNamesMap[L"dec"] = 12;
-
-		//Italian month names
-		m_MonthNamesMap[L"gen"] = 1;
-		m_MonthNamesMap[L"mag"] = 5;
-		m_MonthNamesMap[L"giu"] = 6;
-		m_MonthNamesMap[L"lug"] = 7;
-		m_MonthNamesMap[L"ago"] = 8;
-		m_MonthNamesMap[L"set"] = 9;
-		m_MonthNamesMap[L"ott"] = 10;
-		m_MonthNamesMap[L"dic"] = 12;
-
-		//Spanish month names
-		m_MonthNamesMap[L"ene"] = 1;
-		m_MonthNamesMap[L"fbro"] = 2;
-		m_MonthNamesMap[L"mzo"] = 3;
-		m_MonthNamesMap[L"ab"] = 4;
-		m_MonthNamesMap[L"abr"] = 4;
-		m_MonthNamesMap[L"agto"] = 8;
-		m_MonthNamesMap[L"sbre"] = 9;
-		m_MonthNamesMap[L"obre"] = 9;
-		m_MonthNamesMap[L"nbre"] = 9;
-		m_MonthNamesMap[L"dbre"] = 9;
-
-		//Polish month names
-		m_MonthNamesMap[L"sty"] = 1;
-		m_MonthNamesMap[L"lut"] = 2;
-		m_MonthNamesMap[L"kwi"] = 4;
-		m_MonthNamesMap[L"maj"] = 5;
-		m_MonthNamesMap[L"cze"] = 6;
-		m_MonthNamesMap[L"lip"] = 7;
-		m_MonthNamesMap[L"sie"] = 8;
-		m_MonthNamesMap[L"wrz"] = 9;
-		m_MonthNamesMap[L"pa\x9f"] = 10;
-		m_MonthNamesMap[L"pa\xbc"] = 10; // ISO-8859-2
-		m_MonthNamesMap[L"paz"] = 10; // ASCII
-		m_MonthNamesMap[L"pa\xc5\xba"] = 10; // UTF-8
-		m_MonthNamesMap[L"pa\x017a"] = 10; // some servers send this
-		m_MonthNamesMap[L"lis"] = 11;
-		m_MonthNamesMap[L"gru"] = 12;
-
-		//Russian month names
-		m_MonthNamesMap[L"\xff\xed\xe2"] = 1;
-		m_MonthNamesMap[L"\xf4\xe5\xe2"] = 2;
-		m_MonthNamesMap[L"\xec\xe0\xf0"] = 3;
-		m_MonthNamesMap[L"\xe0\xef\xf0"] = 4;
-		m_MonthNamesMap[L"\xec\xe0\xe9"] = 5;
-		m_MonthNamesMap[L"\xe8\xfe\xed"] = 6;
-		m_MonthNamesMap[L"\xe8\xfe\xeb"] = 7;
-		m_MonthNamesMap[L"\xe0\xe2\xe3"] = 8;
-		m_MonthNamesMap[L"\xf1\xe5\xed"] = 9;
-		m_MonthNamesMap[L"\xee\xea\xf2"] = 10;
-		m_MonthNamesMap[L"\xed\xee\xff"] = 11;
-		m_MonthNamesMap[L"\xe4\xe5\xea"] = 12;
-
-		//Dutch month names
-		m_MonthNamesMap[L"mrt"] = 3;
-		m_MonthNamesMap[L"mei"] = 5;
-
-		//Portuguese month names
-		m_MonthNamesMap[L"out"] = 10;
-
-		//Finnish month names
-		m_MonthNamesMap[L"tammi"] = 1;
-		m_MonthNamesMap[L"helmi"] = 2;
-		m_MonthNamesMap[L"maalis"] = 3;
-		m_MonthNamesMap[L"huhti"] = 4;
-		m_MonthNamesMap[L"touko"] = 5;
-		m_MonthNamesMap[L"kes\xe4"] = 6;
-		m_MonthNamesMap[L"hein\xe4"] = 7;
-		m_MonthNamesMap[L"elo"] = 8;
-		m_MonthNamesMap[L"syys"] = 9;
-		m_MonthNamesMap[L"loka"] = 10;
-		m_MonthNamesMap[L"marras"] = 11;
-		m_MonthNamesMap[L"joulu"] = 12;
-
-		//Slovenian month names
-		m_MonthNamesMap[L"avg"] = 8;
-
-		//Icelandic
-		m_MonthNamesMap[L"ma\x00ed"] = 5;
-		m_MonthNamesMap[L"j\x00fan"] = 6;
-		m_MonthNamesMap[L"j\x00fal"] = 7;
-		m_MonthNamesMap[L"\x00e1g"] = 8;
-		m_MonthNamesMap[L"n\x00f3v"] = 11;
-		m_MonthNamesMap[L"des"] = 12;
-
-		//Lithuanian
-		m_MonthNamesMap[L"sau"] = 1;
-		m_MonthNamesMap[L"vas"] = 2;
-		m_MonthNamesMap[L"kov"] = 3;
-		m_MonthNamesMap[L"bal"] = 4;
-		m_MonthNamesMap[L"geg"] = 5;
-		m_MonthNamesMap[L"bir"] = 6;
-		m_MonthNamesMap[L"lie"] = 7;
-		m_MonthNamesMap[L"rgp"] = 8;
-		m_MonthNamesMap[L"rgs"] = 9;
-		m_MonthNamesMap[L"spa"] = 10;
-		m_MonthNamesMap[L"lap"] = 11;
-		m_MonthNamesMap[L"grd"] = 12;
-
-		// Hungarian
-		m_MonthNamesMap[L"szept"] = 9;
-
-		//There are more languages and thus month
-		//names, but as long as nobody reports a
-		//problem, I won't add them, there are way
-		//too many languages
-
-		// Some servers send a combination of month name and number,
-		// Add corresponding numbers to the month names.
-		std::map<std::wstring, int> combo;
-		for (auto iter = m_MonthNamesMap.begin(); iter != m_MonthNamesMap.end(); ++iter) {
-			// January could be 1 or 0, depends how the server counts
-			combo[fz::sprintf(L"%s%02d", iter->first, iter->second)] = iter->second;
-			combo[fz::sprintf(L"%s%02d", iter->first, iter->second - 1)] = iter->second;
-			if (iter->second < 10) {
-				combo[fz::sprintf(L"%s%d", iter->first, iter->second)] = iter->second;
-			}
-			else {
-				combo[fz::sprintf(L"%s%d", iter->first, iter->second % 10)] = iter->second;
-			}
-			if (iter->second <= 10) {
-				combo[fz::sprintf(L"%s%d", iter->first, iter->second - 1)] = iter->second;
-			}
-			else {
-				combo[fz::sprintf(L"%s%d", iter->first, (iter->second - 1) % 10)] = iter->second;
-			}
-		}
-		m_MonthNamesMap.insert(combo.begin(), combo.end());
-
-		m_MonthNamesMap[L"1"] = 1;
-		m_MonthNamesMap[L"2"] = 2;
-		m_MonthNamesMap[L"3"] = 3;
-		m_MonthNamesMap[L"4"] = 4;
-		m_MonthNamesMap[L"5"] = 5;
-		m_MonthNamesMap[L"6"] = 6;
-		m_MonthNamesMap[L"7"] = 7;
-		m_MonthNamesMap[L"8"] = 8;
-		m_MonthNamesMap[L"9"] = 9;
-		m_MonthNamesMap[L"10"] = 10;
-		m_MonthNamesMap[L"11"] = 11;
-		m_MonthNamesMap[L"12"] = 12;
-	}
-
 #ifdef LISTDEBUG
-	for (unsigned int i = 0; data[i][0]; ++i) {
-		unsigned int len = (unsigned int)strlen(data[i]);
-		char *pData = new char[len + 3];
-		strcpy(pData, data[i]);
-		strcat(pData, "\r\n");
-		AddData(pData, len + 2);
+	for (size_t i = 0; !data[i].empty(); ++i) {
+		GetInputBuffer().append(data[i]);
+		GetInputBuffer().append("\r\n"sv);
 	}
 #endif
 
 	if (m_pControlSocket) {
-		limit_ = static_cast<size_t>(m_pControlSocket->GetEngine().GetOptions().get_int(OPTION_DIRECTORY_LISTING_ITEM_LIMIT));
+		limit_ = static_cast<size_t>(m_pControlSocket->GetEngine().GetOptions().get<size_t>(OPTION_DIRECTORY_LISTING_ITEM_LIMIT));
 	}
-
 }
 
-CDirectoryListingParser::~CDirectoryListingParser()
-{
-}
+CDirectoryListingParser::~CDirectoryListingParser() = default;
 
 bool CDirectoryListingParser::ParseData(bool partial)
 {
 	ConvertEncoding();
 
 	bool error = false;
-	std::optional<CLine> line = GetLine(partial, error);
-	while (line) {
-		bool res = ParseLine(*line, m_server.GetType(), false);
+	std::wstring raw_line = GetLine(partial, error);
+	while (!raw_line.empty()) {
+		CLine line(raw_line);
+		bool res = ParseLine(line, m_server.GetType(), false);
 		if (!res) {
-			if (prevLine_) {
-				CLine concatedLine = prevLine_->Concat(*line);
+			if (!prevLine_.empty()) {
+				prevLine_ += ' ';
+				prevLine_ += raw_line;
+				CLine concatedLine(prevLine_, line.TrailingWhitespace());
 				res = ParseLine(concatedLine, m_server.GetType(), true);
 				if (res) {
-					prevLine_.reset();
+					prevLine_.clear();
 				}
 				else {
-					prevLine_ = std::move(line);
+					prevLine_ = std::move(raw_line);
 				}
 			}
 			else {
-				prevLine_ = std::move(line);
+				prevLine_ = std::move(raw_line);
 			}
 		}
 		else {
-			prevLine_.reset();
+			prevLine_.clear();
 		}
-		line = GetLine(partial, error);
+		raw_line = GetLine(partial, error);
 	};
+
+	if (converted_ > inbuf_.size()) {
+		converted_ = inbuf_.size();
+	}
 
 	return !error;
 }
@@ -776,6 +606,10 @@ bool CDirectoryListingParser::ParseLine(CLine &line, ServerType const serverType
 	if (!override || override->name.empty()) {
 		return false;
 	}
+
+	entry = *override;
+	goto done2;
+
 done:
 
 	if (override) {
@@ -786,13 +620,13 @@ done:
 		if (!override->time.empty()) {
 			entry.time = override->time;
 		}
-		if (!(override->flags & CDirentry::flag_unsure)) {
-			entry.flags = override->flags;
-		}
 		if (!entry.is_dir() && override->size != -1) {
 			entry.size = override->size;
 		}
+		// Not doing flags for now, would need to stat each entry to resolve links
 	}
+
+done2:
 
 	m_maybeMultilineVms = false;
 	m_fileList.clear();
@@ -812,6 +646,7 @@ done:
 	}
 
 	{
+		// Apply user-supplied offset to adjust for incorrectly set server clocks
 		auto const timezoneOffset = m_server.GetTimezoneOffset();
 		if (timezoneOffset) {
 			entry.time += fz::duration::from_minutes(timezoneOffset);
@@ -933,14 +768,10 @@ bool CDirectoryListingParser::ParseAsUnix(CLine &line, CDirentry &entry, bool ex
 			}
 
 			auto group = sizeToken.get_view();
-			int i;
-			for (i = group.size() - 1;
-				 i >= 0 && group[i] >= '0' && group[i] <= '9';
-				 --i)
-			{
+			while (!group.empty() && group.back() >= '0' && group.back() <= '9') {
+				group.remove_suffix(1);
 			}
-
-			ownerGroup += group.substr(0, i + 1);
+			ownerGroup += group;
 		}
 
 		if (expect_date) {
@@ -1446,18 +1277,27 @@ bool CDirectoryListingParser::ParseAsDos(CLine &line, CDirentry &entry)
 	else if (token.IsNumeric() || token.IsLeftNumeric()) {
 		// Convert size, filter out separators
 		int64_t size = 0;
-		int len = token.size();
-		for (int i = 0; i < len; ++i) {
-			auto const chr = token[i];
-			if (chr == ',' || chr == '.') {
+		for (size_t i = 0; i < token.size(); ++i) {
+			auto const c = token[i];
+			if (c == ',' || c == '.') {
 				continue;
 			}
-			if (chr < '0' || chr > '9') {
+			if (c < '0' || c > '9') {
 				return false;
 			}
+			constexpr int64_t max = std::numeric_limits<int64_t>::max();
+			constexpr int64_t max10 = max / 10;
 
+			if (size > max10) {
+				return false;
+			}
 			size *= 10;
-			size += chr - '0';
+
+			auto digit = c - '0';
+			if (max - digit < size) {
+				return false;
+			}
+			size += digit;
 		}
 		entry.size = size;
 	}
@@ -1523,20 +1363,25 @@ bool CDirectoryListingParser::ParseTime(CToken &token, CDirentry &entry)
 		}
 	}
 
-	// Convert to 24h format
+	// Convert to 24h format.
 	if (!token.IsRightNumeric()) {
-		if (token[token.size() - 2] == 'P') {
+		auto h = token[token.size() - 2];
+		if (h == 'P' || h == 'p') {
 			if (hour < 12) {
 				hour += 12;
 			}
 		}
-		else {
+		else if (h == 'A' || h == 'a') {
 			if (hour == 12) {
 				hour = 0;
 			}
 		}
+		else {
+			return false;
+		}
 	}
 
+	// imbue_time checks for alternate midnight and rejects invalid times
 	return entry.time.imbue_time(hour, minute, seconds);
 }
 
@@ -1586,6 +1431,9 @@ bool CDirectoryListingParser::ParseAsEplf(CLine &line, CDirentry &entry)
 		}
 		else if (type == 's') {
 			entry.size = token.GetNumber(fact + 1, len - 1);
+			if (entry.size < 0) {
+				return false;
+			}
 		}
 		else if (type == 'm') {
 			int64_t number = token.GetNumber(fact + 1, len - 1);
@@ -1669,7 +1517,7 @@ bool CDirectoryListingParser::ParseAsVms(CLine &line, CDirentry &entry)
 	// This field can either be the filesize, a username (at least that's what I think) enclosed in [] or a date.
 	if (!token.IsNumeric() && !token.IsLeftNumeric()) {
 		// Must be username
-		const int len = token.size();
+		const size_t len = token.size();
 		if (len < 3 || token[0] != '[' || token[len - 1] != ']') {
 			return false;
 		}
@@ -1732,7 +1580,7 @@ bool CDirectoryListingParser::ParseAsVms(CLine &line, CDirentry &entry)
 	}
 
 	if (!ParseTime(token, entry)) {
-		int len = token.size();
+		size_t len = token.size();
 		if (token[0] == '[' && token[len - 1] != ']') {
 			return false;
 		}
@@ -1777,7 +1625,7 @@ bool CDirectoryListingParser::ParseAsVms(CLine &line, CDirentry &entry)
 
 	// Owner / group and permissions
 	while ((token = line.GetToken(++index))) {
-		const int len = token.size();
+		const size_t len = token.size();
 		if (len > 2 && token[0] == '(' && token[len - 1] == ')') {
 			if (!permissions.empty()) {
 				permissions += ' ';
@@ -2068,10 +1916,8 @@ bool CDirectoryListingParser::ProcessAddedData()
 		return false;
 	}
 
-	size_t added = inbuf_.size() - parse_offset_;
-
-	m_totalData += added;
-	if (!added || m_totalData < 512u) {
+	// Need enough data to guess encoding
+	if (m_listingEncoding == listingEncoding::unknown && inbuf_.size() < 512u) {
 		return true;
 	}
 
@@ -2091,12 +1937,11 @@ bool CDirectoryListingParser::AddLine(std::wstring && line, std::wstring && name
 	CDirentry override;
 	override.name = std::move(name);
 	override.time = time;
-	override.size = size ? *size : -1;
 	if (flags) {
 		override.flags = *flags;
 	}
-	else {
-		override.flags = CDirentry::flag_unsure;
+	if (!override.is_dir()) {
+		override.size = (size && *size <= std::numeric_limits<int64_t>::max()) ? *size : -1;
 	}
 	CLine l(std::move(line));
 	ParseLine(l, m_server.GetType(), true, &override);
@@ -2110,69 +1955,72 @@ void CDirectoryListingParser::TrimLeadingWhitespace()
 		return;
 	}
 
-	for (size_t i = 0; i < inbuf_.size(); ++i) {
+	size_t i = 0;
+	for (; i < inbuf_.size(); ++i) {
 		auto c = inbuf_[i];
 		if (c != '\r' && c != '\n' && c != ' ' && c != '\t' && c) {
-			inbuf_.consume(i);
-			return;
-		}
-	}
-}
-
-std::optional<CLine> CDirectoryListingParser::GetLine(bool breakAtEnd, bool &error)
-{
-	TrimLeadingWhitespace();
-
-	for (; parse_offset_ < inbuf_.size(); ++parse_offset_) {
-		auto c  = inbuf_[parse_offset_];
-		if (!c || c == '\n' || c == '\r') {
 			break;
 		}
 	}
+	inbuf_.consume(i);
+}
 
-	if (parse_offset_ > 10000) {
-		if (m_pControlSocket) {
-			m_pControlSocket->log(logmsg::error, _("Received a line exceeding 10000 characters, aborting."));
-		}
-		error = true;
-		return std::nullopt;
-	}
+std::wstring CDirectoryListingParser::GetLine(bool breakAtEnd, bool &error)
+{
+	while (true) {
+		TrimLeadingWhitespace();
 
-	if (parse_offset_ >= inbuf_.size()) {
-		if (breakAtEnd || inbuf_.empty()) {
-			return std::nullopt;
-		}
-	}
-
-	std::string_view raw_line = inbuf_.to_view().substr(0, parse_offset_);
-
-	std::wstring buffer;
-	if (m_pControlSocket) {
-		buffer = m_pControlSocket->ConvToLocal(raw_line.data(), raw_line.size());
-		m_pControlSocket->log_raw(logmsg::listing, buffer);
-	}
-	else {
-		buffer = fz::to_wstring_from_utf8(raw_line);
-		if (buffer.empty()) {
-			buffer = fz::to_wstring(raw_line);
-			if (buffer.empty()) {
-				buffer = std::wstring(raw_line.data(), raw_line.data() + raw_line.size());
+		for (; parse_offset_ < inbuf_.size(); ++parse_offset_) {
+			auto c  = inbuf_[parse_offset_];
+			if (!c || c == '\n' || c == '\r') {
+				break;
 			}
 		}
-	}
-	inbuf_.consume(parse_offset_);
-	parse_offset_ = 0;
 
-	// Strip BOM
-	if (buffer[0] == 0xfeff) {
-		buffer = buffer.substr(1);
+		if (parse_offset_ > 10000) {
+			if (m_pControlSocket) {
+				m_pControlSocket->log(logmsg::error, _("Received a line exceeding 10000 characters, aborting."));
+			}
+			error = true;
+			return {};
+		}
+
+		if (parse_offset_ >= inbuf_.size()) {
+			if (breakAtEnd || inbuf_.empty()) {
+				return {};
+			}
+		}
+
+		std::string_view raw_line = inbuf_.to_view().substr(0, parse_offset_);
+
+		std::wstring buffer;
+		if (m_pControlSocket) {
+			buffer = m_pControlSocket->ConvToLocal(raw_line.data(), raw_line.size());
+			m_pControlSocket->log_raw(logmsg::listing, buffer);
+		}
+		else {
+			buffer = fz::to_wstring_from_utf8(raw_line);
+			if (buffer.empty()) {
+				buffer = fz::to_wstring(raw_line);
+				if (buffer.empty()) {
+					buffer = std::wstring(raw_line.data(), raw_line.data() + raw_line.size());
+				}
+			}
+		}
+		inbuf_.consume(parse_offset_);
+		parse_offset_ = 0;
+
+		// Strip BOM
+		if (!buffer.empty() && buffer[0] == 0xfeff) {
+			buffer = buffer.substr(1);
+		}
+
+		if (!buffer.empty()) {
+			return buffer;
+		}
 	}
 
-	if (!buffer.empty()) {
-		return CLine(std::move(buffer));
-	}
-
-	return std::nullopt;
+	return {};
 }
 
 bool CDirectoryListingParser::ParseAsWfFtp(CLine &line, CDirentry &entry)
@@ -2529,8 +2377,8 @@ bool CDirectoryListingParser::ParseAsIBM_MVS_PDS2(CLine &line, CDirentry &entry)
 		if (!(token = line.GetToken(i))) {
 			return false;
 		}
-		int len = token.size();
-		for (int j = 0; j < len; ++j) {
+		size_t len = token.size();
+		for (size_t j = 0; j < len; ++j) {
 			if (token[j] < 'A' || token[j] > 'Z') {
 				return false;
 			}
@@ -2582,18 +2430,24 @@ bool CDirectoryListingParser::ParseComplexFileSize(CToken& token, int64_t& size,
 {
 	if (token.IsNumeric()) {
 		size = token.GetNumber();
-		if (blocksize != -1) {
+		if (blocksize > 0) {
+			if (size > std::numeric_limits<std::decay_t<decltype(size)>>::max() / blocksize) {
+				return false;
+			}
 			size *= blocksize;
 		}
 
 		return true;
 	}
 
-	int len = token.size();
+	size_t len = token.size();
+	if (!len) {
+		return false;
+	}
 
 	auto last = token[len - 1];
 	if (last == 'B' || last == 'b') {
-		if (len == 1) {
+		if (len < 2) {
 			return false;
 		}
 
@@ -2617,55 +2471,72 @@ bool CDirectoryListingParser::ParseComplexFileSize(CToken& token, int64_t& size,
 
 	size = 0;
 
-	int dot = -1;
-	for (int i = 0; i < len; ++i) {
+	size_t dot{};
+	for (size_t i = 0; i < len; ++i) {
 		auto const c = token[i];
 		if (c >= '0' && c <= '9') {
-			size *= 10;
-			size += c - '0';
-		}
-		else if (c == '.') {
-			if (dot != -1) {
+			if (size > std::numeric_limits<std::decay_t<decltype(size)>>::max() / 10) {
 				return false;
 			}
-			dot = len - i - 1;
+			size *= 10;
+
+			auto digit = c - '0';
+			if (std::numeric_limits<std::decay_t<decltype(size)>>::max() - digit < size) {
+				return false;
+			}
+			size += digit;
+		}
+		else if (c == '.') {
+			if (!i || i + 1 == len || dot) {
+				return false;
+			}
+			dot = len - i;
 		}
 		else {
 			return false;
 		}
 	}
+
+	int64_t mult{};
 	switch (last)
 	{
 	case 'k':
 	case 'K':
-		size *= 1024;
+		mult = 1024;
 		break;
 	case 'm':
 	case 'M':
-		size *= 1024 * 1024;
+		mult = 1024 * 1024;
 		break;
 	case 'g':
 	case 'G':
-		size *= 1024 * 1024 * 1024;
+		mult = 1024 * 1024 * 1024;
 		break;
 	case 't':
 	case 'T':
-		size *= 1024 * 1024;
-		size *= 1024 * 1024;
+		mult = 1024 * 1024 * 1024 * 1024ll;
 		break;
 	case 'b':
 	case 'B':
 		break;
 	case 0:
-		if (blocksize != -1) {
-			size *= blocksize;
+		if (blocksize > 0) {
+			mult = blocksize;
 		}
 		break;
 	default:
 		return false;
 	}
-	while (dot-- > 0) {
-		size /= 10;
+	if (mult) {
+		if (size > std::numeric_limits<std::decay_t<decltype(size)>>::max() / mult) {
+			return false;
+		}
+		size *= mult;
+	}
+	if (dot) {
+		while (--dot) {
+			size /= 10;
+		}
 	}
 
 	return true;
@@ -2727,9 +2598,10 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 				entry.flags |= CDirentry::flag_dir;
 			}
 			else if (valuePrefix == L"os.unix=slink"sv || valuePrefix == L"os.unix=symlink"sv) {
+				// Sadly we can't distinguish between symlinks to links and dirs, they appear the same in listings. Handled instead via FZ_REPLY_LINKNOTDIR
 				entry.flags |= CDirentry::flag_dir | CDirentry::flag_link;
 				if (colonPos != std::wstring::npos) {
-					std::wstring_view target = value.substr(colonPos);
+					std::wstring_view target = value.substr(colonPos + 1);
 					entry.target = fz::sparse_optional<std::wstring>(std::wstring(target.begin(), target.end()));
 				}
 			}
@@ -2739,14 +2611,9 @@ int CDirectoryListingParser::ParseAsMlsd(CLine &line, CDirentry &entry)
 			}
 		}
 		else if (factname == L"size"sv) {
-			entry.size = 0;
-
-			for (unsigned int i = 0; i < value.size(); ++i) {
-				if (value[i] < '0' || value[i] > '9') {
-					return 0;
-				}
-				entry.size *= 10;
-				entry.size += value[i] - '0';
+			entry.size = CToken::GetNumber(value, CToken::decimal, true);
+			if (entry.size < 0) {
+				return 0;
 			}
 		}
 		else if (factname == L"modify"sv ||
@@ -2930,13 +2797,16 @@ void CDirectoryListingParser::Reset()
 {
 	inbuf_.clear();
 	parse_offset_ = 0;
-	prevLine_.reset();
+	converted_ = 0;
+	prevLine_.clear();
 
 	entries_.clear();
 	m_fileList.clear();
 	m_fileListOnly = true;
 	m_maybeMultilineVms = false;
 	truncated_ = false;
+
+	// Keep the deduced encoding and m_timezoneOffset, this isn't changing between listings
 }
 
 bool CDirectoryListingParser::ParseAsZVM(CLine &line, CDirentry &entry)
@@ -2985,7 +2855,13 @@ bool CDirectoryListingParser::ParseAsZVM(CLine &line, CDirentry &entry)
 		return false;
 	}
 
-	entry.size *= token.GetNumber();
+	int64_t records = token.GetNumber();
+	if (entry.size > 0) {
+		if (records < 0 || std::numeric_limits<decltype(entry.size)>::max() / entry.size < records) {
+			return false;
+		}
+		entry.size *= records;
+	}
 
 	// Unused (Block size?)
 	if (!(token = line.GetToken(++index))) {
@@ -3047,7 +2923,7 @@ bool CDirectoryListingParser::ParseAsHPNonstop(CLine &line, CDirentry &entry)
 
 	entry.name = token.get_view();
 
-	// File code, numeric, unsuded
+	// File code, numeric, unused
 	if (!(token = line.GetToken(++index))) {
 		return false;
 	}
@@ -3118,9 +2994,233 @@ bool CDirectoryListingParser::ParseAsHPNonstop(CLine &line, CDirentry &entry)
 bool CDirectoryListingParser::GetMonthFromName(std::wstring_view const& name, int &month)
 {
 	std::wstring lower = fz::str_tolower_ascii(name);
-	auto iter = m_MonthNamesMap.find(lower);
-	if (iter == m_MonthNamesMap.end())
+
+	static auto const monthNamesMap = [](){
+		std::map<std::wstring, int> monthNamesMap;
+		//Fill the month names map
+
+		//English month names
+		monthNamesMap[L"jan"] = 1;
+		monthNamesMap[L"feb"] = 2;
+		monthNamesMap[L"mar"] = 3;
+		monthNamesMap[L"apr"] = 4;
+		monthNamesMap[L"may"] = 5;
+		monthNamesMap[L"jun"] = 6;
+		monthNamesMap[L"june"] = 6;
+		monthNamesMap[L"jul"] = 7;
+		monthNamesMap[L"july"] = 7;
+		monthNamesMap[L"aug"] = 8;
+		monthNamesMap[L"sep"] = 9;
+		monthNamesMap[L"sept"] = 9;
+		monthNamesMap[L"oct"] = 10;
+		monthNamesMap[L"nov"] = 11;
+		monthNamesMap[L"dec"] = 12;
+
+		//Numerical values for the month
+		monthNamesMap[L"1"] = 1;
+		monthNamesMap[L"01"] = 1;
+		monthNamesMap[L"2"] = 2;
+		monthNamesMap[L"02"] = 2;
+		monthNamesMap[L"3"] = 3;
+		monthNamesMap[L"03"] = 3;
+		monthNamesMap[L"4"] = 4;
+		monthNamesMap[L"04"] = 4;
+		monthNamesMap[L"5"] = 5;
+		monthNamesMap[L"05"] = 5;
+		monthNamesMap[L"6"] = 6;
+		monthNamesMap[L"06"] = 6;
+		monthNamesMap[L"7"] = 7;
+		monthNamesMap[L"07"] = 7;
+		monthNamesMap[L"8"] = 8;
+		monthNamesMap[L"08"] = 8;
+		monthNamesMap[L"9"] = 9;
+		monthNamesMap[L"09"] = 9;
+		monthNamesMap[L"10"] = 10;
+		monthNamesMap[L"11"] = 11;
+		monthNamesMap[L"12"] = 12;
+
+		//German month names
+		monthNamesMap[L"mrz"] = 3;
+		monthNamesMap[L"m\xe4r"] = 3;
+		monthNamesMap[L"m\xe4rz"] = 3;
+		monthNamesMap[L"mai"] = 5;
+		monthNamesMap[L"juni"] = 6;
+		monthNamesMap[L"juli"] = 7;
+		monthNamesMap[L"okt"] = 10;
+		monthNamesMap[L"dez"] = 12;
+
+		//Austrian month names
+		monthNamesMap[L"j\xe4n"] = 1;
+
+		//French month names
+		monthNamesMap[L"janv"] = 1;
+		monthNamesMap[L"f\xe9" L"b"] = 2;
+		monthNamesMap[L"f\xe9v"] = 2;
+		monthNamesMap[L"fev"] = 2;
+		monthNamesMap[L"f\xe9vr"] = 2;
+		monthNamesMap[L"fevr"] = 2;
+		monthNamesMap[L"mars"] = 3;
+		monthNamesMap[L"mrs"] = 3;
+		monthNamesMap[L"avr"] = 4;
+		monthNamesMap[L"avril"] = 4;
+		monthNamesMap[L"juin"] = 6;
+		monthNamesMap[L"juil"] = 7;
+		monthNamesMap[L"jui"] = 7;
+		monthNamesMap[L"ao\xfb"] = 8;
+		monthNamesMap[L"ao\xfbt"] = 8;
+		monthNamesMap[L"aout"] = 8;
+		monthNamesMap[L"d\xe9" L"c"] = 12;
+		monthNamesMap[L"dec"] = 12;
+
+		//Italian month names
+		monthNamesMap[L"gen"] = 1;
+		monthNamesMap[L"mag"] = 5;
+		monthNamesMap[L"giu"] = 6;
+		monthNamesMap[L"lug"] = 7;
+		monthNamesMap[L"ago"] = 8;
+		monthNamesMap[L"set"] = 9;
+		monthNamesMap[L"ott"] = 10;
+		monthNamesMap[L"dic"] = 12;
+
+		//Spanish month names
+		monthNamesMap[L"ene"] = 1;
+		monthNamesMap[L"fbro"] = 2;
+		monthNamesMap[L"mzo"] = 3;
+		monthNamesMap[L"ab"] = 4;
+		monthNamesMap[L"abr"] = 4;
+		monthNamesMap[L"agto"] = 8;
+		monthNamesMap[L"sbre"] = 9;
+		monthNamesMap[L"obre"] = 10;
+		monthNamesMap[L"nbre"] = 11;
+		monthNamesMap[L"dbre"] = 12;
+
+		//Polish month names
+		monthNamesMap[L"sty"] = 1;
+		monthNamesMap[L"lut"] = 2;
+		monthNamesMap[L"kwi"] = 4;
+		monthNamesMap[L"maj"] = 5;
+		monthNamesMap[L"cze"] = 6;
+		monthNamesMap[L"lip"] = 7;
+		monthNamesMap[L"sie"] = 8;
+		monthNamesMap[L"wrz"] = 9;
+		monthNamesMap[L"pa\x9f"] = 10;
+		monthNamesMap[L"pa\xbc"] = 10; // ISO-8859-2
+		monthNamesMap[L"paz"] = 10; // ASCII
+		monthNamesMap[L"pa\xc5\xba"] = 10; // UTF-8
+		monthNamesMap[L"pa\x017a"] = 10; // some servers send this
+		monthNamesMap[L"lis"] = 11;
+		monthNamesMap[L"gru"] = 12;
+
+		//Russian month names
+		monthNamesMap[L"\xff\xed\xe2"] = 1;
+		monthNamesMap[L"\xf4\xe5\xe2"] = 2;
+		monthNamesMap[L"\xec\xe0\xf0"] = 3;
+		monthNamesMap[L"\xe0\xef\xf0"] = 4;
+		monthNamesMap[L"\xec\xe0\xe9"] = 5;
+		monthNamesMap[L"\xe8\xfe\xed"] = 6;
+		monthNamesMap[L"\xe8\xfe\xeb"] = 7;
+		monthNamesMap[L"\xe0\xe2\xe3"] = 8;
+		monthNamesMap[L"\xf1\xe5\xed"] = 9;
+		monthNamesMap[L"\xee\xea\xf2"] = 10;
+		monthNamesMap[L"\xed\xee\xff"] = 11;
+		monthNamesMap[L"\xe4\xe5\xea"] = 12;
+
+		//Dutch month names
+		monthNamesMap[L"mrt"] = 3;
+		monthNamesMap[L"mei"] = 5;
+
+		//Portuguese month names
+		monthNamesMap[L"out"] = 10;
+
+		//Finnish month names
+		monthNamesMap[L"tammi"] = 1;
+		monthNamesMap[L"helmi"] = 2;
+		monthNamesMap[L"maalis"] = 3;
+		monthNamesMap[L"huhti"] = 4;
+		monthNamesMap[L"touko"] = 5;
+		monthNamesMap[L"kes\xe4"] = 6;
+		monthNamesMap[L"hein\xe4"] = 7;
+		monthNamesMap[L"elo"] = 8;
+		monthNamesMap[L"syys"] = 9;
+		monthNamesMap[L"loka"] = 10;
+		monthNamesMap[L"marras"] = 11;
+		monthNamesMap[L"joulu"] = 12;
+
+		//Slovenian month names
+		monthNamesMap[L"avg"] = 8;
+
+		//Icelandic
+		monthNamesMap[L"ma\x00ed"] = 5;
+		monthNamesMap[L"j\x00fan"] = 6;
+		monthNamesMap[L"j\x00fal"] = 7;
+		monthNamesMap[L"\x00e1g"] = 8;
+		monthNamesMap[L"n\x00f3v"] = 11;
+		monthNamesMap[L"des"] = 12;
+
+		//Lithuanian
+		monthNamesMap[L"sau"] = 1;
+		monthNamesMap[L"vas"] = 2;
+		monthNamesMap[L"kov"] = 3;
+		monthNamesMap[L"bal"] = 4;
+		monthNamesMap[L"geg"] = 5;
+		monthNamesMap[L"bir"] = 6;
+		monthNamesMap[L"lie"] = 7;
+		monthNamesMap[L"rgp"] = 8;
+		monthNamesMap[L"rgs"] = 9;
+		monthNamesMap[L"spa"] = 10;
+		monthNamesMap[L"lap"] = 11;
+		monthNamesMap[L"grd"] = 12;
+
+		// Hungarian
+		monthNamesMap[L"szept"] = 9;
+
+		//There are more languages and thus month
+		//names, but as long as nobody reports a
+		//problem, I won't add them, there are way
+		//too many languages
+
+		// Some servers send a combination of month name and number,
+		// Add corresponding numbers to the month names.
+		std::map<std::wstring, int> combo;
+		for (auto iter = monthNamesMap.begin(); iter != monthNamesMap.end(); ++iter) {
+			// January could be 1 or 0, depends how the server counts
+			combo[fz::sprintf(L"%s%02d", iter->first, iter->second)] = iter->second;
+			combo[fz::sprintf(L"%s%02d", iter->first, iter->second - 1)] = iter->second;
+			if (iter->second < 10) {
+				combo[fz::sprintf(L"%s%d", iter->first, iter->second)] = iter->second;
+			}
+			else {
+				combo[fz::sprintf(L"%s%d", iter->first, iter->second % 10)] = iter->second;
+			}
+			if (iter->second <= 10) {
+				combo[fz::sprintf(L"%s%d", iter->first, iter->second - 1)] = iter->second;
+			}
+			else {
+				combo[fz::sprintf(L"%s%d", iter->first, (iter->second - 1) % 10)] = iter->second;
+			}
+		}
+		monthNamesMap.insert(combo.begin(), combo.end());
+
+		monthNamesMap[L"1"] = 1;
+		monthNamesMap[L"2"] = 2;
+		monthNamesMap[L"3"] = 3;
+		monthNamesMap[L"4"] = 4;
+		monthNamesMap[L"5"] = 5;
+		monthNamesMap[L"6"] = 6;
+		monthNamesMap[L"7"] = 7;
+		monthNamesMap[L"8"] = 8;
+		monthNamesMap[L"9"] = 9;
+		monthNamesMap[L"10"] = 10;
+		monthNamesMap[L"11"] = 11;
+		monthNamesMap[L"12"] = 12;
+
+		return monthNamesMap;
+	}();
+
+	auto iter = monthNamesMap.find(lower);
+	if (iter == monthNamesMap.end()) {
 		return false;
+	}
 
 	month = iter->second;
 
@@ -3155,9 +3255,10 @@ void CDirectoryListingParser::ConvertEncoding()
 		return;
 	}
 
-	for (size_t i = parse_offset_; i < inbuf_.size(); ++i) {
+	for (size_t i = converted_; i < inbuf_.size(); ++i) {
 		inbuf_[i] = ebcdic_table[inbuf_[i]];
 	}
+	converted_ = inbuf_.size();
 }
 
 void CDirectoryListingParser::DeduceEncoding()
@@ -3166,11 +3267,8 @@ void CDirectoryListingParser::DeduceEncoding()
 		return;
 	}
 
-	int count[256];
-
-	memset(&count, 0, sizeof(int)*256);
-
-	for (auto const& c : inbuf_.to_view()) {
+	std::array<size_t, 256> count{};
+	for (auto const& c : inbuf_.to_view().substr(0, 50000)) {
 		++count[static_cast<unsigned char>(c)];
 	}
 

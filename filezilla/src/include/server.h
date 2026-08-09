@@ -58,9 +58,8 @@ enum ServerProtocol
 	MAX_VALUE = CLOUDFLARE_R2
 };
 
-enum ServerType
+enum ServerType : unsigned
 {
-	DEFAULT,
 	UNIX,
 	VMS,
 	DOS, // Backslashes as preferred separator
@@ -222,7 +221,7 @@ public:
 
 protected:
 	ServerProtocol m_protocol{UNKNOWN};
-	ServerType m_type{DEFAULT};
+	ServerType m_type{UNIX};
 	std::wstring m_host;
 	std::wstring m_user;
 	unsigned int m_port{21};

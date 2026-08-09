@@ -50,9 +50,7 @@ CFtpListOpData::CFtpListOpData(CFtpControlSocket & controlSocket, CServerPath co
     , subDir_(subDir)
     , flags_(flags)
 {
-	if (path_.GetType() == DEFAULT) {
-		path_.SetType(currentServer_.GetType());
-	}
+	path_.SetType(currentServer_.GetType());
 	refresh_ = (flags & LIST_FLAG_REFRESH) != 0;
 	fallback_to_current_ = !path.empty() && (flags & LIST_FLAG_FALLBACK_CURRENT) != 0;
 }

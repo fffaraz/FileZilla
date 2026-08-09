@@ -243,7 +243,7 @@ void CUpdater::OnRun(bool manual)
 	SetState(UpdaterState::checking);
 
 	UpdaterState s = LoadLocalData();
-	
+
 	if (!ShouldCheck(s)) {
 		SetState(s);
 		return;
@@ -302,7 +302,7 @@ int CUpdater::Request(fz::uri const& uri)
 	pending_commands_.clear();
 	pending_commands_.emplace_back(new CDisconnectCommand);
 
-	CServer server(fz::equal_insensitive_ascii(uri.scheme_, std::string("http")) ? HTTP : HTTPS, DEFAULT, fz::to_wstring_from_utf8(uri.host_), uri.port_);
+	CServer server(fz::equal_insensitive_ascii(uri.scheme_, std::string("http")) ? HTTP : HTTPS, UNIX, fz::to_wstring_from_utf8(uri.host_), uri.port_);
 	pending_commands_.emplace_back(new CConnectCommand(server, ServerHandle(), Credentials()));
 	pending_commands_.emplace_back(new CHttpRequestCommand(uri, fz::writer_factory_holder(std::make_unique<fz::buffer_writer_factory>(output_buffer_, L"Updater", 1024*1024)), "GET", fz::reader_factory_holder(), true));
 

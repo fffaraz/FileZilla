@@ -679,7 +679,7 @@ bool CQueueStorage::Impl::SaveServer(CServerItem const& item)
 	Bind(insertServerQuery_, server_table_column_names::host, site.server.GetHost());
 	Bind(insertServerQuery_, server_table_column_names::port, static_cast<int>(site.server.GetPort()));
 	Bind(insertServerQuery_, server_table_column_names::protocol, static_cast<int>(site.server.GetProtocol()));
-	Bind(insertServerQuery_, server_table_column_names::type, static_cast<int>(site.server.GetType()));
+	Bind(insertServerQuery_, server_table_column_names::type, static_cast<int>(site.server.GetType() + 1));
 
 	ProtectedCredentials credentials = site.credentials;
 	protect(credentials, login_manager_, options_);
@@ -1048,12 +1048,17 @@ int64_t CQueueStorage::Impl::ParseServerFromRow(Site & site)
 	}
 	site.server.SetProtocol(static_cast<ServerProtocol>(protocol));
 
-	int type = GetColumnInt(selectServersQuery_, server_table_column_names::type);
-	if (type < 0 || type >= SERVERTYPE_MAX) {
-		return INVALID_DATA;
+	if (site.server.HasFeature(ProtocolFeature::ServerType)) {
+		int type = GetColumnInt(selectServersQuery_, server_table_column_names::type);
+		if (type < 0 || static_cast<unsigned>(type) > SERVERTYPE_MAX) {
+			return INVALID_DATA;
+		}
+		if (type) {
+			--type;
+		}
+		site.server.SetType(static_cast<ServerType>(type));
 	}
 
-	site.server.SetType(static_cast<ServerType>(type));
 
 	int64_t logonType = GetColumnInt64(selectServersQuery_, server_table_column_names::logontype);
 	bool const encrypted = logonType & (1ll << 62);

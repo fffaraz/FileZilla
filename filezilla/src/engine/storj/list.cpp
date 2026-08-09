@@ -25,7 +25,7 @@ int CStorjListOpData::Send()
 
 		log(logmsg::status, _("Retrieving directory listing of \"%s\"..."), currentPath_.GetPath());
 
-		if (currentPath_.GetType() != ServerType::UNIX) {
+		if (currentPath_.GetType() != UNIX) {
 			log(logmsg::debug_warning, L"CStorjListOpData::Send called with incompatible server type %d in path", currentPath_.GetType());
 			return FZ_REPLY_INTERNALERROR;
 		}

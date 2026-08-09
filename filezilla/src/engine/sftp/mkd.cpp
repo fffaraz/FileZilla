@@ -44,13 +44,14 @@ int CSftpMkdirOpData::Send()
 		paths_.push_back(p);
 		p.MakeParent();
 	}
-	if (p != commonParent_) {
-		paths_.push_back(p);
-	}
 
 	fz::ssh::sftp::attributes attrs;
 	for (auto it = paths_.rbegin(); it != paths_.rend(); ++it) {
-		sftp_->mkdir(this, controlSocket_.ConvToServer(it->GetPath()), attrs);
+		auto p = controlSocket_.ConvToServer(it->GetPath());
+		if (p.empty()) {
+			return FZ_REPLY_ERROR;
+		}
+		sftp_->mkdir(this, p, attrs);
 	}
 
 	return FZ_REPLY_WOULDBLOCK;

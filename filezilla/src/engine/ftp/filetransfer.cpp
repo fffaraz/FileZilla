@@ -53,9 +53,7 @@ int CFtpFileTransferOpData::Send()
 
 		opState = filetransfer_waitcwd;
 
-		if (remotePath_.GetType() == DEFAULT) {
-			remotePath_.SetType(currentServer_.GetType());
-		}
+		remotePath_.SetType(currentServer_.GetType());
 
 		controlSocket_.ChangeDir(remotePath_);
 		return FZ_REPLY_CONTINUE;
@@ -78,7 +76,7 @@ int CFtpFileTransferOpData::Send()
 			resumeOffset = 0;
 			if (download()) {
 				// Potentially racy
-				localFileSize_ = writer_factory_.size(); 
+				localFileSize_ = writer_factory_.size();
 				fileDidExist_ = localFileSize_ != fz::aio_base::nosize;
 
 				if (resume_) {

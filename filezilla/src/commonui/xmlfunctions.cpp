@@ -18,7 +18,7 @@ void SetServer(pugi::xml_node node, Site const& site, login_manager& lim, COptio
 	AddTextElement(node, "Port", site.server.GetPort());
 	AddTextElement(node, "Protocol", protocol);
 	if (site.server.HasFeature(ProtocolFeature::ServerType)) {
-		AddTextElement(node, "Type", site.server.GetType());
+		AddTextElement(node, "Type", site.server.GetType() + 1);
 	}
 
 	ProtectedCredentials credentials = site.credentials;

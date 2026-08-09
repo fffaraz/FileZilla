@@ -60,7 +60,7 @@ public:
 		return !time.empty() && time.get_accuracy() >= fz::datetime::seconds;
 	}
 
-	fz::sparse_optional<std::wstring> target; // Set to linktarget it link is true
+	fz::sparse_optional<std::wstring> target; // Set to linktarget if link is true
 
 	fz::datetime time;
 

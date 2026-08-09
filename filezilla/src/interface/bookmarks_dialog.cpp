@@ -541,7 +541,7 @@ bool CBookmarksDialog::Verify()
 			xrc_call(*this, "ID_BOOKMARK_REMOTEDIR", &wxTextCtrl::SetFocus);
 			if (site) {
 				wxString msg;
-				if (site->GetOriginalServer().GetType() != DEFAULT) {
+				if (site->GetOriginalServer().GetType() != UNIX) {
 					msg = wxString::Format(_("Remote path cannot be parsed. Make sure it is a valid absolute path and is supported by the current site's servertype (%s)."), CServer::GetNameFromServerType(site->GetOriginalServer().GetType()));
 				}
 				else {

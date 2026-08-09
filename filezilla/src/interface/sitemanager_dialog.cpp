@@ -929,7 +929,7 @@ bool CSiteManagerDialog::Verify()
 			if (!remotePath.SetPath(remotePathRaw.ToStdWstring())) {
 				XRCCTRL(*this, "ID_BOOKMARK_REMOTEDIR", wxTextCtrl)->SetFocus();
 				wxString msg;
-				if (pServer->m_site->server.GetType() != DEFAULT) {
+				if (pServer->m_site->server.GetType() != UNIX) {
 					msg = wxString::Format(_("Remote path cannot be parsed. Make sure it is a valid absolute path and is supported by the servertype (%s) selected on the parent site."), CServer::GetNameFromServerType(pServer->m_site->server.GetType()));
 				}
 				else {
