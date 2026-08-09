@@ -35,7 +35,7 @@ RUN \
 	cd filezilla && \
 	mkdir -p ./src/fzshellext/32 ./src/fzshellext/64 && \
 	autoreconf -f -i && \
-	./configure --with-pugixml=builtin --enable-static --disable-shared && \
+	./configure --disable-manualupdatecheck --with-pugixml=builtin --enable-static --disable-shared && \
 	make -j$(nproc) && \
 	make install
 

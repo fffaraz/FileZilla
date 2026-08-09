@@ -43,7 +43,7 @@ RUN \
 	cd filezilla && \
 	mkdir -p ./src/fzshellext/32 ./src/fzshellext/64 && \
 	autoreconf -f -i && \
-	./configure --enable-static --disable-shared && \
+	./configure --disable-manualupdatecheck --enable-static --disable-shared && \
 	make -j$(nproc) && \
 	make install
 
