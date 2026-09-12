@@ -1,4 +1,4 @@
-﻿AC_INIT([libfilezilla],[0.56.1],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
+﻿AC_INIT([libfilezilla],[0.57.0],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
 
 # Update the version information only immediately before a public release of your software
 # If the library source code has changed at all since the last update, then increment revision (‘c:r:a’ becomes ‘c:r+1:a’).
@@ -6,7 +6,7 @@
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-LIBRARY_VERSION=58:1:0
+LIBRARY_VERSION=59:0:0
 
 AH_TOP([
 #ifndef LIBFILEZILLA_CONFIG_HEADER

@@ -1,7 +1,9 @@
 #include "libfilezilla/event_handler.hpp"
 #include "libfilezilla/impersonation.hpp"
+#include "libfilezilla/logger.hpp"
 #include "libfilezilla/process.hpp"
 #include "libfilezilla/thread_pool.hpp"
+#include "libfilezilla/translate.hpp"
 #include "libfilezilla/util.hpp"
 
 #ifdef FZ_WINDOWS
@@ -11,6 +13,8 @@
 #include "libfilezilla/glue/async_pipe.hpp"
 #include "libfilezilla/glue/windows.hpp"
 #include "windows/security_descriptor_builder.hpp"
+
+#include <optional>
 
 namespace fz {
 
@@ -153,6 +157,8 @@ event_loop& get_unused_loop()
 }
 
 HANDLE get_handle(impersonation_token const& t);
+std::optional<wchar_t *> get_desktop_name(impersonation_token const& t, logger_interface &logger);
+
 class process::impl : public event_handler
 {
 public:
@@ -187,7 +193,7 @@ public:
 			(!include_stderr || err_.create(true, false));
 	}
 
-	bool spawn(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, io_redirection redirect_mode, impersonation_token const* it = nullptr)
+	bool spawn(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, io_redirection redirect_mode, impersonation_token const* it = nullptr, logger_interface &logger = get_null_logger())
 	{
 		if (process_handle_ != INVALID_HANDLE_VALUE) {
 			return false;
@@ -242,10 +248,19 @@ public:
 		}
 
 		PROCESS_INFORMATION pi{};
+		BOOL res{};
+		DWORD impersonation_error{};
 
-		BOOL res;
 		if (it) {
-			 res = CreateProcessAsUserW(get_handle(*it), cmd.c_str(), cmdline.data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
+			auto desktop_name = get_desktop_name(*it, logger);
+			if (desktop_name) {
+				si.StartupInfo.lpDesktop = *desktop_name;
+				logger.log(logmsg::debug_debug, L"process: spawning impersonated process with desktop [%s].", si.StartupInfo.lpDesktop ? si.StartupInfo.lpDesktop : L"<automatic>");
+				res = CreateProcessAsUserW(get_handle(*it), cmd.c_str(), cmdline.data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
+				if (!res) {
+					impersonation_error = GetLastError();
+				}
+			}
 		}
 		else {
 			res = CreateProcessW(cmd.c_str(), cmdline.data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
@@ -257,6 +272,9 @@ public:
 		}
 
 		if (!res) {
+			if (impersonation_error != ERROR_SUCCESS) {
+				logger.log(logmsg::error, fztranslate("process: CreateProcessAsUserW failed. Last Error: %d."), impersonation_error);
+			}
 			kill();
 			return false;
 		}
@@ -577,7 +595,7 @@ public:
 		}
 	}
 
-	bool spawn(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, io_redirection redirect_mode, std::vector<int> const& extra_fds = std::vector<int>(), impersonation_token const* it = nullptr)
+	bool spawn(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, io_redirection redirect_mode, std::vector<int> const& extra_fds = std::vector<int>(), impersonation_token const* it = nullptr, logger_interface & /*logger*/ = get_null_logger())
 	{
 		if (pid_ != -1) {
 			return false;
@@ -904,16 +922,19 @@ bool process::spawn(native_string const& cmd, std::vector<native_string> const& 
 	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode) : false;
 }
 
-#if FZ_WINDOWS || FZ_UNIX
 bool process::spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, io_redirection redirect_mode)
 {
+	return spawn(it, cmd, args, redirect_mode, get_null_logger());
+}
+
+bool process::spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, io_redirection redirect_mode, logger_interface &logger)
+{
 #if FZ_WINDOWS
-	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, &it) : false;
+	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, &it, logger) : false;
 #else
-	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, {}, &it) : false;
+	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, {}, &it, logger) : false;
 #endif
 }
-#endif
 
 #ifndef FZ_WINDOWS
 bool process::spawn(native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode)
@@ -923,7 +944,12 @@ bool process::spawn(native_string const& cmd, std::vector<native_string> const& 
 
 bool process::spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode)
 {
-	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, extra_fds, &it) : false;
+	return spawn(it, cmd, args, extra_fds, redirect_mode, get_null_logger());
+}
+
+bool process::spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode, logger_interface &logger)
+{
+	return impl_ ? impl_->spawn(cmd, args.cbegin(), args.cend(), redirect_mode, extra_fds, &it, logger) : false;
 }
 
 #endif

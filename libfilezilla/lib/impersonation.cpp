@@ -4,32 +4,90 @@
 
 namespace fz {
 
+user::invalid::operator bool() const
+{
+	return false;
+}
+
+user::name::name(fz::native_string v)
+	: value(std::move(v))
+{}
+
+user::name::operator bool() const
+{
+	return !value.empty();
+}
+
+user::id::operator bool() const
+{
+	return !value.empty();
+}
+
+user::user(id user_id)
+	: value_(std::move(user_id))
+{}
+
+user::operator bool() const
+{
+	return std::visit([](const auto &v) { return static_cast<bool>(v); }, value_);
+}
+
+fz::native_string const *user::get_name() const
+{
+	if (auto user_name = std::get_if<name>(&value_)) {
+		return &user_name->value;
+	}
+
+	return {};
+}
+
+std::string const *user::get_id() const
+{
+	if (auto user_id = std::get_if<id>(&value_)) {
+		return &user_id->value;
+	}
+
+	return {};
+}
+
 impersonation_token::impersonation_token() = default;
 impersonation_token::~impersonation_token() noexcept = default;
 
 impersonation_token::impersonation_token(impersonation_token&&) noexcept = default;
 impersonation_token& impersonation_token::operator=(impersonation_token&&) noexcept = default;
 
-impersonation_token::impersonation_token(fz::native_string const& username, fz::native_string const &password, fz::logger_interface& logger, impersonation_options const& opts)
-	: impersonation_token(username, &password, logger, opts)
+impersonation_capability_state impersonation_capabilities::operator[](impersonation_capability capability) const
+{
+	auto const index = static_cast<std::size_t>(capability);
+	return index < states_.size() ? states_[index] : impersonation_capability_state::not_applicable;
+}
+
+impersonation_token::impersonation_token(fz::user const& user, fz::native_string const &password, fz::logger_interface& logger, impersonation_options const& opts)
+	: impersonation_token(user, &password, logger, opts)
 {}
 
-impersonation_token::impersonation_token(fz::native_string const& username, impersonation_options::pwless_type, fz::logger_interface& logger, impersonation_options const& opts)
-	: impersonation_token(username, nullptr, logger, opts)
+impersonation_token::impersonation_token(fz::user const& user, impersonation_options::pwless_type, fz::logger_interface& logger, impersonation_options const& opts)
+	: impersonation_token(user, nullptr, logger, opts)
 {}
 
 }
 
 #if FZ_UNIX || FZ_MAC
 
-#include "libfilezilla/buffer.hpp"
-
+#include <charconv>
+#include <cstdint>
 #include <optional>
 #include <tuple>
+
+#include "libfilezilla/buffer.hpp"
 
 #if FZ_UNIX
 #include <crypt.h>
 #include <shadow.h>
+#endif
+#if defined(__linux__)
+#include <linux/capability.h>
+#include <sys/syscall.h>
 #endif
 #include <grp.h>
 #include <limits.h>
@@ -41,6 +99,7 @@ impersonation_token::impersonation_token(fz::native_string const& username, impe
 #if FZ_MAC
 #include <CoreServices/CoreServices.h>
 #endif
+#include <cstring>
 
 namespace fz {
 namespace {
@@ -247,20 +306,34 @@ bool check_auth(native_string const& username, native_string const& password)
 #endif
 	return false;
 }
-}
 
-impersonation_token::impersonation_token(fz::native_string const& username, fz::native_string const* password, logger_interface& logger, impersonation_options const& opts)
+#if defined(__linux__)
+uint64_t get_effective_capabilities_mask()
 {
-	auto pwd = get_passwd(username);
+	__user_cap_header_struct header{};
+	header.version = _LINUX_CAPABILITY_VERSION_3;
+	header.pid = 0;  /* calling thread */
 
-	if (!pwd.pwd_) {
-		logger.log_u(logmsg::error, fztranslate("impersonation_token: user '%s' not found."), username);
-		return;
+	__user_cap_data_struct data[_LINUX_CAPABILITY_U32S_3] = {};
+
+	if (syscall(SYS_capget, &header, data) == -1) {
+		return false;
 	}
 
+	return uint64_t{data[0].effective} | (uint64_t{data[1].effective} << 32);
+}
+
+bool has_effective_capability(uint64_t capabilities_mask, unsigned cap)
+{
+	return (capabilities_mask & (uint64_t{1} << cap)) != 0;
+}
+#endif
+
+std::unique_ptr<impersonation_token_impl> make_impersonation_token_impl(passwd_holder &pwd, native_string const &name, native_string const *password, logger_interface& logger, impersonation_options const& opts)
+{
 	if (password && !check_auth(pwd.pwd_->pw_name, *password)) {
-		logger.log_u(logmsg::error, fztranslate("impersonation_token: invalid credentials. User: '%s'."), username);
-		return;
+		logger.log_u(logmsg::error, fztranslate("impersonation_token: invalid credentials. User: '%s'."), name);
+		return {};
 	}
 
 	if (!opts.group.empty()) {
@@ -268,19 +341,79 @@ impersonation_token::impersonation_token(fz::native_string const& username, fz::
 			pwd.pwd_->pw_gid = *gid;
 		}
 		else {
-			logger.log_u(logmsg::error, fztranslate("impersonation_token: could not get GID for group '%s'. User: '%s'."), opts.group, username);
-			return;
+			logger.log_u(logmsg::error, fztranslate("impersonation_token: could not get GID for group '%s'. User: '%s'."), opts.group, name);
+			return {};
 		}
 	}
 
-	impl_ = std::make_unique<impersonation_token_impl>();
-	impl_->name_ = username;
+	auto ret = std::make_unique<impersonation_token_impl>();
+	ret->name_ = name;
 	if (pwd.pwd_->pw_dir) {
-		impl_->home_ = pwd.pwd_->pw_dir;
+		ret->home_ = pwd.pwd_->pw_dir;
 	}
-	impl_->uid_ = pwd.pwd_->pw_uid;
-	impl_->gid_ = pwd.pwd_->pw_gid;
-	impl_->sup_groups_ = get_supplementary(username, pwd.pwd_->pw_gid);
+	ret->uid_ = pwd.pwd_->pw_uid;
+	ret->gid_ = pwd.pwd_->pw_gid;
+	ret->sup_groups_ = get_supplementary(name, pwd.pwd_->pw_gid);
+
+	return ret;
+}
+}
+
+impersonation_token::impersonation_token(fz::user const& user, fz::native_string const* password, logger_interface& logger, impersonation_options const& opts)
+{
+	if (auto username = user.get_name()) {
+		auto pwd = get_passwd(*username);
+
+		if (!pwd.pwd_) {
+			logger.log_u(logmsg::error, fztranslate("impersonation_token: user '%s' not found."), *username);
+			return;
+		}
+
+		impl_ = make_impersonation_token_impl(pwd, *username, password, logger, opts);
+		return;
+	}
+
+	if (auto uid = user.get_id()) {
+		auto id = fz::to_integral_o<uid_t>(*uid);
+		if (!id) {
+			logger.log_u(logmsg::error, fztranslate("impersonation_token: invalid user id '%s'."), *uid);
+			return;
+		}
+
+		auto pwd = get_passwd(*id);
+		if (!pwd.pwd_) {
+			logger.log_u(logmsg::error, fztranslate("impersonation_token: user id '%s' not found."), *uid);
+			return;
+		}
+
+		impl_ = make_impersonation_token_impl(pwd, pwd.pwd_->pw_name, password, logger, opts);
+	}
+}
+
+impersonation_capabilities impersonation_token::get_capabilities(std::initializer_list<impersonation_capability> requested)
+{
+	impersonation_capabilities ret{};
+
+	bool can_switch_user = geteuid() == 0;
+
+#if defined(__linux__)
+	auto const capabilities_mask = get_effective_capabilities_mask();
+	can_switch_user = can_switch_user || (has_effective_capability(capabilities_mask, CAP_SETGID) && has_effective_capability(capabilities_mask, CAP_SETUID));
+#endif
+
+	for (auto requested_capability : requested) {
+		switch (requested_capability) {
+		case impersonation_capability::password:
+		case impersonation_capability::passwordless:
+			ret.states_[static_cast<std::size_t>(requested_capability)] = can_switch_user ? impersonation_capability_state::available : impersonation_capability_state::unavailable;
+			break;
+		case impersonation_capability::user_profile:
+			ret.states_[static_cast<std::size_t>(requested_capability)] = impersonation_capability_state::available;
+			break;
+		}
+	}
+
+	return ret;
 }
 
 native_string impersonation_token::username() const
@@ -360,11 +493,26 @@ std::string impersonation_token::uid() const
 	return impl_ ? fz::to_string(impl_->uid_) : std::string();
 }
 
-std::string get_user_uid(native_string const& username)
+std::string get_user_id(native_string const& username)
 {
 	passwd_holder pwd = get_passwd(username);
 	if (pwd.pwd_) {
 		return fz::to_string(pwd.pwd_->pw_uid);
+	}
+
+	return {};
+}
+
+native_string get_user_name(std::string const& id)
+{
+	auto uid = fz::to_integral_o<uid_t>(id);
+	if (!uid) {
+		return {};
+	}
+
+	passwd_holder pwd = get_passwd(*uid);
+	if (pwd.pwd_ && pwd.pwd_->pw_name) {
+		return fz::native_string(pwd.pwd_->pw_name);
 	}
 
 	return {};
@@ -376,61 +524,376 @@ std::string get_user_uid(native_string const& username)
 
 #include "libfilezilla/glue/dll.hpp"
 #include "libfilezilla/glue/windows.hpp"
+#include "libfilezilla/string.hpp"
+#include "windows/helpers.hpp"
+#include "windows/impersonation_desktop_impl.hpp"
+#include "windows/impersonation_logon_helper.hpp"
+#include "windows/impersonation_profile_helper.hpp"
 #include "windows/security_descriptor_builder.hpp"
+#include "windows/token_privileges.hpp"
 
 #include <shlobj.h>
 #include <sddl.h>
-#include <dsgetdc.h>
-#include <lm.h>
+#include <ntsecapi.h>
+#define SECURITY_WIN32
+#include <secext.h>
+#undef SECURITY_WIN32
 #include <userenv.h>
 
-#include <tuple>
+#include <optional>
+#include <vector>
+
+namespace fz {
 
 namespace {
 
-struct handle_closer {
-	using pointer = HANDLE;
-	void operator()(HANDLE h) { if (h && h != INVALID_HANDLE_VALUE) CloseHandle(h); }
-};
+using unique_handle = windows::unique_handle;
 
-using unique_handle = std::unique_ptr<HANDLE, handle_closer>;
+template <WELL_KNOWN_SID_TYPE Type>
+std::optional<bool> process_token_has_sid(HANDLE token)
+{
+	auto sid = windows::holder<SID>::create(SECURITY_MAX_SID_SIZE);
+	DWORD size = SECURITY_MAX_SID_SIZE;
+	if (!CreateWellKnownSid(Type, nullptr, sid.get(), &size)) {
+		return {};
+	}
 
+	BOOL member{};
+	if (!CheckTokenMembership(token, sid.get(), &member)) {
+		return {};
+	}
+
+	return member != FALSE;
 }
 
-namespace fz {
+std::optional<bool> process_is_administrator_or_local_system()
+{
+	unique_handle token;
+	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY | TOKEN_DUPLICATE, windows::out_ptr(token))) {
+		return {};
+	}
+
+	unique_handle impersonation_token;
+	if (!DuplicateToken(token.get(), SecurityIdentification, windows::out_ptr(impersonation_token))) {
+		return {};
+	}
+
+	auto administrator = process_token_has_sid<WinBuiltinAdministratorsSid>(impersonation_token.get());
+	if (!administrator || *administrator) {
+		return administrator;
+	}
+
+	return process_token_has_sid<WinLocalSystemSid>(impersonation_token.get());
+}
+
+struct sid_deleter {
+	using pointer = PSID;
+	void operator()(PSID p) const { if (p) LocalFree(p); }
+};
+
+using unique_sid = std::unique_ptr<PSID, sid_deleter>;
+
+dll& secur32()
+{
+	static dll lib(L"secur32.dll", LOAD_LIBRARY_SEARCH_SYSTEM32);
+	return lib;
+}
+
+struct lsa_buffer_closer {
+	using pointer = void *;
+	void operator()(void *buffer) const
+	{
+		if (buffer) {
+			FZ_DLL_IMPORT(secur32(), LsaFreeReturnBuffer);
+
+			if (LsaFreeReturnBuffer) {
+				LsaFreeReturnBuffer(buffer);
+			}
+		}
+	}
+};
+
+using unique_lsa_buffer = std::unique_ptr<void, lsa_buffer_closer>;
+
+enum class authentication_package
+{
+	negotiate,
+	msv1_0,
+	kerberos
+};
+
+std::optional<std::wstring> profile_string_value(UNICODE_STRING const &string, void const *buffer, size_t buffer_length)
+{
+	if (!string.Length) {
+		return std::wstring{};
+	}
+
+	if (!string.Buffer || string.Length % sizeof(wchar_t)) {
+		return std::nullopt;
+	}
+
+	auto const begin = reinterpret_cast<uintptr_t>(buffer);
+	auto const end = begin + buffer_length;
+	auto const string_begin = reinterpret_cast<uintptr_t>(string.Buffer);
+	auto const string_end = string_begin + string.Length;
+
+	if (end < begin || string_end < string_begin || string_begin < begin || string_end > end) {
+		return std::nullopt;
+	}
+
+	return std::wstring(string.Buffer, string.Length / sizeof(wchar_t));
+}
+
+std::optional<std::wstring> extract_profile_path_from_authentication_profile(authentication_package package, void const *buffer, size_t buffer_length)
+{
+	if (!buffer || buffer_length < sizeof(ULONG)) {
+		return std::nullopt;
+	}
+
+	auto const message_type = *static_cast<ULONG const *>(buffer);
+
+	if (message_type == MsV1_0InteractiveProfile || message_type == KerbInteractiveProfile) {
+		if (buffer_length < sizeof(KERB_INTERACTIVE_PROFILE)) {
+			return std::nullopt;
+		}
+
+		auto const &profile = *static_cast<KERB_INTERACTIVE_PROFILE const *>(buffer);
+		return profile_string_value(profile.ProfilePath, buffer, buffer_length);
+	}
+
+	if (package == authentication_package::kerberos && (message_type == KerbSmartCardProfile || message_type == KerbTicketProfile)) {
+		if (buffer_length < sizeof(KERB_INTERACTIVE_PROFILE)) {
+			return std::nullopt;
+		}
+
+		auto const &profile = *static_cast<KERB_INTERACTIVE_PROFILE const *>(buffer);
+		return profile_string_value(profile.ProfilePath, buffer, buffer_length);
+	}
+
+	if (package != authentication_package::kerberos && message_type == MsV1_0Lm20LogonProfile) {
+		if (buffer_length < sizeof(MSV1_0_LM20_LOGON_PROFILE)) {
+			return std::nullopt;
+		}
+
+		return std::wstring{};
+	}
+
+	return std::nullopt;
+}
+
+bool sid_to_user_and_domain(std::wstring const &sid_string, std::wstring &user, std::wstring &domain, logger_interface &logger)
+{
+	PSID sid_raw{};
+	if (!ConvertStringSidToSidW(sid_string.c_str(), &sid_raw)) {
+		auto err = GetLastError();
+		logger.log(logmsg::error, fztranslate("logon_windows_user: ConvertStringSidToSidW failed. SID: '%s'. Last Error: %d."), sid_string, err);
+		return false;
+	}
+
+	unique_sid sid(sid_raw);
+
+	DWORD user_size{};
+	DWORD domain_size{};
+	SID_NAME_USE sid_type{};
+
+	if (LookupAccountSidW(nullptr, sid.get(), nullptr, &user_size, nullptr, &domain_size, &sid_type)) {
+		logger.log(logmsg::error, fztranslate("logon_windows_user: LookupAccountSidW unexpectedly succeeded while probing sizes. SID: '%s'."), sid_string);
+		return false;
+	}
+
+	auto err = GetLastError();
+	if (err != ERROR_INSUFFICIENT_BUFFER || !user_size || !domain_size) {
+		logger.log(logmsg::error, fztranslate("logon_windows_user: LookupAccountSidW failed while probing sizes. SID: '%s'. Last Error: %d."), sid_string, err);
+		return false;
+	}
+
+	user.resize(user_size - 1);
+	domain.resize(domain_size - 1);
+
+	if (!LookupAccountSidW(nullptr, sid.get(), user.data(), &user_size, domain.data(), &domain_size, &sid_type)) {
+		err = GetLastError();
+		logger.log(logmsg::error, fztranslate("logon_windows_user: LookupAccountSidW failed. SID: '%s'. Last Error: %d."), sid_string, err);
+		return false;
+	}
+
+	if (sid_type != SidTypeUser) {
+		logger.log(logmsg::error, fztranslate("logon_windows_user: SID does not identify a user account. SID: '%s', Type: %d."), sid_string, sid_type);
+		return false;
+	}
+
+	user.resize(std::char_traits<wchar_t>::length(user.data()));
+	domain.resize(std::char_traits<wchar_t>::length(domain.data()));
+
+	return true;
+}
+
+std::optional<bool> is_local_domain(std::wstring const &domain, logger_interface &logger)
+{
+	if (domain.empty() || domain == L".") {
+		return true;
+	}
+
+	wchar_t computer_name[MAX_COMPUTERNAME_LENGTH + 1];
+	DWORD computer_name_size = std::size(computer_name);
+	if (!GetComputerNameW(computer_name, &computer_name_size)) {
+		auto err = GetLastError();
+		logger.log(logmsg::error, fztranslate("logon_windows_user: GetComputerNameW failed while classifying domain '%s'. Last Error: %d."), domain, err);
+		return std::nullopt;
+	}
+
+	return !fz::stricmp(domain, std::wstring_view(computer_name, computer_name_size));
+}
+
+std::optional<std::wstring> translate_domain_user_to_upn(std::wstring const &domain, std::wstring const &user, logger_interface &logger)
+{
+	FZ_DLL_IMPORT(secur32(), TranslateNameW);
+	if (!TranslateNameW) {
+		logger.log_raw(logmsg::error, fztranslate("logon_windows_user: cannot import TranslateNameW from secur32.dll."));
+		return std::nullopt;
+	}
+
+	auto account = domain + L'\\' + user;
+	ULONG size{};
+	auto translated = TranslateNameW(account.c_str(), NameSamCompatible, NameUserPrincipal, nullptr, &size);
+	auto err = translated ? ERROR_SUCCESS : GetLastError();
+	if ((!translated && err != ERROR_INSUFFICIENT_BUFFER && err != ERROR_MORE_DATA) || !size) {
+		logger.log(logmsg::error, fztranslate("logon_windows_user: TranslateNameW failed while probing the UPN size for '%s'. Last Error: %d."), account, err);
+		return std::nullopt;
+	}
+
+	std::wstring upn(size, L'\0');
+	if (!TranslateNameW(account.c_str(), NameSamCompatible, NameUserPrincipal, upn.data(), &size)) {
+		err = GetLastError();
+		logger.log(logmsg::error, fztranslate("logon_windows_user: TranslateNameW failed for '%s'. Last Error: %d."), account, err);
+		return std::nullopt;
+	}
+
+	upn.resize(std::char_traits<wchar_t>::length(upn.data()));
+	logger.log(logmsg::debug_info, L"logon_windows_user: translated domain identity [%s] to UPN [%s].", account, upn);
+	return upn;
+}
+
+BOOL logon_windows_user(fz::user const &identity, std::wstring const *password, unique_handle &token, std::wstring &user, std::wstring &domain, std::wstring &profile_path, logger_interface &logger)
+{
+	user.clear();
+	domain.clear();
+	profile_path.clear();
+
+	if (auto username = identity.get_name()) {
+		if (auto backslash_pos = username->find(L'\\'); backslash_pos != username->npos) {
+			user = username->substr(backslash_pos + 1);
+			domain = username->substr(0, backslash_pos);
+		}
+		else {
+			user = *username;
+		}
+
+		logger.log(logmsg::debug_debug, L"logon_windows_user: username [%s] => user[%s], domain[%s].", *username, user, domain);
+	}
+	else if (auto id = identity.get_id()) {
+		if (!sid_to_user_and_domain(fz::to_native(*id), user, domain, logger)) {
+			return FALSE;
+		}
+
+		auto local = is_local_domain(domain, logger);
+		if (!local) {
+			return FALSE;
+		}
+
+		if (*local) {
+			domain = L".";
+		}
+
+		logger.log(logmsg::debug_debug, L"logon_windows_user: user id [%s] => user[%s], domain[%s].", *id, user, domain);
+	}
+	else {
+		return FALSE;
+	}
+
+	if (password) {
+		unique_lsa_buffer profile_buffer;
+		DWORD profile_buffer_length{};
+		QUOTA_LIMITS quotas{};
+		if (!LogonUserExW(user.c_str(), domain.empty() ? nullptr : domain.c_str(), password->c_str(), LOGON32_LOGON_NETWORK_CLEARTEXT, LOGON32_PROVIDER_DEFAULT, windows::out_ptr(token), nullptr, windows::out_ptr(profile_buffer), &profile_buffer_length, &quotas)) {
+			auto err = GetLastError();
+			logger.log(logmsg::error, fztranslate("logon_windows_user: LogonUserExW failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
+			return FALSE;
+		}
+
+		auto path = extract_profile_path_from_authentication_profile(authentication_package::negotiate, profile_buffer.get(), profile_buffer_length);
+		if (!path) {
+			logger.log_raw(logmsg::error, fztranslate("logon_windows_user: LogonUserExW returned an unsupported or malformed profile buffer."));
+			token.reset();
+			return FALSE;
+		}
+
+		profile_path = std::move(*path);
+
+		return TRUE;
+	}
+
+	bool use_kerberos{};
+	if (domain.empty() && user.find(L'@') != user.npos) {
+		use_kerberos = true;
+	}
+	else {
+		auto local = is_local_domain(domain, logger);
+		if (!local) {
+			return FALSE;
+		}
+
+		if (*local) {
+			domain = L".";
+		}
+		else {
+			auto upn = translate_domain_user_to_upn(domain, user, logger);
+			if (!upn) {
+				return FALSE;
+			}
+
+			user = std::move(*upn);
+			domain.clear();
+			use_kerberos = true;
+		}
+	}
+
+	logger.log(logmsg::debug_debug, L"logon_windows_user: resolved user[%s], domain[%s], package[%s], password[absent].", user, domain, use_kerberos ? L"Kerberos" : L"MSV1_0");
+
+	HANDLE token_raw{};
+	if (!windows::passwordless_logon_user(user, domain, use_kerberos, token_raw, profile_path, logger)) {
+		return FALSE;
+	}
+
+	token.reset(token_raw);
+
+	return TRUE;
+}
+
+}
 
 class impersonation_token_impl final
 {
 public:
 	impersonation_token_impl() = default;
 
-	impersonation_token_impl(native_string name, native_string server, std::string sid, std::wstring roaming_profile_path, unique_handle h, logger_interface &logger)
+	impersonation_token_impl(native_string name, native_string server, std::string sid, std::wstring roaming_profile_path, unique_handle h, bool load_profile, impersonation_desktop::mode desktop_mode, logger_interface &logger)
 		: name_(name)
 		, sid_(std::move(sid))
 		, h_(std::move(h))
+		, desktop_(impersonation_desktop::impl::make(desktop_mode))
 	{
 		if (!server.empty() && server != L".") {
 			name_ += L'@';
 			name_ += server;
 		}
 
-		FZ_DLL_IMPORT(userenv(), LoadUserProfileW);
+		if (!load_profile) {
+			return;
+		}
 
-		native_string profile_path;
-
-		if (LoadUserProfileW) {
-			logger.log(logmsg::debug_debug, L"Loading user [%s] profile [roaming: [%s]].", name_, roaming_profile_path);
-
-			PROFILEINFOW info = {};
-			info.dwSize = sizeof(info);
-			info.dwFlags = PI_NOUI;
-			info.lpUserName = name.data();
-			info.lpServerName = server.empty() ? nullptr : server.data();
-			info.lpProfilePath = roaming_profile_path.empty() ? nullptr : roaming_profile_path.data();
-
-			if (LoadUserProfileW(h_.get(), &info)) {
-				profile_h_ = info.hProfile;
-			}
+		logger.log(logmsg::debug_debug, L"Loading user [%s] profile [roaming: [%s]].", name_, roaming_profile_path);
+		if (auto profile = windows::load_user_profile(h_.get(), name, server, roaming_profile_path, logger)) {
+			profile_h_ = profile;
 		}
 
 		if (profile_h_ == INVALID_HANDLE_VALUE) {
@@ -458,8 +921,29 @@ public:
 		return t.impl_ ? t.impl_->h_.get() : INVALID_HANDLE_VALUE;
 	}
 
+	bool has_loaded_profile() const {
+		return profile_h_ != INVALID_HANDLE_VALUE;
+	}
+
 	HANDLE get_handle() {
 		return h_.get();
+	}
+
+	std::optional<wchar_t *> get_desktop_name(logger_interface &logger)
+	{
+		if (desktop_) {
+			if (!desktop_->init(h_.get(), logger)) {
+				return std::nullopt;
+			}
+
+			if (auto name = desktop_->name()) {
+				static thread_local std::wstring name_copy;
+				name_copy = *name;
+				return name_copy.data();
+			}
+		}
+
+		return nullptr;
 	}
 
 	std::string const& get_sid() {
@@ -478,6 +962,7 @@ private:
 	std::string sid_; // SID as string
 	unique_handle h_{};
 	HANDLE profile_h_{INVALID_HANDLE_VALUE};
+	std::unique_ptr<impersonation_desktop::impl> desktop_;
 
 	static dll& userenv() {
 		static dll lib(L"userenv.dll", LOAD_LIBRARY_SEARCH_SYSTEM32);
@@ -485,58 +970,102 @@ private:
 	}
 };
 
-impersonation_token::impersonation_token(fz::native_string const& username, fz::native_string const* password, logger_interface& logger, impersonation_options const& opts)
+namespace {
+
+std::unique_ptr<impersonation_token_impl> make_impersonation_token_impl(fz::user const& identity, fz::native_string const* password, logger_interface& logger, impersonation_options const& opts)
 {
+	unique_handle token;
 	std::wstring user;
 	std::wstring domain;
-
-	if (!password) {
-		logger.log_u(logmsg::error, fztranslate("impersonation_token: password-less login is not supported under Windows."));
-		return;
+	std::wstring roaming_profile_path;
+	if (!logon_windows_user(identity, password, token, user, domain, roaming_profile_path, logger)) {
+		return {};
 	}
-
-	if (auto backslash_pos = username.find(L'\\'); backslash_pos != username.npos) {
-		user = username.substr(backslash_pos + 1);
-		domain = username.substr(0, backslash_pos);
-	}
-	else {
-		user = username;
-	}
-
-	logger.log(logmsg::debug_debug, L"impersonation_token: username [%s] => user[%s], domain[%s].", username, user, domain);
-
-	HANDLE token_raw{INVALID_HANDLE_VALUE};
-
-	if (!LogonUserW(user.c_str(), domain.empty() ? nullptr : domain.c_str(), password->c_str(), LOGON32_LOGON_NETWORK_CLEARTEXT, LOGON32_PROVIDER_DEFAULT, &token_raw)) {
-		auto err = GetLastError();
-		logger.log(logmsg::error, fztranslate("impersonation_token: LogonUserW failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
-		return;
-	}
-
-	unique_handle token(token_raw);
 
 	std::string sid;
-	std::wstring roaming_profile_path;
-	if (!GetUserInfoFromToken(token.get(), sid, roaming_profile_path, user, domain, logger)) {
-		return;
+	if (!GetUserInfoFromToken(token.get(), sid, user, domain, logger)) {
+		return {};
 	}
 
-	HANDLE primary_raw{INVALID_HANDLE_VALUE};
-	if (!DuplicateTokenEx(token.get(), 0, nullptr, SecurityImpersonation, TokenPrimary, &primary_raw)) {
+	auto local = is_local_domain(domain, logger);
+	if (!local) {
+		return {};
+	}
+
+	if (*local) {
+		domain = L".";
+	}
+
+	unique_handle primary;
+	if (!DuplicateTokenEx(token.get(), 0, nullptr, SecurityImpersonation, TokenPrimary, windows::out_ptr(primary))) {
 		auto err = GetLastError();
 		logger.log(logmsg::error, fztranslate("impersonation_token: DuplicateTokenEx failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
-		return;
+		return {};
 	}
-
-	unique_handle primary(primary_raw);
 
 	if (opts.drop_admin_privileges && !DropAdminPrivilegesFromToken(primary.get())) {
 		auto err = GetLastError();
 		logger.log(logmsg::error, fztranslate("impersonation_token: DropAdminPrivilegesFromToken failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
-		return;
+		return {};
 	}
 
-	impl_ = std::make_unique<impersonation_token_impl>(std::move(user), std::move(domain), std::move(sid), std::move(roaming_profile_path), std::move(primary), logger);
+	auto const load_profile = opts.profile == impersonation_profile_mode::require ||
+		(opts.profile == impersonation_profile_mode::require_if_roaming && !roaming_profile_path.empty());
+
+	auto ret = std::make_unique<impersonation_token_impl>(std::move(user), std::move(domain), std::move(sid), std::move(roaming_profile_path), std::move(primary), load_profile, opts.desktop, logger);
+	if (load_profile && !ret->has_loaded_profile()) {
+		return {};
+	}
+
+	return ret;
+}
+
+}
+
+impersonation_token::impersonation_token(fz::user const& user, fz::native_string const* password, logger_interface& logger, impersonation_options const& opts)
+{
+	impl_ = make_impersonation_token_impl(user, password, logger, opts);
+}
+
+impersonation_capabilities impersonation_token::get_capabilities(std::initializer_list<impersonation_capability> requested)
+{
+	impersonation_capabilities ret{};
+
+	for (auto requested_capability : requested) {
+		switch (requested_capability) {
+		case impersonation_capability::password:
+			ret.states_[static_cast<std::size_t>(requested_capability)] = has_process_privilege(SE_ASSIGNPRIMARYTOKEN_NAME)
+				? impersonation_capability_state::available
+				: impersonation_capability_state::unavailable;
+			break;
+
+		case impersonation_capability::passwordless:
+			ret.states_[static_cast<std::size_t>(requested_capability)] =
+				has_process_privilege(SE_ASSIGNPRIMARYTOKEN_NAME) &&
+				has_process_privilege(SE_TCB_NAME)
+				? impersonation_capability_state::available
+				: impersonation_capability_state::unavailable;
+			break;
+
+		case impersonation_capability::user_profile: {
+			auto process_identity = process_is_administrator_or_local_system();
+			if (!process_identity) {
+				ret.states_[static_cast<std::size_t>(requested_capability)] = impersonation_capability_state::indeterminate;
+				break;
+			}
+
+			ret.states_[static_cast<std::size_t>(requested_capability)] =
+				*process_identity &&
+				has_process_privilege(SE_BACKUP_NAME) &&
+				has_process_privilege(SE_RESTORE_NAME)
+					? impersonation_capability_state::available
+					: impersonation_capability_state::unavailable;
+			break;
+		}
+		}
+	}
+
+	return ret;
 }
 
 native_string impersonation_token::username() const
@@ -599,11 +1128,20 @@ native_string impersonation_token::home() const
 
 std::string impersonation_token::uid() const
 {
-	return impl_ ? fz::to_string(impl_->get_sid()) : std::string();
+	return impl_ ? impl_->get_sid() : std::string();
 }
 
 HANDLE get_handle(impersonation_token const& t) {
 	return impersonation_token_impl::get_handle(t);
+}
+
+std::optional<wchar_t *> get_desktop_name(impersonation_token const& t, logger_interface &logger)
+{
+	if (auto impl = impersonation_token_impl::get(t)) {
+		return impl->get_desktop_name(logger);
+	}
+
+	return std::nullopt;
 }
 
 native_string current_username()
@@ -630,7 +1168,7 @@ native_string current_username()
 	return username;
 }
 
-std::string get_user_uid(native_string const& username)
+std::string get_user_id(native_string const& username)
 {
 	SID_NAME_USE use = SidTypeUnknown;
 	BYTE sid[256];
@@ -669,6 +1207,27 @@ std::string get_user_uid(native_string const& username)
 	}
 
 	return ret;
+}
+
+native_string get_user_name(std::string const& id)
+{
+	std::wstring user;
+	std::wstring domain;
+
+	if (!sid_to_user_and_domain(fz::to_native(id), user, domain, get_null_logger())) {
+		return {};
+	}
+
+	auto local = is_local_domain(domain, get_null_logger());
+	if (!local) {
+		return {};
+	}
+
+	if (*local) {
+		return std::wstring(L".\\") + user;
+	}
+
+	return user + L"@" + domain;
 }
 
 }

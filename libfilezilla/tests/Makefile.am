@@ -10,6 +10,7 @@ test_SOURCES =  test.cpp \
 		eventloop.cpp \
 		format.cpp \
 		hash.cpp \
+		impersonation.cpp \
 		invoker.cpp \
 		iputils.cpp \
 		json.cpp \

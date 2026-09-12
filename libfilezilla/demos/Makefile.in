@@ -93,9 +93,8 @@ build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = timer_fizzbuzz$(EXEEXT) process$(EXEEXT) \
 	nonblocking_process$(EXEEXT) events$(EXEEXT) list$(EXEEXT) \
-	https$(EXEEXT) raw_https$(EXEEXT) aio$(EXEEXT) $(am__EXEEXT_1) \
-	xml_pp$(EXEEXT)
-@FZ_WINDOWS_FALSE@am__append_1 = impersonation
+	https$(EXEEXT) raw_https$(EXEEXT) aio$(EXEEXT) \
+	impersonation$(EXEEXT) xml_pp$(EXEEXT)
 subdir = demos
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_flag.m4 \
@@ -129,7 +128,6 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/config/config.hpp
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@FZ_WINDOWS_FALSE@am__EXEEXT_1 = impersonation$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 am_aio_OBJECTS = aio-aio.$(OBJEXT)
 aio_OBJECTS = $(am_aio_OBJECTS)
@@ -151,9 +149,7 @@ https_OBJECTS = $(am_https_OBJECTS)
 https_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(https_LDFLAGS) $(LDFLAGS) -o $@
-am__impersonation_SOURCES_DIST = impersonation.cpp
-@FZ_WINDOWS_FALSE@am_impersonation_OBJECTS =  \
-@FZ_WINDOWS_FALSE@	impersonation-impersonation.$(OBJEXT)
+am_impersonation_OBJECTS = impersonation-impersonation.$(OBJEXT)
 impersonation_OBJECTS = $(am_impersonation_OBJECTS)
 impersonation_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
@@ -241,7 +237,7 @@ SOURCES = $(aio_SOURCES) $(events_SOURCES) $(https_SOURCES) \
 	$(raw_https_SOURCES) $(timer_fizzbuzz_SOURCES) \
 	$(xml_pp_SOURCES)
 DIST_SOURCES = $(aio_SOURCES) $(events_SOURCES) $(https_SOURCES) \
-	$(am__impersonation_SOURCES_DIST) $(list_SOURCES) \
+	$(impersonation_SOURCES) $(list_SOURCES) \
 	$(nonblocking_process_SOURCES) $(process_SOURCES) \
 	$(raw_https_SOURCES) $(timer_fizzbuzz_SOURCES) \
 	$(xml_pp_SOURCES)
@@ -490,13 +486,11 @@ aio_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/lib
 aio_LDFLAGS = $(AM_LDFLAGS) -no-install
 aio_LDADD = ../lib/libfilezilla.la $(libdeps)
 aio_DEPENDENCIES = ../lib/libfilezilla.la
-@FZ_WINDOWS_FALSE@impersonation_SOURCES = impersonation.cpp
-@FZ_WINDOWS_FALSE@impersonation_CPPFLAGS = $(AM_CPPFLAGS) \
-@FZ_WINDOWS_FALSE@	-I$(top_srcdir)/lib
-@FZ_WINDOWS_FALSE@impersonation_LDFLAGS = $(AM_LDFLAGS) -no-install
-@FZ_WINDOWS_FALSE@impersonation_LDADD = ../lib/libfilezilla.la \
-@FZ_WINDOWS_FALSE@	$(libdeps)
-@FZ_WINDOWS_FALSE@impersonation_DEPENDENCIES = ../lib/libfilezilla.la
+impersonation_SOURCES = impersonation.cpp
+impersonation_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/lib
+impersonation_LDFLAGS = $(AM_LDFLAGS) -no-install
+impersonation_LDADD = ../lib/libfilezilla.la $(libdeps)
+impersonation_DEPENDENCIES = ../lib/libfilezilla.la
 xml_pp_SOURCES = xml_pp.cpp
 xml_pp_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/lib
 xml_pp_LDFLAGS = $(AM_LDFLAGS) -no-install

@@ -1707,7 +1707,9 @@ int socket::read(void* buffer, unsigned int size, int& error)
 	}
 #endif
 
+#if !FZ_WINDOWS
 repeat:
+#endif
 	int res = recv(fd_, (char*)buffer, size, 0);
 
 	if (res == -1) {
@@ -1752,7 +1754,9 @@ int socket::write(void const* buffer, unsigned int size, int& error)
 	}
 #endif
 
+#if !FZ_WINDOWS
 repeat:
+#endif
 	int res = send(fd_, (const char*)buffer, size, flags);
 
 	if (res == -1) {

@@ -14,6 +14,7 @@
 
 namespace fz {
 class buffer;
+class secure_buffer;
 
 /** \brief Converts a hex digit to decimal int
  *
@@ -113,7 +114,8 @@ enum class base64_type {
 /// \brief Encodes raw input string to base64
 std::string FZ_PUBLIC_SYMBOL base64_encode(std::string_view const& in, base64_type type = base64_type::standard, bool pad = true);
 std::string FZ_PUBLIC_SYMBOL base64_encode(std::vector<uint8_t> const& in, base64_type type = base64_type::standard, bool pad = true);
-std::string FZ_PUBLIC_SYMBOL base64_encode(fz::buffer const& in, base64_type type = base64_type::standard, bool pad = true);
+std::string FZ_PUBLIC_SYMBOL base64_encode(buffer const& in, base64_type type = base64_type::standard, bool pad = true);
+std::string FZ_PUBLIC_SYMBOL base64_encode(secure_buffer const& in, base64_type type = base64_type::standard, bool pad = true);
 
 /**
  * \brief base64-encodes input and appends it to result.
@@ -130,10 +132,11 @@ void FZ_PUBLIC_SYMBOL base64_encode_append(std::string& result, std::string_view
  */
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL base64_decode(std::string_view const& in);
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL base64_decode(std::wstring_view const& in);
-std::vector<uint8_t> FZ_PUBLIC_SYMBOL base64_decode(fz::buffer const& in);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL base64_decode(buffer const& in);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL base64_decode(secure_buffer const& in);
 std::string FZ_PUBLIC_SYMBOL base64_decode_s(std::string_view const& in);
 std::string FZ_PUBLIC_SYMBOL base64_decode_s(std::wstring_view const& in);
-std::string FZ_PUBLIC_SYMBOL base64_decode_s(fz::buffer const& in);
+std::string FZ_PUBLIC_SYMBOL base64_decode_s(secure_buffer const& in);
 
 
 /**
@@ -151,7 +154,8 @@ enum class base32_type {
 /// \brief Encodes raw input string to base32
 std::string FZ_PUBLIC_SYMBOL base32_encode(std::string_view const& in, base32_type type = base32_type::standard, bool pad = true);
 std::string FZ_PUBLIC_SYMBOL base32_encode(std::vector<uint8_t> const& in, base32_type type = base32_type::standard, bool pad = true);
-std::string FZ_PUBLIC_SYMBOL base32_encode(fz::buffer const& in, base32_type type = base32_type::standard, bool pad = true);
+std::string FZ_PUBLIC_SYMBOL base32_encode(buffer const& in, base32_type type = base32_type::standard, bool pad = true);
+std::string FZ_PUBLIC_SYMBOL base32_encode(secure_buffer const& in, base32_type type = base32_type::standard, bool pad = true);
 
 /**
  * \brief Decodes base32, ignores whitespace. Returns empty string on invalid input.
@@ -160,10 +164,12 @@ std::string FZ_PUBLIC_SYMBOL base32_encode(fz::buffer const& in, base32_type typ
  */
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL base32_decode(std::string_view const& in, base32_type type = base32_type::standard);
 std::vector<uint8_t> FZ_PUBLIC_SYMBOL base32_decode(std::wstring_view const& in, base32_type type = base32_type::standard);
-std::vector<uint8_t> FZ_PUBLIC_SYMBOL base32_decode(fz::buffer const& in, base32_type type = base32_type::standard);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL base32_decode(buffer const& in, base32_type type = base32_type::standard);
+std::vector<uint8_t> FZ_PUBLIC_SYMBOL base32_decode(secure_buffer const& in, base32_type type = base32_type::standard);
 std::string FZ_PUBLIC_SYMBOL base32_decode_s(std::string_view const& in, base32_type type = base32_type::standard);
 std::string FZ_PUBLIC_SYMBOL base32_decode_s(std::wstring_view const& in, base32_type type = base32_type::standard);
-std::string FZ_PUBLIC_SYMBOL base32_decode_s(fz::buffer const& in, base32_type type = base32_type::standard);
+std::string FZ_PUBLIC_SYMBOL base32_decode_s(buffer const& in, base32_type type = base32_type::standard);
+std::string FZ_PUBLIC_SYMBOL base32_decode_s(secure_buffer const& in, base32_type type = base32_type::standard);
 
 /**
  * \brief Percent-encodes string.

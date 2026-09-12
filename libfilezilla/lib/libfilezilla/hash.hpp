@@ -36,6 +36,7 @@ enum class hmac_algorithm
 size_t FZ_PUBLIC_SYMBOL get_digest_size(hash_algorithm);
 
 class buffer;
+class secure_buffer;
 
 /// Accumulator for hashing large amounts of data
 class FZ_PUBLIC_SYMBOL hash_accumulator final
@@ -59,6 +60,7 @@ public:
 	void update(std::vector<uint8_t> const& data);
 	void update(uint8_t const* data, size_t size);
 	void update(buffer const& data);
+	void update(secure_buffer const& data);
 	void update(uint8_t in) {
 		update(&in, 1);
 	}
@@ -144,6 +146,9 @@ std::vector<uint8_t> pbkdf2_hmac_sha256(PasswordContainer const& password, SaltC
 	                          std::basic_string_view<uint8_t>(reinterpret_cast<uint8_t const*>(salt.data()), salt.size()),
 	                          length, iterations);
 }
+
+secure_buffer FZ_PUBLIC_SYMBOL pbkdf2(hmac_algorithm alg, std::string_view const& password, std::string_view const& salt, size_t length, unsigned int iterations);
+
 }
 
 #endif

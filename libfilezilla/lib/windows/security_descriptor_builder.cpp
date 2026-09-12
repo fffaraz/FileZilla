@@ -2,93 +2,19 @@
 
 #ifdef FZ_WINDOWS
 
+#include "helpers.hpp"
+
 #include "../libfilezilla/logger.hpp"
-#include "../libfilezilla/thread.hpp"
-#include "../libfilezilla/glue/dll.hpp"
 #include "../libfilezilla/translate.hpp"
 
-#include <array>
 #include <map>
 
 #include <sddl.h>
-#include <lm.h>
-#include <dsgetdc.h>
 
 namespace fz {
 
 namespace {
-template<typename T>
-struct holder final
-{
-	holder() = default;
-	~holder()
-	{
-		clear();
-	}
-
-	static holder create(size_t s) {
-		holder h;
-		h.v_ = reinterpret_cast<T*>(::operator new[](s, std::align_val_t(alignof(T))));
-		h.size_ = s;
-		h.delete_ = true;
-		return h;
-	}
-
-	void clear()
-	{
-		if (delete_) {
-			::operator delete[](reinterpret_cast<void*>(v_), std::align_val_t(alignof(T)));
-		}
-		size_ = 0;
-		v_ = nullptr;
-	}
-
-	static holder create(void* v, bool del)
-	{
-		holder h;
-		h.v_ = reinterpret_cast<T*>(v);
-		h.size_ = v ? size_t(-1) : 0;
-		h.delete_ = del;
-		return h;
-	}
-
-	holder(holder&& h) noexcept
-		: v_(h.v_)
-		, size_(h.size_)
-	{
-		h.v_ = nullptr;
-		h.size_ = 0;
-		delete_ = h.delete_;
-	}
-
-	holder& operator=(holder&& h) noexcept {
-		if (this != &h) {
-			clear();
-			v_ = h.v_;
-			size_ = h.size_;
-			h.v_ = nullptr;
-			h.size_ = 0;
-			delete_ = h.delete_;
-		}
-		return *this;
-	}
-
-	size_t size() const { return size_; }
-
-	explicit operator bool() const { return v_ != nullptr; }
-
-	holder(holder const&) = delete;
-	holder& operator=(holder const&) = delete;
-
-	T* get() { return v_; }
-	T& operator*() { return *v_; }
-	T* operator->() { return v_; }
-
-private:
-	bool delete_{};
-	T* v_{};
-	size_t size_{};
-};
+using windows::holder;
 }
 
 struct security_descriptor_builder::impl
@@ -262,124 +188,9 @@ bool GetUserAndDomainFromSid(PSID sid, std::wstring& user, std::wstring& domain)
 	return true;
 }
 
-namespace {
-
-bool GetRoamingProfilePath(HANDLE h, std::wstring const& user, std::wstring &domain, std::wstring& roaming_profile_path, logger_interface& logger)
-{
-	static dll netapi32_dll(L"netapi32.dll", LOAD_LIBRARY_SEARCH_SYSTEM32);
-
-	FZ_DLL_IMPORT(netapi32_dll, DsGetDcNameW);
-	FZ_DLL_IMPORT(netapi32_dll, NetApiBufferFree);
-	FZ_DLL_IMPORT(netapi32_dll, NetUserGetInfo);
-
-	logger.log(logmsg::debug_debug, L"Entering GetRoamingProfilePath(%s, %s)", user, domain);
-
-	if (!DsGetDcNameW || !NetApiBufferFree || !NetUserGetInfo) {
-		logger.log_raw(logmsg::error, fztranslate("GetRoamingProfilePath: couldn't import netapi32.dll functions."));
-		return false;
-	}
-
-	auto make_fqdn_if_necessary = [&](std::wstring &fqdn) {
-		static wchar_t computer_name[MAX_COMPUTERNAME_LENGTH + 1];
-		DWORD computer_name_size = MAX_COMPUTERNAME_LENGTH + 1;
-
-		if (!GetComputerNameW(computer_name, &computer_name_size)) {
-			auto err = GetLastError();
-			logger.log(logmsg::error, fztranslate("GetRoamingProfilePath: GetComputerNameW failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
-			return false;
-		}
-
-		if (domain == computer_name) {
-			domain.clear();
-			fqdn.clear();
-			return true;
-		}
-
-		// Resolve the domain controller name
-		DOMAIN_CONTROLLER_INFOW* dc_info{};
-		DWORD error = DsGetDcNameW(
-			nullptr,
-			domain.c_str(),
-			nullptr,
-			nullptr,
-			DS_DIRECTORY_SERVICE_REQUIRED | DS_RETURN_DNS_NAME,
-			&dc_info
-		);
-
-		bool success = error == ERROR_SUCCESS && dc_info && dc_info->DomainControllerName;
-		if (success) {
-			logger.log(logmsg::debug_debug, L"GetRoamingProfilePath(%s, %s): DC name = [%s]", user, domain, dc_info->DomainControllerName);
-			fqdn = dc_info->DomainControllerName;
-		}
-		else {
-			logger.log(logmsg::debug_debug, L"GetRoamingProfilePath(%s, %s): DsGetDcNameW failed. Error: %d.", user, domain, error);
-		}
-
-		NetApiBufferFree(dc_info);
-
-		return success;
-	};
-
-	std::wstring fqdn;
-	if (!make_fqdn_if_necessary(fqdn)) {
-		return false;
-	}
-
-	thread worker;
-
-	NET_API_STATUS netusergetinfo_status{};
-	DWORD impersonateloggedonuser_err{};
-	DWORD reverttoself_err{};
-
-	worker.run([&] {
-		if (!ImpersonateLoggedOnUser(h)) {
-			impersonateloggedonuser_err = GetLastError();
-			return;
-		}
-
-		LPBYTE buf_ptr = nullptr;
-		netusergetinfo_status = NetUserGetInfo(fqdn.empty() ? nullptr : fqdn.c_str(), user.c_str(), 3, &buf_ptr);
-
-		if (netusergetinfo_status == NERR_Success) {
-			USER_INFO_3* user_info = reinterpret_cast<USER_INFO_3*>(buf_ptr);
-
-			if (user_info->usri3_profile) {
-				roaming_profile_path = user_info->usri3_profile;
-			}
-		}
-
-		NetApiBufferFree(buf_ptr);
-
-		if (!RevertToSelf()) {
-			reverttoself_err = GetLastError();
-		}
-	});
-	worker.join();
-
-	if (impersonateloggedonuser_err) {
-		logger.log(logmsg::error, fztranslate("GetRoamingProfilePath: ImpersonateLoggedOnUser failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, impersonateloggedonuser_err);
-		return false;
-	}
-
-	if (netusergetinfo_status != NERR_Success) {
-		logger.log(logmsg::error, fztranslate("GetRoamingProfilePath: NetUserGetInfo failed. User: '%s', Domain: '%s'. Status: %d."), user, domain, netusergetinfo_status);
-	}
-
-	if (reverttoself_err) {
-		logger.log(logmsg::error, fztranslate("GetRoamingProfilePath: RevertToSelf failed, aborting. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, reverttoself_err);
-		std::fflush(nullptr);
-		TerminateProcess(GetCurrentProcess(), EXIT_FAILURE);
-	}
-
-	return netusergetinfo_status == NERR_Success;
-}
-
-}
-
 bool GetUserInfoFromToken(
 	HANDLE h,
 	std::string& sid_string,
-	std::wstring& roaming_profile_path,
 	std::wstring& username,
 	std::wstring& domain,
 	logger_interface& logger
@@ -409,68 +220,7 @@ bool GetUserInfoFromToken(
 	}
 
 	if (domain == L"NT AUTHORITY" || domain == L"BUILTIN") {
-		roaming_profile_path.clear();
 		domain.clear();
-	}
-	else
-	if (!GetRoamingProfilePath(h, username, domain, roaming_profile_path, logger)) {
-		return false;
-	}
-
-	return true;
-}
-
-namespace {
-holder<TOKEN_PRIVILEGES> GetPrivileges(HANDLE token)
-{
-	DWORD needed{};
-	GetTokenInformation(token, TokenPrivileges, NULL, 0, &needed);
-	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER) {
-		auto privs = holder<TOKEN_PRIVILEGES>::create(needed);
-		if (GetTokenInformation(token, TokenPrivileges, privs.get(), needed, &needed)) {
-			return privs;
-		}
-	}
-
-	return {};
-}
-}
-
-bool DropAdminPrivilegesFromToken(HANDLE h)
-{
-	auto privs = GetPrivileges(h);
-	if (!privs) {
-		return false;
-	}
-
-	std::array<LUID, 2> allowed;
-	if (!LookupPrivilegeValue(nullptr, SE_INC_WORKING_SET_NAME, &allowed[0])) {
-		return false;
-	}
-	if (!LookupPrivilegeValue(nullptr, SE_CHANGE_NOTIFY_NAME, &allowed[1])) {
-		return false;
-	}
-
-	DWORD out{};
-	for (DWORD i = 0; i < privs->PrivilegeCount; ++i) {
-		bool found{};
-		for (auto const& luid : allowed) {
-			if (std::tie(luid.LowPart, luid.HighPart) == std::tie(privs->Privileges[i].Luid.LowPart, privs->Privileges[i].Luid.HighPart)) {
-				found = true;
-				break;
-			}
-		}
-		if (!found) {
-			privs->Privileges[out].Luid = privs->Privileges[i].Luid;
-			privs->Privileges[out].Attributes = SE_PRIVILEGE_REMOVED;
-			++out;
-		}
-	}
-	if (out) {
-		privs->PrivilegeCount = out;
-		if (!AdjustTokenPrivileges(h, false, privs.get(), privs.size(), nullptr, nullptr)) {
-			return false;
-		}
 	}
 
 	return true;

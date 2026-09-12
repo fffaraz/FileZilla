@@ -16,7 +16,9 @@
 
 namespace fz {
 
+class buffer;
 class datetime;
+class secure_buffer;
 
 /** \brief Lean class for file access
  *
@@ -259,6 +261,7 @@ inline file::creation_flags& operator|=(file::creation_flags & lhs, file::creati
  * On error, the size of the output buffer remains unchanged.
  */
 rwresult FZ_PUBLIC_SYMBOL read_file(fz::file & f, buffer & out, size_t max_size);
+rwresult FZ_PUBLIC_SYMBOL read_file(fz::file & f, secure_buffer & out, size_t max_size);
 
 /** \brief Reads the entire source file and appends if to the buffer.
  *
@@ -267,6 +270,7 @@ rwresult FZ_PUBLIC_SYMBOL read_file(fz::file & f, buffer & out, size_t max_size)
  * On error, the size of the output buffer remains unchanged.
  */
 result FZ_PUBLIC_SYMBOL read_file(native_string const& name, buffer & b, size_t max_size);
+result FZ_PUBLIC_SYMBOL read_file(native_string const& name, secure_buffer & b, size_t max_size);
 
 }
 #endif

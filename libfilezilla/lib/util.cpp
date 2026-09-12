@@ -286,7 +286,7 @@ void wipe(std::vector<uint8_t> & v)
 {
 	size_t const orig_size = v.size();
 	v.resize(v.capacity());
-	wipe(v.data() + orig_size, v.size() - orig_size);
+	wipe(v.data(), v.size());
 	v.resize(orig_size);
 }
 

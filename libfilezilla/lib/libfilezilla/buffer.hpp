@@ -12,6 +12,12 @@
 
 namespace fz {
 
+/// \private
+enum class buffer_wipe_policy {
+	normal,
+	wipe_on_release
+};
+
 /**
  * \brief The buffer class is a simple buffer where data can be appended at the end and consumed at the front.
  * Think of it as a deque with contiguous storage.
@@ -23,24 +29,31 @@ namespace fz {
  * class helps to limit both to the bare minimum.
  *
  */
-class FZ_PUBLIC_SYMBOL buffer final
+template<buffer_wipe_policy Policy>
+class basic_buffer
 {
 public:
-	typedef unsigned char value_type;
+	using value_type = unsigned char;
 
-	buffer() noexcept = default;
+	basic_buffer() noexcept = default;
 
 	/// Initially reserves the passed capacity
-	explicit buffer(size_t capacity);
+	explicit basic_buffer(size_t capacity);
 
-	buffer(buffer const& buf);
-	buffer(buffer && buf) noexcept;
+	explicit basic_buffer(std::string_view const& data);
 
-	~buffer() { delete[] data_; }
+	basic_buffer(basic_buffer const& buf);
+	basic_buffer(basic_buffer && buf) noexcept;
 
-	buffer& operator=(buffer const& buf);
-	buffer& operator=(buffer && buf) noexcept;
+	basic_buffer& operator=(basic_buffer const& buf);
+	basic_buffer& operator=(basic_buffer && buf) noexcept;
 
+	basic_buffer& operator=(std::string_view const& v);
+
+protected:
+	~basic_buffer();
+
+public:
 	/// Undefined if buffer is empty
 	unsigned char const* get() const { return pos_; }
 	unsigned char* get() { return pos_; }
@@ -108,23 +121,27 @@ public:
 	void append(std::string_view const& str);
 	void append(std::basic_string_view<uint8_t> const& data);
 	void append(std::vector<uint8_t> const& data);
-	void append(fz::buffer const& b);
+	void append(basic_buffer const& b);
 	void append(unsigned char v);
 	void append(size_t len, unsigned char c);
 
-	buffer& operator+=(unsigned char v) {
+	void push_back(unsigned char v) {
+		return append(v);
+	}
+
+	basic_buffer& operator+=(unsigned char v) {
 		append(v);
 		return *this;
 	}
-	buffer& operator+=(std::string_view const& str) {
+	basic_buffer& operator+=(std::string_view const& str) {
 		append(str);
 		return *this;
 	}
-	buffer& operator+=(std::vector<uint8_t> const& data) {
+	basic_buffer& operator+=(std::vector<uint8_t> const& data) {
 		append(data);
 		return *this;
 	}
-	buffer& operator+=(fz::buffer const& b) {
+	basic_buffer& operator+=(basic_buffer const& b) {
 		append(b);
 		return *this;
 	}
@@ -143,9 +160,16 @@ public:
 	unsigned char operator[](size_t i) const { return pos_[i]; }
 	unsigned char & operator[](size_t i) { return pos_[i]; }
 
-	bool operator==(buffer const& rhs) const;
+	bool operator==(basic_buffer const& rhs) const {
+		return *this == rhs.to_view();
+	}
 
-	bool operator!=(buffer const& rhs) const {
+	bool operator==(std::string_view const& rhs) const;
+
+	bool operator!=(basic_buffer const& rhs) const {
+		return !(*this == rhs);
+	}
+	bool operator!=(std::string_view const& rhs) const {
 		return !(*this == rhs);
 	}
 
@@ -167,11 +191,40 @@ private:
 	size_t capacity_{};
 };
 
+#if BUILDING_LIBFILEZILLA
+extern template class FZ_PUBLIC_SYMBOL basic_buffer<buffer_wipe_policy::normal>;
+extern template class FZ_PUBLIC_SYMBOL basic_buffer<buffer_wipe_policy::wipe_on_release>;
+#endif
+
+class FZ_PUBLIC_SYMBOL buffer final : public basic_buffer<buffer_wipe_policy::normal>
+{
+public:
+	using basic_buffer::basic_buffer;
+	using basic_buffer::operator=;
+};
+
+/// Just like buffer, but zeros memory when released or the secure_buffer is cleared.
+/// In addition, comparison is constant-time if operands have equal size
+class FZ_PUBLIC_SYMBOL secure_buffer final : public basic_buffer<buffer_wipe_policy::wipe_on_release>
+{
+public:
+	using basic_buffer::basic_buffer;
+	using basic_buffer::operator=;
+};
+
 inline void wipe(buffer & b) {
 	b.wipe();
 }
 
 inline void wipe_unused(buffer & b) {
+	b.wipe_unused();
+}
+
+inline void wipe(secure_buffer & b) {
+	b.wipe();
+}
+
+inline void wipe_unused(secure_buffer & b) {
 	b.wipe_unused();
 }
 

@@ -117,7 +117,7 @@ void FZ_PUBLIC_SYMBOL wipe(std::vector<uint8_t> & v);
 template<typename T>
 struct scoped_wiper final
 {
-	[[nodiscard]] scoped_wiper(T& v)
+	scoped_wiper(T& v)
 		: v_(v)
 	{}
 

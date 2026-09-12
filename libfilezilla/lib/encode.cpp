@@ -68,7 +68,14 @@ std::string base64_encode(std::vector<uint8_t> const& in, base64_type type, bool
 	return ret;
 }
 
-std::string base64_encode(fz::buffer const& in, base64_type type, bool pad)
+std::string base64_encode(buffer const& in, base64_type type, bool pad)
+{
+	std::string ret;
+	base64_encode_impl(ret, in.to_view(), type, pad);
+	return ret;
+}
+
+std::string base64_encode(secure_buffer const& in, base64_type type, bool pad)
 {
 	std::string ret;
 	base64_encode_impl(ret, in.to_view(), type, pad);
@@ -180,7 +187,12 @@ std::vector<uint8_t> base64_decode(std::wstring_view const& in)
 	return base64_decode_impl<std::vector<uint8_t>>(in);
 }
 
-std::vector<uint8_t> base64_decode(fz::buffer const& in)
+std::vector<uint8_t> base64_decode(buffer const& in)
+{
+	return base64_decode_impl<std::vector<uint8_t>>(in.to_view());
+}
+
+std::vector<uint8_t> base64_decode(secure_buffer const& in)
 {
 	return base64_decode_impl<std::vector<uint8_t>>(in.to_view());
 }
@@ -195,7 +207,12 @@ std::string base64_decode_s(std::wstring_view const& in)
 	return base64_decode_impl<std::string>(in);
 }
 
-std::string base64_decode_s(fz::buffer const& in)
+std::string base64_decode_s(buffer const& in)
+{
+	return base64_decode_impl<std::string>(in.to_view());
+}
+
+std::string base64_decode_s(secure_buffer const& in)
 {
 	return base64_decode_impl<std::string>(in.to_view());
 }
@@ -293,7 +310,12 @@ std::string base32_encode(std::vector<uint8_t> const& in, base32_type type, bool
 	return base32_encode_impl(in, type, pad);
 }
 
-std::string base32_encode(fz::buffer const& in, base32_type type, bool pad)
+std::string base32_encode(buffer const& in, base32_type type, bool pad)
+{
+	return base32_encode_impl(in.to_view(), type, pad);
+}
+
+std::string base32_encode(secure_buffer const& in, base32_type type, bool pad)
 {
 	return base32_encode_impl(in.to_view(), type, pad);
 }
@@ -457,7 +479,12 @@ std::vector<uint8_t> base32_decode(std::wstring_view const& in, base32_type type
 	return base32_decode_impl<std::vector<uint8_t>>(in, type);
 }
 
-std::vector<uint8_t> base32_decode(fz::buffer const& in, base32_type type)
+std::vector<uint8_t> base32_decode(buffer const& in, base32_type type)
+{
+	return base32_decode_impl<std::vector<uint8_t>>(in.to_view(), type);
+}
+
+std::vector<uint8_t> base32_decode(secure_buffer const& in, base32_type type)
 {
 	return base32_decode_impl<std::vector<uint8_t>>(in.to_view(), type);
 }
@@ -472,7 +499,12 @@ std::string base32_decode_s(std::wstring_view const& in, base32_type type)
 	return base32_decode_impl<std::string>(in, type);
 }
 
-std::string base32_decode_s(fz::buffer const& in, base32_type type)
+std::string base32_decode_s(buffer const& in, base32_type type)
+{
+	return base32_decode_impl<std::string>(in.to_view(), type);
+}
+
+std::string base32_decode_s(secure_buffer const& in, base32_type type)
 {
 	return base32_decode_impl<std::string>(in.to_view(), type);
 }

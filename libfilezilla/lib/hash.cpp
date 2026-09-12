@@ -3,6 +3,7 @@
 #include "libfilezilla/buffer.hpp"
 #include "libfilezilla/encode.hpp"
 #include "libfilezilla/hash.hpp"
+#include "libfilezilla/util.hpp"
 
 #include <nettle/hmac.h>
 #include <nettle/md5.h>
@@ -12,8 +13,17 @@
 #include <nettle/version.h>
 
 // Undo Nettle's horrible namespace mangling fuckery
+#ifdef pbkdf2
+#undef pbkdf2
+#endif
+#ifdef pbkdf2_hmac_sha1
+#undef pbkdf2_hmac_sha1
+#endif
 #ifdef pbkdf2_hmac_sha256
 #undef pbkdf2_hmac_sha256
+#endif
+#ifdef pbkdf2_hmac_sha512
+#undef pbkdf2_hmac_sha512
 #endif
 
 #include <nettle/sha2.h>
@@ -31,19 +41,19 @@ namespace fz {
 size_t get_digest_size(hash_algorithm alg)
 {
 	switch (alg) {
-		case hash_algorithm::md5:
-			return 128/8;
-		case hash_algorithm::sha1:
-			return 160/8;
-		case hash_algorithm::sha256:
-		case hash_algorithm::sha3_256:
-			return 256/8;
-		case hash_algorithm::sha384:
-		case hash_algorithm::sha3_384:
-			return 384/8;
-		case hash_algorithm::sha512:
-		case hash_algorithm::sha3_512:
-			return 512/8;
+	case hash_algorithm::md5:
+		return 128/8;
+	case hash_algorithm::sha1:
+		return 160/8;
+	case hash_algorithm::sha256:
+	case hash_algorithm::sha3_256:
+		return 256/8;
+	case hash_algorithm::sha384:
+	case hash_algorithm::sha3_384:
+		return 384/8;
+	case hash_algorithm::sha512:
+	case hash_algorithm::sha3_512:
+		return 512/8;
 	}
 	return {};
 }
@@ -82,6 +92,11 @@ public:
 		reinit();
 	}
 
+	~hash_accumulator_md5() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return MD5_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override
@@ -113,6 +128,11 @@ public:
 	hash_accumulator_sha1()
 	{
 		reinit();
+	}
+
+	~hash_accumulator_sha1() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
 	}
 
 	virtual size_t digest_size() const override { return SHA1_DIGEST_SIZE; }
@@ -252,6 +272,11 @@ public:
 		reinit();
 	}
 
+	~hash_accumulator_sha256() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return SHA256_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override
@@ -273,7 +298,6 @@ public:
 #endif
 	}
 
-
 private:
 	sha256_ctx ctx_;
 };
@@ -284,6 +308,11 @@ public:
 	hash_accumulator_sha512()
 	{
 		reinit();
+	}
+
+	~hash_accumulator_sha512() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
 	}
 
 	virtual size_t digest_size() const override { return SHA512_DIGEST_SIZE; }
@@ -319,6 +348,11 @@ public:
 		reinit();
 	}
 
+	~hash_accumulator_sha384() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return SHA384_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override final
@@ -350,6 +384,11 @@ public:
 	hash_accumulator_sha3_256()
 	{
 		reinit();
+	}
+
+	~hash_accumulator_sha3_256() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
 	}
 
 	virtual size_t digest_size() const override { return SHA3_256_DIGEST_SIZE; }
@@ -390,6 +429,11 @@ public:
 		reinit();
 	}
 
+	~hash_accumulator_sha3_384() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return SHA3_384_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override final
@@ -426,6 +470,11 @@ public:
 	hash_accumulator_sha3_512()
 	{
 		reinit();
+	}
+
+	~hash_accumulator_sha3_512() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
 	}
 
 	virtual size_t digest_size() const override { return SHA3_512_DIGEST_SIZE; }
@@ -466,6 +515,11 @@ public:
 		nettle_hmac_sha256_set_key(&ctx_, keysize, key);
 	}
 
+	~hash_accumulator_hmac_sha256() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return SHA256_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override
@@ -504,6 +558,11 @@ public:
 		nettle_hmac_sha512_set_key(&ctx_, keysize, key);
 	}
 
+	~hash_accumulator_hmac_sha512() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
+	}
+
 	virtual size_t digest_size() const override { return SHA512_DIGEST_SIZE; }
 
 	virtual void update(uint8_t const* data, size_t size) override
@@ -540,6 +599,11 @@ public:
 	hash_accumulator_hmac_sha1(size_t keysize, uint8_t const* key)
 	{
 		nettle_hmac_sha1_set_key(&ctx_, keysize, key);
+	}
+
+	~hash_accumulator_hmac_sha1() noexcept
+	{
+		wipe(&ctx_, sizeof(ctx_));
 	}
 
 	virtual size_t digest_size() const override { return SHA1_DIGEST_SIZE; }
@@ -674,6 +738,13 @@ void hash_accumulator::update(uint8_t const* data, size_t size)
 }
 
 void hash_accumulator::update(buffer const& data)
+{
+	if (!data.empty()) {
+		impl_->update(data.get(), data.size());
+	}
+}
+
+void hash_accumulator::update(secure_buffer const& data)
 {
 	if (!data.empty()) {
 		impl_->update(data.get(), data.size());
@@ -821,7 +892,6 @@ std::vector<uint8_t> sha512_impl(DataContainer const& in)
 	ret.resize(SHA512_DIGEST_SIZE);
 	acc.digest(ret.data());
 	return ret;
-
 }
 
 template<typename KeyContainer, typename DataContainer>
@@ -830,22 +900,13 @@ std::vector<uint8_t> hmac_sha1_impl(KeyContainer const& key, DataContainer const
 	static_assert(sizeof(typename KeyContainer::value_type) == 1, "Bad container type");
 	static_assert(sizeof(typename DataContainer::value_type) == 1, "Bad container type");
 
-	std::vector<uint8_t> ret;
-
-	hmac_sha1_ctx ctx;
-	nettle_hmac_sha1_set_key(&ctx, key.size(), key.empty() ? nullptr : reinterpret_cast<uint8_t const*>(key.data()));
-
+	hash_accumulator_hmac_sha1 acc(key.size(), reinterpret_cast<uint8_t const*>(key.data()));
 	if (!data.empty()) {
-		nettle_hmac_sha1_update(&ctx, data.size(), reinterpret_cast<uint8_t const*>(data.data()));
+		acc.update(reinterpret_cast<uint8_t const*>(data.data()), data.size());
 	}
-
+	std::vector<uint8_t> ret;
 	ret.resize(SHA1_DIGEST_SIZE);
-#if NETTLE_VERSION_MAJOR >= 4
-	nettle_hmac_sha1_digest(&ctx, ret.data());
-#else
-	nettle_hmac_sha1_digest(&ctx, ret.size(), ret.data());
-#endif
-
+	acc.digest(ret.data());
 	return ret;
 }
 
@@ -855,22 +916,13 @@ std::vector<uint8_t> hmac_sha256_impl(KeyContainer const& key, DataContainer con
 	static_assert(sizeof(typename KeyContainer::value_type) == 1, "Bad container type");
 	static_assert(sizeof(typename DataContainer::value_type) == 1, "Bad container type");
 
-	std::vector<uint8_t> ret;
-
-	hmac_sha256_ctx ctx;
-	nettle_hmac_sha256_set_key(&ctx, key.size(), key.empty() ? nullptr : reinterpret_cast<uint8_t const*>(key.data()));
-
+	hash_accumulator_hmac_sha256 acc(key.size(), reinterpret_cast<uint8_t const*>(key.data()));
 	if (!data.empty()) {
-		nettle_hmac_sha256_update(&ctx, data.size(), reinterpret_cast<uint8_t const*>(data.data()));
+		acc.update(reinterpret_cast<uint8_t const*>(data.data()), data.size());
 	}
-
+	std::vector<uint8_t> ret;
 	ret.resize(SHA256_DIGEST_SIZE);
-#if NETTLE_VERSION_MAJOR >= 4
-	nettle_hmac_sha256_digest(&ctx, ret.data());
-#else
-	nettle_hmac_sha256_digest(&ctx, ret.size(), ret.data());
-#endif
-
+	acc.digest(ret.data());
 	return ret;
 }
 }
@@ -969,11 +1021,46 @@ std::vector<uint8_t> pbkdf2_hmac_sha256(std::basic_string_view<uint8_t> const& p
 {
 	std::vector<uint8_t> ret;
 
-	if (!password.empty() && !salt.empty()) {
+	if (!password.empty() && !salt.empty() && iterations) {
 		ret.resize(length);
 		nettle_pbkdf2_hmac_sha256(password.size(), password.data(), iterations, salt.size(), salt.data(), length, ret.data());
 	}
 
 	return ret;
 }
+
+std::vector<uint8_t> pbkdf2_hmac_sha1(std::basic_string_view<uint8_t> const& password, std::basic_string_view<uint8_t> const& salt, size_t length, unsigned int iterations)
+{
+	std::vector<uint8_t> ret;
+
+	if (!password.empty() && !salt.empty()) {
+		ret.resize(length);
+		nettle_pbkdf2_hmac_sha1(password.size(), password.data(), iterations, salt.size(), salt.data(), length, ret.data());
+	}
+
+	return ret;
+}
+
+secure_buffer pbkdf2(hmac_algorithm alg, std::string_view const& password, std::string_view const& salt, size_t length, unsigned int iterations)
+{
+	if (password.empty() || salt.empty() || !iterations || !length) {
+		return {};
+	}
+
+	secure_buffer ret;
+	ret.resize(length);
+	switch (alg) {
+	case hmac_algorithm::sha1:
+		nettle_pbkdf2_hmac_sha1(password.size(), reinterpret_cast<uint8_t const*>(password.data()), iterations, salt.size(), reinterpret_cast<uint8_t const*>(salt.data()), length, ret.data());
+		return ret;
+	case hmac_algorithm::sha256:
+		nettle_pbkdf2_hmac_sha256(password.size(), reinterpret_cast<uint8_t const*>(password.data()), iterations, salt.size(), reinterpret_cast<uint8_t const*>(salt.data()), length, ret.data());
+		return ret;
+	case hmac_algorithm::sha512:
+		nettle_pbkdf2_hmac_sha512(password.size(), reinterpret_cast<uint8_t const*>(password.data()), iterations, salt.size(), reinterpret_cast<uint8_t const*>(salt.data()), length, ret.data());
+		return ret;
+	}
+	return {};
+}
+
 }

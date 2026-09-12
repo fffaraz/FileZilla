@@ -573,7 +573,9 @@ datetime file::get_modification_time() const
 }
 #endif
 
-rwresult read_file(fz::file & f, buffer & out, size_t max_size)
+namespace {
+template<typename T>
+rwresult read_file_impl(fz::file & f, T & out, size_t max_size)
 {
 	if (std::numeric_limits<size_t>::max() - max_size < out.size()) {
 		return rwresult{rwresult::invalid, 0};
@@ -618,7 +620,8 @@ rwresult read_file(fz::file & f, buffer & out, size_t max_size)
 	return rwresult{out.size() - old_size};
 }
 
-result read_file(native_string const& name, buffer & b, size_t max_size)
+template<typename T>
+result read_file_impl(native_string const& name, T & b, size_t max_size)
 {
 	file f;
 	auto res = f.open(name, file::reading);
@@ -638,5 +641,25 @@ result read_file(native_string const& name, buffer & b, size_t max_size)
 		return {result::other, rwres.raw_};
 	}
 }
+}
 
+rwresult read_file(fz::file & f, buffer & out, size_t max_size)
+{
+	return read_file_impl(f, out, max_size);
+}
+
+rwresult read_file(fz::file & f, secure_buffer & out, size_t max_size)
+{
+	return read_file_impl(f, out, max_size);
+}
+
+result read_file(native_string const& name, buffer & b, size_t max_size)
+{
+	return read_file_impl(name, b, max_size);
+}
+
+result read_file(native_string const& name, secure_buffer & b, size_t max_size)
+{
+	return read_file_impl(name, b, max_size);
+}
 }

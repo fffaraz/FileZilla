@@ -1,3 +1,17 @@
+0.57.0 (2026-08-18)
+
++ Added support for creating impersonation_token from either user names or user ids
++ Added APIs to check whether impersonation is available before trying to create a token
++ Added fz::get_user_id() and fz::get_user_name()
++ MSW: Added passwordless impersonation tokens
++ MSW: Added desktop selection for processes spawned under impersonation
++ MSW: Process spawning under impersonation can now report setup failures through a logger
++ Improved the impersonation demo with user id, passwordless, desktop and custom command support
++ Added fz::secure_buffer that wipes memory on deallocation
++ Added fz::pbkd2 function taking hmac algorithm as argument
+- MSW: Loading impersonated user profiles no longer changes caller process privileges
+- MSW: Fixed EOF handling when reading redirected process output after the child process exits
+
 0.56.1 (2026-06-04)
 
 - macOS: Fix fz::socket::connect() failing after bind()

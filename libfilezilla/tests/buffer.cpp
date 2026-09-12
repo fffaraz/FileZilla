@@ -9,6 +9,7 @@ class buffer_test final : public CppUnit::TestFixture
 	CPPUNIT_TEST_SUITE(buffer_test);
 	CPPUNIT_TEST(test_simple);
 	CPPUNIT_TEST(test_append);
+	CPPUNIT_TEST(test_get);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -17,6 +18,7 @@ public:
 
 	void test_simple();
 	void test_append();
+	void test_get();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(buffer_test);
@@ -43,22 +45,56 @@ void buffer_test::test_simple()
 
 void buffer_test::test_append()
 {
+	// This unit test specifically tests the memmove case with self-append in buffer::append
 	fz::buffer buf;
-	buf.reserve(10);
+	buf.reserve(100);
 	size_t const cap = buf.capacity();
 	buf.add(cap);
+	auto const* old = buf.get();
 	for (size_t i = 0; i < cap; ++i) {
 		buf[i] = static_cast<unsigned char>(i);
 	}
-	buf.consume(5);
-	buf.append(buf.get(), 5);
-	CPPUNIT_ASSERT(buf.size() == buf.capacity());
+	size_t consumed = cap / 3 + 1;
+	buf.consume(consumed);
+	buf.append(buf.get(), 20);
 
-	for (size_t i = 0; i < cap - 5; ++i) {
-		CPPUNIT_ASSERT(buf[i] == static_cast<unsigned char>(i + 5));
+	CPPUNIT_ASSERT(buf.capacity() == cap);
+	CPPUNIT_ASSERT(old == buf.get());
+
+	for (size_t i = 0; i < buf.size() - 20; ++i) {
+		CPPUNIT_ASSERT(buf[i] == static_cast<unsigned char>(i + consumed));
 	}
 
-	for (size_t i = 0; i < 5; ++i) {
-		CPPUNIT_ASSERT(buf[cap - 5 + i] == static_cast<unsigned char>(i + 5));
+	for (size_t i = 0; i < 20; ++i) {
+		CPPUNIT_ASSERT(buf[buf.size() - 20 + i] == static_cast<unsigned char>(i + consumed));
+	}
+}
+
+void buffer_test::test_get()
+{
+	// This unit test specifically tests the memmove case in buffer::get
+	fz::buffer buf;
+	buf.reserve(100);
+	size_t const cap = buf.capacity();
+	buf.add(cap);
+	auto const* old = buf.get();
+	for (size_t i = 0; i < cap; ++i) {
+		buf[i] = static_cast<unsigned char>(i);
+	}
+	size_t consumed = cap / 3 + 1;
+	buf.consume(consumed);
+	auto p = buf.get(20);
+	memcpy(p, buf.get(), 20);
+	buf.add(20);
+
+	CPPUNIT_ASSERT(buf.capacity() == cap);
+	CPPUNIT_ASSERT(old == buf.get());
+
+	for (size_t i = 0; i < buf.size() - 20; ++i) {
+		CPPUNIT_ASSERT(buf[i] == static_cast<unsigned char>(i + consumed));
+	}
+
+	for (size_t i = 0; i < 20; ++i) {
+		CPPUNIT_ASSERT(buf[buf.size() - 20 + i] == static_cast<unsigned char>(i + consumed));
 	}
 }

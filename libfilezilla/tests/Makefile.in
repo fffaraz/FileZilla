@@ -142,11 +142,11 @@ ratelimit_test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 am_test_OBJECTS = test-test.$(OBJEXT) test-buffer.$(OBJEXT) \
 	test-crypto.$(OBJEXT) test-dispatch.$(OBJEXT) \
 	test-eventloop.$(OBJEXT) test-format.$(OBJEXT) \
-	test-hash.$(OBJEXT) test-invoker.$(OBJEXT) \
-	test-iputils.$(OBJEXT) test-json.$(OBJEXT) \
-	test-smart_pointer.$(OBJEXT) test-socket.$(OBJEXT) \
-	test-string.$(OBJEXT) test-time.$(OBJEXT) test-util.$(OBJEXT) \
-	test-xml.$(OBJEXT)
+	test-hash.$(OBJEXT) test-impersonation.$(OBJEXT) \
+	test-invoker.$(OBJEXT) test-iputils.$(OBJEXT) \
+	test-json.$(OBJEXT) test-smart_pointer.$(OBJEXT) \
+	test-socket.$(OBJEXT) test-string.$(OBJEXT) \
+	test-time.$(OBJEXT) test-util.$(OBJEXT) test-xml.$(OBJEXT)
 test_OBJECTS = $(am_test_OBJECTS)
 test_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
@@ -170,11 +170,12 @@ am__depfiles_remade = ./$(DEPDIR)/ratelimit_test-ratelimit.Po \
 	./$(DEPDIR)/test-buffer.Po ./$(DEPDIR)/test-crypto.Po \
 	./$(DEPDIR)/test-dispatch.Po ./$(DEPDIR)/test-eventloop.Po \
 	./$(DEPDIR)/test-format.Po ./$(DEPDIR)/test-hash.Po \
-	./$(DEPDIR)/test-invoker.Po ./$(DEPDIR)/test-iputils.Po \
-	./$(DEPDIR)/test-json.Po ./$(DEPDIR)/test-smart_pointer.Po \
-	./$(DEPDIR)/test-socket.Po ./$(DEPDIR)/test-string.Po \
-	./$(DEPDIR)/test-test.Po ./$(DEPDIR)/test-time.Po \
-	./$(DEPDIR)/test-util.Po ./$(DEPDIR)/test-xml.Po
+	./$(DEPDIR)/test-impersonation.Po ./$(DEPDIR)/test-invoker.Po \
+	./$(DEPDIR)/test-iputils.Po ./$(DEPDIR)/test-json.Po \
+	./$(DEPDIR)/test-smart_pointer.Po ./$(DEPDIR)/test-socket.Po \
+	./$(DEPDIR)/test-string.Po ./$(DEPDIR)/test-test.Po \
+	./$(DEPDIR)/test-time.Po ./$(DEPDIR)/test-util.Po \
+	./$(DEPDIR)/test-xml.Po
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -619,6 +620,7 @@ test_SOURCES = test.cpp \
 		eventloop.cpp \
 		format.cpp \
 		hash.cpp \
+		impersonation.cpp \
 		invoker.cpp \
 		iputils.cpp \
 		json.cpp \
@@ -701,6 +703,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-eventloop.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-format.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-hash.Po@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-impersonation.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-invoker.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-iputils.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test-json.Po@am__quote@ # am--include-marker
@@ -853,6 +856,20 @@ test-hash.obj: hash.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='hash.cpp' object='test-hash.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test-hash.obj `if test -f 'hash.cpp'; then $(CYGPATH_W) 'hash.cpp'; else $(CYGPATH_W) '$(srcdir)/hash.cpp'; fi`
+
+test-impersonation.o: impersonation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test-impersonation.o -MD -MP -MF $(DEPDIR)/test-impersonation.Tpo -c -o test-impersonation.o `test -f 'impersonation.cpp' || echo '$(srcdir)/'`impersonation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test-impersonation.Tpo $(DEPDIR)/test-impersonation.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='impersonation.cpp' object='test-impersonation.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test-impersonation.o `test -f 'impersonation.cpp' || echo '$(srcdir)/'`impersonation.cpp
+
+test-impersonation.obj: impersonation.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test-impersonation.obj -MD -MP -MF $(DEPDIR)/test-impersonation.Tpo -c -o test-impersonation.obj `if test -f 'impersonation.cpp'; then $(CYGPATH_W) 'impersonation.cpp'; else $(CYGPATH_W) '$(srcdir)/impersonation.cpp'; fi`
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/test-impersonation.Tpo $(DEPDIR)/test-impersonation.Po
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='impersonation.cpp' object='test-impersonation.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o test-impersonation.obj `if test -f 'impersonation.cpp'; then $(CYGPATH_W) 'impersonation.cpp'; else $(CYGPATH_W) '$(srcdir)/impersonation.cpp'; fi`
 
 test-invoker.o: invoker.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(test_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT test-invoker.o -MD -MP -MF $(DEPDIR)/test-invoker.Tpo -c -o test-invoker.o `test -f 'invoker.cpp' || echo '$(srcdir)/'`invoker.cpp
@@ -1317,6 +1334,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/test-eventloop.Po
 	-rm -f ./$(DEPDIR)/test-format.Po
 	-rm -f ./$(DEPDIR)/test-hash.Po
+	-rm -f ./$(DEPDIR)/test-impersonation.Po
 	-rm -f ./$(DEPDIR)/test-invoker.Po
 	-rm -f ./$(DEPDIR)/test-iputils.Po
 	-rm -f ./$(DEPDIR)/test-json.Po
@@ -1379,6 +1397,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/test-eventloop.Po
 	-rm -f ./$(DEPDIR)/test-format.Po
 	-rm -f ./$(DEPDIR)/test-hash.Po
+	-rm -f ./$(DEPDIR)/test-impersonation.Po
 	-rm -f ./$(DEPDIR)/test-invoker.Po
 	-rm -f ./$(DEPDIR)/test-iputils.Po
 	-rm -f ./$(DEPDIR)/test-json.Po

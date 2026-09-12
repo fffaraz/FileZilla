@@ -12,6 +12,8 @@
 
 #include "windows.hpp"
 
+#include <optional>
+
 namespace fz {
 
 class event_handler;
@@ -102,6 +104,7 @@ private:
 	OVERLAPPED ol_read_{};
 	OVERLAPPED ol_write_{};
 	rwresult write_error_{0};
+	std::optional<rwresult> terminal_read_result_;
 	bool waiting_read_{true};
 	bool waiting_write_{};
 	bool quit_{};

@@ -95,9 +95,15 @@ host_triplet = @host@
 @FZ_WINDOWS_TRUE@am__append_1 = \
 @FZ_WINDOWS_TRUE@	windows/async_pipe.cpp \
 @FZ_WINDOWS_TRUE@	windows/dll.cpp \
+@FZ_WINDOWS_TRUE@	windows/impersonation_desktop_helper.cpp \
+@FZ_WINDOWS_TRUE@	windows/impersonation_desktop_impl.cpp \
+@FZ_WINDOWS_TRUE@	windows/impersonation_helper.cpp \
+@FZ_WINDOWS_TRUE@	windows/impersonation_logon_helper.cpp \
+@FZ_WINDOWS_TRUE@	windows/impersonation_profile_helper.cpp \
 @FZ_WINDOWS_TRUE@	windows/poller.cpp \
 @FZ_WINDOWS_TRUE@	windows/registry.cpp \
-@FZ_WINDOWS_TRUE@	windows/security_descriptor_builder.cpp
+@FZ_WINDOWS_TRUE@	windows/security_descriptor_builder.cpp \
+@FZ_WINDOWS_TRUE@	windows/token_privileges.cpp
 
 @FZ_WINDOWS_TRUE@am__append_2 = \
 @FZ_WINDOWS_TRUE@	libfilezilla/glue/async_pipe.hpp \
@@ -196,16 +202,27 @@ am__libfilezilla_la_SOURCES_DIST = aio/aio.cpp aio/reader.cpp \
 	thread_pool.cpp tls_info.cpp tls_layer.cpp tls_layer_impl.cpp \
 	tls_params.cpp tls_system_trust_store.cpp time.cpp \
 	translate.cpp uri.cpp util.cpp version.cpp xml.cpp \
-	windows/async_pipe.cpp windows/dll.cpp windows/poller.cpp \
+	windows/async_pipe.cpp windows/dll.cpp \
+	windows/impersonation_desktop_helper.cpp \
+	windows/impersonation_desktop_impl.cpp \
+	windows/impersonation_helper.cpp \
+	windows/impersonation_logon_helper.cpp \
+	windows/impersonation_profile_helper.cpp windows/poller.cpp \
 	windows/registry.cpp windows/security_descriptor_builder.cpp \
-	glue/unix.cpp unix/poller.cpp
+	windows/token_privileges.cpp glue/unix.cpp unix/poller.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
 @FZ_WINDOWS_TRUE@am__objects_1 =  \
 @FZ_WINDOWS_TRUE@	windows/libfilezilla_la-async_pipe.lo \
 @FZ_WINDOWS_TRUE@	windows/libfilezilla_la-dll.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-impersonation_desktop_helper.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-impersonation_desktop_impl.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-impersonation_helper.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-impersonation_logon_helper.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-impersonation_profile_helper.lo \
 @FZ_WINDOWS_TRUE@	windows/libfilezilla_la-poller.lo \
 @FZ_WINDOWS_TRUE@	windows/libfilezilla_la-registry.lo \
-@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-security_descriptor_builder.lo
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-security_descriptor_builder.lo \
+@FZ_WINDOWS_TRUE@	windows/libfilezilla_la-token_privileges.lo
 @FZ_WINDOWS_FALSE@am__objects_2 = glue/libfilezilla_la-unix.lo \
 @FZ_WINDOWS_FALSE@	unix/libfilezilla_la-poller.lo
 am_libfilezilla_la_OBJECTS = aio/libfilezilla_la-aio.lo \
@@ -318,9 +335,15 @@ am__depfiles_remade = ./$(DEPDIR)/libfilezilla_la-ascii_layer.Plo \
 	unix/$(DEPDIR)/libfilezilla_la-poller.Plo \
 	windows/$(DEPDIR)/libfilezilla_la-async_pipe.Plo \
 	windows/$(DEPDIR)/libfilezilla_la-dll.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Plo \
 	windows/$(DEPDIR)/libfilezilla_la-poller.Plo \
 	windows/$(DEPDIR)/libfilezilla_la-registry.Plo \
-	windows/$(DEPDIR)/libfilezilla_la-security_descriptor_builder.Plo
+	windows/$(DEPDIR)/libfilezilla_la-security_descriptor_builder.Plo \
+	windows/$(DEPDIR)/libfilezilla_la-token_privileges.Plo
 am__mv = mv -f
 CXXCOMPILE = $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
 	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS)
@@ -649,8 +672,15 @@ dist_noinst_HEADERS = \
 	http/throttler.hpp \
 	tls_layer_impl.hpp \
 	tls_system_trust_store_impl.hpp \
+	windows/helpers.hpp \
+	windows/impersonation_desktop_helper.hpp \
+	windows/impersonation_desktop_impl.hpp \
+	windows/impersonation_helper.hpp \
+	windows/impersonation_logon_helper.hpp \
+	windows/impersonation_profile_helper.hpp \
 	windows/poller.hpp \
 	windows/security_descriptor_builder.hpp \
+	windows/token_privileges.hpp \
 	unix/poller.hpp
 
 @FZ_WINDOWS_TRUE@EXTRA_libfilezilla_la_DEPENDENCIES = windows/libfilezilla_rc.o
@@ -775,12 +805,24 @@ windows/libfilezilla_la-async_pipe.lo: windows/$(am__dirstamp) \
 	windows/$(DEPDIR)/$(am__dirstamp)
 windows/libfilezilla_la-dll.lo: windows/$(am__dirstamp) \
 	windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-impersonation_desktop_helper.lo:  \
+	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-impersonation_desktop_impl.lo:  \
+	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-impersonation_helper.lo:  \
+	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-impersonation_logon_helper.lo:  \
+	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-impersonation_profile_helper.lo:  \
+	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
 windows/libfilezilla_la-poller.lo: windows/$(am__dirstamp) \
 	windows/$(DEPDIR)/$(am__dirstamp)
 windows/libfilezilla_la-registry.lo: windows/$(am__dirstamp) \
 	windows/$(DEPDIR)/$(am__dirstamp)
 windows/libfilezilla_la-security_descriptor_builder.lo:  \
 	windows/$(am__dirstamp) windows/$(DEPDIR)/$(am__dirstamp)
+windows/libfilezilla_la-token_privileges.lo: windows/$(am__dirstamp) \
+	windows/$(DEPDIR)/$(am__dirstamp)
 glue/$(am__dirstamp):
 	@$(MKDIR_P) glue
 	@: >>glue/$(am__dirstamp)
@@ -871,9 +913,15 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@unix/$(DEPDIR)/libfilezilla_la-poller.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-async_pipe.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-dll.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-poller.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-registry.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-security_descriptor_builder.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@windows/$(DEPDIR)/libfilezilla_la-token_privileges.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -1269,6 +1317,41 @@ windows/libfilezilla_la-dll.lo: windows/dll.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-dll.lo `test -f 'windows/dll.cpp' || echo '$(srcdir)/'`windows/dll.cpp
 
+windows/libfilezilla_la-impersonation_desktop_helper.lo: windows/impersonation_desktop_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-impersonation_desktop_helper.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Tpo -c -o windows/libfilezilla_la-impersonation_desktop_helper.lo `test -f 'windows/impersonation_desktop_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_desktop_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Tpo windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/impersonation_desktop_helper.cpp' object='windows/libfilezilla_la-impersonation_desktop_helper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-impersonation_desktop_helper.lo `test -f 'windows/impersonation_desktop_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_desktop_helper.cpp
+
+windows/libfilezilla_la-impersonation_desktop_impl.lo: windows/impersonation_desktop_impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-impersonation_desktop_impl.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Tpo -c -o windows/libfilezilla_la-impersonation_desktop_impl.lo `test -f 'windows/impersonation_desktop_impl.cpp' || echo '$(srcdir)/'`windows/impersonation_desktop_impl.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Tpo windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/impersonation_desktop_impl.cpp' object='windows/libfilezilla_la-impersonation_desktop_impl.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-impersonation_desktop_impl.lo `test -f 'windows/impersonation_desktop_impl.cpp' || echo '$(srcdir)/'`windows/impersonation_desktop_impl.cpp
+
+windows/libfilezilla_la-impersonation_helper.lo: windows/impersonation_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-impersonation_helper.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Tpo -c -o windows/libfilezilla_la-impersonation_helper.lo `test -f 'windows/impersonation_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Tpo windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/impersonation_helper.cpp' object='windows/libfilezilla_la-impersonation_helper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-impersonation_helper.lo `test -f 'windows/impersonation_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_helper.cpp
+
+windows/libfilezilla_la-impersonation_logon_helper.lo: windows/impersonation_logon_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-impersonation_logon_helper.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Tpo -c -o windows/libfilezilla_la-impersonation_logon_helper.lo `test -f 'windows/impersonation_logon_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_logon_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Tpo windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/impersonation_logon_helper.cpp' object='windows/libfilezilla_la-impersonation_logon_helper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-impersonation_logon_helper.lo `test -f 'windows/impersonation_logon_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_logon_helper.cpp
+
+windows/libfilezilla_la-impersonation_profile_helper.lo: windows/impersonation_profile_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-impersonation_profile_helper.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Tpo -c -o windows/libfilezilla_la-impersonation_profile_helper.lo `test -f 'windows/impersonation_profile_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_profile_helper.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Tpo windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/impersonation_profile_helper.cpp' object='windows/libfilezilla_la-impersonation_profile_helper.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-impersonation_profile_helper.lo `test -f 'windows/impersonation_profile_helper.cpp' || echo '$(srcdir)/'`windows/impersonation_profile_helper.cpp
+
 windows/libfilezilla_la-poller.lo: windows/poller.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-poller.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-poller.Tpo -c -o windows/libfilezilla_la-poller.lo `test -f 'windows/poller.cpp' || echo '$(srcdir)/'`windows/poller.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-poller.Tpo windows/$(DEPDIR)/libfilezilla_la-poller.Plo
@@ -1289,6 +1372,13 @@ windows/libfilezilla_la-security_descriptor_builder.lo: windows/security_descrip
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/security_descriptor_builder.cpp' object='windows/libfilezilla_la-security_descriptor_builder.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-security_descriptor_builder.lo `test -f 'windows/security_descriptor_builder.cpp' || echo '$(srcdir)/'`windows/security_descriptor_builder.cpp
+
+windows/libfilezilla_la-token_privileges.lo: windows/token_privileges.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT windows/libfilezilla_la-token_privileges.lo -MD -MP -MF windows/$(DEPDIR)/libfilezilla_la-token_privileges.Tpo -c -o windows/libfilezilla_la-token_privileges.lo `test -f 'windows/token_privileges.cpp' || echo '$(srcdir)/'`windows/token_privileges.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) windows/$(DEPDIR)/libfilezilla_la-token_privileges.Tpo windows/$(DEPDIR)/libfilezilla_la-token_privileges.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='windows/token_privileges.cpp' object='windows/libfilezilla_la-token_privileges.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -c -o windows/libfilezilla_la-token_privileges.lo `test -f 'windows/token_privileges.cpp' || echo '$(srcdir)/'`windows/token_privileges.cpp
 
 glue/libfilezilla_la-unix.lo: glue/unix.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfilezilla_la_CPPFLAGS) $(CPPFLAGS) $(libfilezilla_la_CXXFLAGS) $(CXXFLAGS) -MT glue/libfilezilla_la-unix.lo -MD -MP -MF glue/$(DEPDIR)/libfilezilla_la-unix.Tpo -c -o glue/libfilezilla_la-unix.lo `test -f 'glue/unix.cpp' || echo '$(srcdir)/'`glue/unix.cpp
@@ -1577,9 +1667,15 @@ distclean: distclean-am
 	-rm -f unix/$(DEPDIR)/libfilezilla_la-poller.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-async_pipe.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-dll.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-poller.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-registry.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-security_descriptor_builder.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-token_privileges.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -1680,9 +1776,15 @@ maintainer-clean: maintainer-clean-am
 	-rm -f unix/$(DEPDIR)/libfilezilla_la-poller.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-async_pipe.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-dll.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_desktop_impl.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_logon_helper.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-impersonation_profile_helper.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-poller.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-registry.Plo
 	-rm -f windows/$(DEPDIR)/libfilezilla_la-security_descriptor_builder.Plo
+	-rm -f windows/$(DEPDIR)/libfilezilla_la-token_privileges.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

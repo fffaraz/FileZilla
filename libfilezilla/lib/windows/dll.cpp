@@ -51,4 +51,10 @@ shdlls& shdlls::get()
 	static shdlls d;
 	return d;
 }
+
+dll & user32dll()
+{
+	static dll d{L"user32.dll", LOAD_LIBRARY_SEARCH_SYSTEM32};
+	return d;
+}
 }

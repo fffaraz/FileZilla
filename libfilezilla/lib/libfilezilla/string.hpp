@@ -385,12 +385,13 @@ struct operator_arrow_proxy
 	T* operator->() { return &v_; }
 };
 
+/// \private
 template <typename T>
 struct operator_arrow_proxy<const T>
 {
 	T v_;
 
-	T* operator->() const { return &v_; }
+	T const* operator->() const { return &v_; }
 };
 
 }

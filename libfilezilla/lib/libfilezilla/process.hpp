@@ -15,6 +15,7 @@
 namespace fz {
 class event_handler;
 class impersonation_token;
+class logger_interface;
 class thread_pool;
 
 
@@ -106,10 +107,11 @@ public:
 
 	bool spawn(std::vector<native_string> const& command_with_args, io_redirection redirect_mode = io_redirection::redirect);
 
-#if FZ_WINDOWS || FZ_UNIX
 	/// Creates a process running under the user represented by the impersonation token
 	bool spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, io_redirection redirect_mode = io_redirection::redirect);
-#endif
+
+	/// Creates a process running under the user represented by the impersonation token, logging platform-specific setup failures.
+	bool spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, io_redirection redirect_mode, logger_interface &logger);
 
 #ifndef FZ_WINDOWS
 	/**
@@ -121,6 +123,8 @@ public:
 	bool spawn(native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode = io_redirection::redirect);
 
 	bool spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode = io_redirection::redirect);
+
+	bool spawn(impersonation_token const& it, native_string const& cmd, std::vector<native_string> const& args, std::vector<int> const& extra_fds, io_redirection redirect_mode, logger_interface &logger);
 #endif
 
 	/**

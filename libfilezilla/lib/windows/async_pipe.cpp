@@ -72,6 +72,7 @@ bool async_pipe::init()
 	write_error_ = rwresult{0};
 	waiting_read_ = true;
 	waiting_write_ = false;
+	terminal_read_result_.reset();
 
 	sync_ = CreateEvent(nullptr, false, false, nullptr);
 	ol_read_.hEvent = CreateEvent(nullptr, true, false, nullptr);
@@ -237,16 +238,22 @@ rwresult async_pipe::read(void* buffer, size_t len)
 			memcpy(buffer, read_buffer_.get(), len);
 			read_buffer_.consume(len);
 
-			if (read_buffer_.empty()) {
+			if (read_buffer_.empty() && !terminal_read_result_) {
 				DWORD res = ReadFile(read_, read_buffer_.get(64 * 1024), 64 * 1024, nullptr, &ol_read_);
 				DWORD err = GetLastError();
 				if (!res) {
-					if (err != ERROR_IO_PENDING) {
-						return rwresult{rwresult::other, err};
+					if (err == ERROR_HANDLE_EOF || err == ERROR_BROKEN_PIPE) {
+						terminal_read_result_ = rwresult(0);
+					}
+					else if (err != ERROR_IO_PENDING) {
+						terminal_read_result_ = rwresult{rwresult::other, err};
 					}
 				}
 			}
 			return rwresult(len);
+		}
+		if (terminal_read_result_) {
+			return *terminal_read_result_;
 		}
 		if (waiting_read_) {
 			return rwresult{rwresult::wouldblock, 0};
@@ -264,10 +271,15 @@ rwresult async_pipe::read(void* buffer, size_t len)
 				SetEvent(sync_);
 				return rwresult{rwresult::wouldblock, 0};
 			}
-			else if (err == ERROR_HANDLE_EOF || err == ERROR_BROKEN_PIPE) {
-				return rwresult(0);
+			else {
+				if (err == ERROR_HANDLE_EOF || err == ERROR_BROKEN_PIPE) {
+					terminal_read_result_ = rwresult(0);
+				}
+				else {
+					terminal_read_result_ = rwresult{rwresult::other, err};
+				}
+				return *terminal_read_result_;
 			}
-			return rwresult{rwresult::other, err};
 		}
 	}
 }

@@ -57,8 +57,7 @@ private:
 };
 
 bool GetUserAndDomainFromSid(PSID sid, std::wstring& user, std::wstring& domain);
-bool GetUserInfoFromToken(HANDLE h, std::string& sid_string, std::wstring& roaming_profile_path, std::wstring& username, std::wstring& domain, logger_interface& logger = get_null_logger());
-bool DropAdminPrivilegesFromToken(HANDLE h);
+bool GetUserInfoFromToken(HANDLE h, std::string& sid_string, std::wstring& username, std::wstring& domain, logger_interface& logger = get_null_logger());
 
 }
 

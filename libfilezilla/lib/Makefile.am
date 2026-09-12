@@ -124,8 +124,15 @@ dist_noinst_HEADERS = \
 	http/throttler.hpp \
 	tls_layer_impl.hpp \
 	tls_system_trust_store_impl.hpp \
+	windows/helpers.hpp \
+	windows/impersonation_desktop_helper.hpp \
+	windows/impersonation_desktop_impl.hpp \
+	windows/impersonation_helper.hpp \
+	windows/impersonation_logon_helper.hpp \
+	windows/impersonation_profile_helper.hpp \
 	windows/poller.hpp \
 	windows/security_descriptor_builder.hpp \
+	windows/token_privileges.hpp \
 	unix/poller.hpp
 
 if FZ_WINDOWS
@@ -133,9 +140,15 @@ if FZ_WINDOWS
 libfilezilla_la_SOURCES += \
 	windows/async_pipe.cpp \
 	windows/dll.cpp \
+	windows/impersonation_desktop_helper.cpp \
+	windows/impersonation_desktop_impl.cpp \
+	windows/impersonation_helper.cpp \
+	windows/impersonation_logon_helper.cpp \
+	windows/impersonation_profile_helper.cpp \
 	windows/poller.cpp \
 	windows/registry.cpp \
-	windows/security_descriptor_builder.cpp
+	windows/security_descriptor_builder.cpp \
+	windows/token_privileges.cpp
 
 nobase_include_HEADERS += \
 	libfilezilla/glue/async_pipe.hpp \

@@ -1,4 +1,4 @@
-noinst_PROGRAMS = timer_fizzbuzz process nonblocking_process events list https raw_https aio
+noinst_PROGRAMS = timer_fizzbuzz process nonblocking_process events list https raw_https aio impersonation
 
 timer_fizzbuzz_SOURCES = timer_fizzbuzz.cpp
 
@@ -109,10 +109,6 @@ aio_LDADD += $(libdeps)
 
 aio_DEPENDENCIES = ../lib/libfilezilla.la
 
-
-if !FZ_WINDOWS
-noinst_PROGRAMS += impersonation
-
 impersonation_SOURCES = impersonation.cpp
 
 impersonation_CPPFLAGS = $(AM_CPPFLAGS)
@@ -125,7 +121,6 @@ impersonation_LDADD = ../lib/libfilezilla.la
 impersonation_LDADD += $(libdeps)
 
 impersonation_DEPENDENCIES = ../lib/libfilezilla.la
-endif
 
 noinst_PROGRAMS += xml_pp
 xml_pp_SOURCES = xml_pp.cpp

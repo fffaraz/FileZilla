@@ -85,6 +85,8 @@ public:
 	dll ole32_;   ///< The Ole32 DLL
 };
 
+dll & FZ_PUBLIC_SYMBOL user32dll();
+
 }
 
 /**
