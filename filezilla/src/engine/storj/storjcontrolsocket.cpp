@@ -49,9 +49,9 @@ void CStorjControlSocket::Connect(CServer const& server, Credentials const& cred
 	Push(std::make_unique<CStorjConnectOpData>(*this));
 }
 
-void CStorjControlSocket::List(CServerPath const& path, std::wstring const& subDir, int flags)
+void CStorjControlSocket::List(CServerPath const& path, int flags)
 {
-	Push(std::make_unique<CStorjListOpData>(*this, path, subDir, flags));
+	Push(std::make_unique<CStorjListOpData>(*this, path, flags));
 }
 
 void CStorjControlSocket::FileTransfer(CFileTransferCommand const& cmd)

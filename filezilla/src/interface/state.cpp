@@ -387,7 +387,7 @@ bool CState::SetRemoteDir(std::shared_ptr<CDirectoryListing> const& pDirectoryLi
 			return false;
 		}
 
-		if (m_pDirectoryListing) {
+		if (m_pDirectoryListing || m_last_path.empty()) {
 			m_pDirectoryListing = 0;
 			NotifyHandlers(STATECHANGE_REMOTE_DIR, std::wstring(), &primary);
 		}
@@ -597,7 +597,7 @@ bool CState::Connect(Site const& site, CServerPath const& path, bool compare)
 
 	// Use m_site from here on
 	m_pCommandQueue->ProcessCommand(new CConnectCommand(m_site.server, m_site.Handle(), m_site.credentials));
-	m_pCommandQueue->ProcessCommand(new CListCommand(path, std::wstring(), LIST_FLAG_FALLBACK_CURRENT));
+	m_pCommandQueue->ProcessCommand(new CListCommand(path, std::wstring()));
 
 	return true;
 }
@@ -1168,6 +1168,10 @@ void CState::LinkIsNotDir(const CServerPath& path, std::wstring const& subdir)
 bool CState::ChangeRemoteDir(CServerPath const& path, std::wstring const& subdir, int flags, bool ignore_busy, bool compare)
 {
 	if (!m_site || !m_pCommandQueue) {
+		return false;
+	}
+
+	if (!path && !m_site.server.HasFeature(ProtocolFeature::HomeDirectory)) {
 		return false;
 	}
 

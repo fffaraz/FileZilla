@@ -11,6 +11,10 @@ class COptions;
 class CThemeProvider;
 class CWrapEngine;
 
+#if FZ_MAC
+#define USE_UILOCALE 1
+#endif
+
 class CFileZillaApp : public wxApp
 {
 public:
@@ -31,7 +35,6 @@ public:
 #endif
 
 	void InitLocale();
-	bool SetLocale(int language);
 	int GetCurrentLanguage() const;
 	wxString GetCurrentLanguageCode() const;
 
@@ -50,10 +53,21 @@ protected:
 #endif
 
 	bool LoadResourceFiles();
-	bool LoadLocales();
+	void LoadLocales();
 	int ProcessCommandLine();
 
+#if USE_UILOCALE
+	bool SetLocale(std::wstring language, wxLanguageInfo const** info);
+	virtual wxLayoutDirection GetLayoutDirection() const override;
+
+	int lang_{wxLANGUAGE_ENGLISH};
+	std::wstring lang_code_;
+	wxLayoutDirection layout_direction_{wxLayout_LeftToRight};
+#else
+	bool SetLocale(int language);
+
 	std::unique_ptr<wxLocale> m_pLocale;
+#endif
 
 	CLocalPath m_resourceDir;
 	CLocalPath m_localesDir;

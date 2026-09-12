@@ -117,7 +117,8 @@ enum class ProtocolFeature
 	ListVersions,
 	DownloadVersion,
 	DeleteVersion,
-	Share
+	Share,
+	HomeDirectory
 };
 
 enum class CaseSensitivity

@@ -250,7 +250,7 @@ bool CServer::operator!=(const CServer &op) const
 CServer::CServer(ServerProtocol protocol, ServerType type, std::wstring const& host, unsigned int port)
 {
 	m_protocol = protocol;
-	m_type = type;
+	m_type = HasFeature(ProtocolFeature::ServerType) ? type : UNIX;
 	m_host = host;
 	if (port) {
 		m_port = port;
@@ -262,22 +262,28 @@ CServer::CServer(ServerProtocol protocol, ServerType type, std::wstring const& h
 
 void CServer::SetType(ServerType type)
 {
-	m_type = type;
+	if (HasFeature(ProtocolFeature::ServerType)) {
+		m_type = type;
+	}
 }
 
 void CServer::SetProtocol(ServerProtocol serverProtocol)
 {
 	assert(serverProtocol != UNKNOWN);
 
-	if (!ProtocolHasFeature(serverProtocol, ProtocolFeature::PostLoginCommands)) {
+	m_protocol = serverProtocol;
+
+	if (!HasFeature(ProtocolFeature::PostLoginCommands)) {
 		m_postLoginCommands.clear();
 	}
-
-	m_protocol = serverProtocol;
 
 	// Clear out parameters not supported by the current protocol
 	if (!ProtocolHasUser(serverProtocol)) {
 		m_user.clear();
+	}
+
+	if (!HasFeature(ProtocolFeature::ServerType)) {
+		m_type = UNIX;
 	}
 
 	std::map<std::string, std::wstring, std::less<>> oldParams;
@@ -566,6 +572,7 @@ bool CServer::ProtocolHasFeature(ServerProtocol const protocol, ProtocolFeature 
 			return true;
 		}
 		break;
+	case ProtocolFeature::HomeDirectory:
 	case ProtocolFeature::Charset:
 		if (protocol == FTP || protocol == FTPS || protocol == FTPES || protocol == INSECURE_FTP ||
 			protocol == SFTP) {
@@ -674,7 +681,7 @@ std::wstring CServer::GetNameFromServerType(ServerType type)
 
 ServerType CServer::GetServerTypeFromName(std::wstring const& name)
 {
-	for (int i = 0; i < SERVERTYPE_MAX; ++i) {
+	for (unsigned int i = 0; i < SERVERTYPE_MAX; ++i) {
 		ServerType type = static_cast<ServerType>(i);
 		if (name == CServer::GetNameFromServerType(type)) {
 			return type;

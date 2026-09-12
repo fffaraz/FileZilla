@@ -44,15 +44,12 @@ bool IsMisleadingListResponse(std::wstring const& response)
 }
 
 CFtpListOpData::CFtpListOpData(CFtpControlSocket & controlSocket, CServerPath const& path, std::wstring const& subDir, int flags)
-    : COpData(Command::list, L"CFtpListOpData")
+    : CListOpData(path, L"CFtpListOpData"sv)
     , CFtpOpData(controlSocket)
-    , path_(path)
     , subDir_(subDir)
     , flags_(flags)
 {
-	path_.SetType(currentServer_.GetType());
 	refresh_ = (flags & LIST_FLAG_REFRESH) != 0;
-	fallback_to_current_ = !path.empty() && (flags & LIST_FLAG_FALLBACK_CURRENT) != 0;
 }
 
 int CFtpListOpData::Send()
@@ -212,17 +209,7 @@ int CFtpListOpData::SubcommandResult(int prevResult, COpData const&)
 				return prevResult;
 			}
 
-			if (fallback_to_current_) {
-				// List current directory instead
-				fallback_to_current_ = false;
-				path_.clear();
-				subDir_.clear();
-				controlSocket_.ChangeDir();
-				return FZ_REPLY_CONTINUE;
-			}
-			else {
-				return prevResult;
-			}
+			return prevResult;
 		}
 		path_ = currentPath_;
 		subDir_.clear();

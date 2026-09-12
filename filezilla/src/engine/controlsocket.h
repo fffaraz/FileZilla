@@ -20,10 +20,12 @@ enum class async_request_type : unsigned {
 	global
 };
 
+using namespace std::literals;
+
 class COpData
 {
 public:
-	explicit COpData(Command op_Id, wchar_t const* name)
+	explicit COpData(Command op_Id, std::wstring_view const& name)
 		: opId(op_Id)
 		, name_(name)
 	{}
@@ -52,7 +54,7 @@ public:
 
 	OpLock opLock_;
 
-	wchar_t const* const name_;
+	std::wstring_view const name_;
 
 	logmsg::type sendLogLevel_{logmsg::debug_verbose};
 
@@ -69,7 +71,6 @@ public:
 		: controlSocket_(controlSocket)
 		, engine_(controlSocket.engine_)
 		, currentServer_(controlSocket.currentServer_)
-		, currentPath_(controlSocket.currentPath_)
 		, options_(engine_.GetOptions())
 	{
 	}
@@ -84,7 +85,6 @@ public:
 	T & controlSocket_;
 	CFileZillaEnginePrivate & engine_;
 	CServer & currentServer_;
-	CServerPath& currentPath_;
 	COptionsBase& options_;
 };
 
@@ -132,6 +132,18 @@ private:
 	CControlSocket & controlSocket_;
 };
 
+class CListOpData : public COpData
+{
+public:
+	CListOpData(CServerPath const& path, std::wstring_view const& name)
+		: COpData(Command::list, name)
+		, path_(path)
+	{
+	}
+
+	CServerPath path_;
+};
+
 class CFileTransferOpData : public COpData
 {
 public:
@@ -139,7 +151,6 @@ public:
 
 	bool download() const { return flags_ & transfer_flags::download; }
 
-	bool tryAbsolutePath_{};
 	bool resume_{};
 
 	transfer_flags flags_;
@@ -181,22 +192,6 @@ public:
 	std::vector<std::wstring> segments_;
 };
 
-class CChangeDirOpData : public COpData
-{
-public:
-	CChangeDirOpData(wchar_t const* name)
-		: COpData(Command::cwd, name)
-	{
-	}
-
-	bool tryMkdOnFail_{};
-	bool link_discovery_{};
-
-	CServerPath path_;
-	std::wstring subDir_;
-	CServerPath target_;
-};
-
 namespace fz {
 class socket_layer;
 }
@@ -217,8 +212,12 @@ public:
 
 	// Implicit FZ_REPLY_CONTINUE
 	virtual void Connect(CServer const& server, Credentials const& credentials) = 0;
+
+	// Override this version only for protocols that have server-side tracking of current working directory. The base implementation
+	// constructs an absolute path and calls the List() overload not taking subDir.
 	virtual void List(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), int flags = 0);
 
+public:
 	virtual void FileTransfer(CFileTransferCommand const& command) = 0;
 	virtual void RawCommand(std::wstring const& command = std::wstring());
 	virtual void Delete(CServerPath const& path, std::vector<std::wstring>&& files);
@@ -263,9 +262,6 @@ public:
 
 	CFileZillaEnginePrivate& GetEngine() { return engine_; }
 
-	// Only called from the engine, see there for description
-	void InvalidateCurrentWorkingDir(CServerPath const& path);
-
 	virtual bool CanSendNextCommand() { return true; }
 	int SendNextCommand();
 
@@ -283,6 +279,7 @@ public:
 	virtual size_t max_buffer_count() const;
 
 protected:
+	virtual void List(CServerPath const& path, int flags);
 	virtual void Lookup(CServerPath const& path, std::wstring const& file, CDirentry * entry = nullptr);
 	virtual void Lookup(CServerPath const& path, std::vector<std::wstring> const& files);
 
@@ -292,7 +289,7 @@ protected:
 	friend class CProtocolOpData<CControlSocket>;
 
 	virtual bool SetAsyncRequestReply(CAsyncRequestNotification *pNotification) = 0;
-	void SendDirectoryListingNotification(CServerPath const& path, bool failed);
+	void SendDirectoryListingNotification(CServerPath const& path, bool failed, std::optional<bool> primary = std::nullopt);
 
 	std::shared_ptr<unsigned int> pending_global_async_request_;
 
@@ -301,6 +298,7 @@ protected:
 	virtual int DoClose(int nErrorCode = FZ_REPLY_DISCONNECTED | FZ_REPLY_ERROR);
 
 	virtual int ResetOperation(int nErrorCode);
+	virtual void FinalizeResetOperation() {}
 	virtual void UpdateCache(COpData const& data, CServerPath const& serverPath, std::wstring const& remoteFile, int64_t fileSize);
 
 	void LogTransferResultMessage(int nErrorCode, CFileTransferOpData *pData);
@@ -313,7 +311,6 @@ protected:
 	int CheckOverwriteFile();
 
 	CServerPath ParsePath(std::wstring reply);
-	bool ParsePwdReply(std::wstring reply, const CServerPath& defaultPath = CServerPath(), bool quoted = true);
 
 	virtual void Push(std::unique_ptr<COpData> && pNewOpData);
 
@@ -329,8 +326,6 @@ protected:
 	CServer currentServer_;
 	Credentials credentials_;
 
-	CServerPath currentPath_;
-
 	bool m_useUTF8{true};
 	bool shown_encoding_error_{};
 
@@ -340,7 +335,6 @@ protected:
 
 	OpLockManager & opLockManager_;
 
-	bool m_invalidateCurrentPath{};
 	ServerHandle handle_;
 
 	fz::logger_interface& logger_;

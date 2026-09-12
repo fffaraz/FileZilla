@@ -450,15 +450,17 @@ void CLocalViewHeader::OnTextChanged(wxCommandEvent&)
 #ifdef __WXGTK__
 void CLocalViewHeader::OnSelectTextEvent(wxCommandEvent&)
 {
-	if (m_autoCompletionText.empty())
+	if (m_autoCompletionText.empty()) {
 		return;
+	}
 
 	const wxString& oldValue = m_pComboBox->GetValue();
 	const wxString completionText = m_autoCompletionText;
 	m_autoCompletionText.clear();
 
-	if (m_pComboBox->GetInsertionPoint() != (int)oldValue.Len())
+	if (m_pComboBox->GetInsertionPoint() != (int)oldValue.Len()) {
 		return;
+	}
 
 	m_pComboBox->SetValue(oldValue + completionText);
 	m_pComboBox->SetSelection(oldValue.Len(), oldValue.Len() + completionText.Len());
@@ -542,12 +544,23 @@ void CRemoteViewHeader::OnStateChange(t_statechange_notifications notification, 
 {
 	if (notification == STATECHANGE_SERVER) {
 		m_windowTinter->SetBackgroundTint(m_state.GetSite().m_colour);
+		auto const& server = m_state.GetSite().server;
+		if (server) {
+			if (server.GetType() != m_path.GetType()) {
+				m_path.clear();
+				m_pComboBox->SetValue(_T(""));
+				m_path.SetType(server.GetType());
+			}
+			Enable();
+		}
+		else {
+			Disable();
+		}
 	}
 	else if (notification == STATECHANGE_REMOTE_DIR) {
 		m_path = m_state.GetRemotePath();
 		if (m_path.empty()) {
 			m_pComboBox->SetValue(_T(""));
-			Disable();
 		}
 		else {
 			Site const& site = m_state.GetSite();
@@ -557,7 +570,6 @@ void CRemoteViewHeader::OnStateChange(t_statechange_notifications notification, 
 				m_sortedRecentDirectories.clear();
 				m_lastServer = site.server;
 			}
-			Enable();
 #ifdef __WXGTK__
 			GetParent()->m_dirtyTabOrder = true;
 #endif
@@ -568,14 +580,17 @@ void CRemoteViewHeader::OnStateChange(t_statechange_notifications notification, 
 
 void CRemoteViewHeader::OnTextEnter(wxCommandEvent&)
 {
-	CServerPath path = m_path;
-	wxString value = m_pComboBox->GetValue();
-	if (value.empty() || !path.ChangePath(value.ToStdWstring())) {
+	if (!m_state.IsRemoteIdle(true)) {
 		wxBell();
 		return;
 	}
 
-	if (!m_state.IsRemoteIdle(true)) {
+	CServerPath path = m_path;
+	wxString value = m_pComboBox->GetValue();
+	if (value.empty() && m_state.GetSite().server.HasFeature(ProtocolFeature::HomeDirectory)) {
+		path.clear();
+	}
+	else if (value.empty() || !path.ChangePath(value.ToStdWstring())) {
 		wxBell();
 		return;
 	}

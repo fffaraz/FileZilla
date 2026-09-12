@@ -89,15 +89,6 @@ public:
 	CFileZillaEngineContext& GetContext() { return context_; }
 	CFileZillaEngine& GetParent() { return parent_; }
 
-	// If deleting or renaming a directory, it could be possible that another
-	// engine's CControlSocket instance still has that directory as
-	// current working directory (m_CurrentPath)
-	// Since this would cause problems, this function interate over all engines
-	// connected ot the same server and invalidates the current working
-	// directories if they match or if it is a subdirectory of the changed
-	// directory.
-	void InvalidateCurrentWorkingDirs(const CServerPath& path);
-
 	unsigned int GetEngineId() const { return m_engine_id; }
 
 	CTransferStatusManager transfer_status_;
@@ -126,7 +117,7 @@ protected:
 	// Command handlers, only called by CFileZillaEngine::Command
 	int Connect(CConnectCommand const& command);
 	int Disconnect(CDisconnectCommand const& command);
-	int List(CListCommand const&command);
+	int List(CListCommand const& command);
 	int FileTransfer(CFileTransferCommand const& command);
 	int RawCommand(CRawCommand const& command);
 	int Delete(CDeleteCommand& command);
@@ -143,7 +134,6 @@ protected:
 	void OnEngineEvent(EngineNotificationType type);
 	void OnTimer(fz::timer_id);
 	void OnCommandEvent();
-	void OnInvalidateCurrentWorkingDir(CServer const& server, CServerPath const& path);
 
 	// Todo: More fine-grained locking, a global mutex isn't nice
 	static fz::mutex global_mutex_;
@@ -157,8 +147,6 @@ protected:
 	std::function<void(CFileZillaEngine*)> notification_cb_;
 
 	unsigned int const m_engine_id;
-
-	static std::vector<CFileZillaEnginePrivate*> m_engineList;
 
 	std::unique_ptr<CControlSocket> controlSocket_;
 

@@ -2,7 +2,6 @@
 
 #include "chmod.h"
 #include "connect.h"
-#include "cwd.h"
 #include "delete.h"
 #include "filetransfer.h"
 #include "list.h"
@@ -209,6 +208,7 @@ void CSftpControlSocket::operator()(fz::event_base const& ev)
 				fz::ssh::auth_public_key_okay_event,
 				fz::ssh::auth_signature_failure_event,
 				fz::ssh::auth_keyboard_interactive_prompt_event,
+				fz::ssh::auth_password_change_request_event,
 				fz::ssh::sftp::sftp_client::ready_event
 			>(
 				ev, op,
@@ -217,6 +217,7 @@ void CSftpControlSocket::operator()(fz::event_base const& ev)
 				&CSftpConnectOpData::on_auth_pubkey_ok,
 				&CSftpConnectOpData::on_auth_signature_failed,
 				&CSftpConnectOpData::on_auth_keyboard_interactive_prompt,
+				&CSftpConnectOpData::on_auth_password_change_requested,
 				&CSftpConnectOpData::on_sftp_ready
 			);
 	}
@@ -247,7 +248,7 @@ void CSftpControlSocket::Push(std::unique_ptr<COpData> && pNewOpData)
 void CSftpControlSocket::on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> & key, fz::ssh::algorithm_info & algs)
 {
 	engine_.AddNotification(std::make_unique<CSftpEncryptionNotification>(algs, key->fingerprint(fz::hash_algorithm::sha256, true)));
-	SendAsyncRequest(std::make_unique<CHostKeyNotification>(currentServer_, handle_, std::move(key), std::move(algs)));
+	SendAsyncRequest(std::make_unique<CHostKeyNotification>(currentServer_, handle_, std::move(key), std::move(algs)), async_request_type::global);
 }
 
 void CSftpControlSocket::on_session_done(fz::ssh::session*)
@@ -260,29 +261,9 @@ void CSftpControlSocket::on_sftp_done(fz::ssh::sftp::sftp_client*)
 	DoClose();
 }
 
-void CSftpControlSocket::List(CServerPath const& path, std::wstring const& subDir, int flags)
+void CSftpControlSocket::List(CServerPath const& path, int flags)
 {
-	Push(std::make_unique<CSftpListOpData>(*this, path, subDir, flags));
-}
-
-void CSftpControlSocket::ChangeDir(CServerPath const& path, std::wstring const& subDir, bool link_discovery)
-{
-	auto pData = std::make_unique<CSftpChangeDirOpData>(*this);
-	pData->path_ = path;
-	pData->subDir_ = subDir;
-	pData->link_discovery_ = link_discovery;
-
-	if (!operations_.empty() && operations_.back()->opId == Command::transfer &&
-		!static_cast<CSftpFileTransferOpData&>(*operations_.back()).download())
-	{
-		if (!subDir.empty()) {
-			Push(std::make_unique<ResultOpData>(FZ_REPLY_INTERNALERROR));
-			return;
-		}
-		pData->tryMkdOnFail_ = true;
-	}
-
-	Push(std::move(pData));
+	Push(std::make_unique<CSftpListOpData>(*this, path, flags));
 }
 
 void CSftpControlSocket::Mkdir(CServerPath const& path, transfer_flags const&)

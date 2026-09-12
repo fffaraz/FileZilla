@@ -188,11 +188,12 @@ int CControlSocket::ResetOperation(int nErrorCode)
 				log(logmsg::error, prefix + _("Failed to retrieve directory listing"));
 			}
 			else {
-				if (currentPath_.empty()) {
+				auto const* data = dynamic_cast<CListOpData const*>(oldOperation.get());
+				if (!data || data->path_.empty()) {
 					log(logmsg::status, _("Directory listing successful"));
 				}
 				else {
-					log(logmsg::status, _("Directory listing of \"%s\" successful"), currentPath_.GetPath());
+					log(logmsg::status, _("Directory listing of \"%s\" successful"), data->path_.GetPath());
 				}
 			}
 			break;
@@ -222,10 +223,7 @@ int CControlSocket::ResetOperation(int nErrorCode)
 
 	engine_.transfer_status_.Reset();
 
-	if (m_invalidateCurrentPath) {
-		currentPath_.clear();
-		m_invalidateCurrentPath = false;
-	}
+	FinalizeResetOperation();
 
 	if (operations_.empty()) {
 		SetWait(false);
@@ -247,7 +245,6 @@ void CControlSocket::UpdateCache(COpData const &, CServerPath const& serverPath,
 int CControlSocket::DoClose(int nErrorCode)
 {
 	log(logmsg::debug_debug, L"CControlSocket::DoClose(%d)", nErrorCode);
-	currentPath_.clear();
 	return ResetOperation(FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED | nErrorCode);
 }
 
@@ -317,7 +314,7 @@ CServerPath CControlSocket::ParsePath(std::wstring reply)
 		return {};
 	}
 
-	CServerPath ret = currentPath_;
+	CServerPath ret;
 	ret.SetType(currentServer_.GetType());
 
 	if (!ret.SetPath(reply)) {
@@ -326,53 +323,6 @@ CServerPath CControlSocket::ParsePath(std::wstring reply)
 	}
 
 	return ret;
-}
-
-bool CControlSocket::ParsePwdReply(std::wstring reply, CServerPath const& defaultPath, bool quoted)
-{
-	if (quoted) {
-		size_t pos1 = reply.find('"');
-		size_t pos2 = reply.rfind('"');
-		// Due to searching the same character, pos1 is npos iff pos2 is npos
-
-		if (pos1 == std::wstring::npos || pos1 >= pos2) {
-			pos1 = reply.find('\'');
-			pos2 = reply.rfind('\'');
-
-			if (pos1 != std::wstring::npos && pos1 < pos2) {
-				log(logmsg::debug_info, L"Broken server sending single-quoted path instead of double-quoted path.");
-			}
-		}
-		if (pos1 == std::wstring::npos || pos1 >= pos2) {
-			log(logmsg::debug_info, L"Broken server, no quoted path found in pwd reply, trying first token as path");
-			pos1 = reply.find(' ');
-			if (pos1 != std::wstring::npos) {
-				reply = reply.substr(pos1 + 1);
-				pos2 = reply.find(' ');
-				if (pos2 != std::wstring::npos)
-					reply = reply.substr(0, pos2);
-			}
-			else {
-				reply.clear();
-			}
-		}
-		else {
-			reply = reply.substr(pos1 + 1, pos2 - pos1 - 1);
-			fz::replace_substrings(reply, L"\"\"", L"\"");
-		}
-	}
-
-	currentPath_ = ParsePath(reply);
-	if (currentPath_.empty()) {
-		if (defaultPath.empty()) {
-			return false;
-		}
-
-		log(logmsg::debug_warning, L"Assuming path is '%s'.", defaultPath.GetPath());
-		currentPath_ = defaultPath;
-	}
-
-	return true;
 }
 
 int CControlSocket::CheckOverwriteFile()
@@ -396,14 +346,7 @@ int CControlSocket::CheckOverwriteFile()
 	CDirentry entry;
 	bool dirDidExist;
 	bool matchedCase;
-	CServerPath remotePath;
-	if (data.tryAbsolutePath_ || currentPath_.empty()) {
-		remotePath = data.remotePath_;
-	}
-	else {
-		remotePath = currentPath_;
-	}
-	bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath, data.remoteFile_, dirDidExist, matchedCase);
+	bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, data.remotePath_, data.remoteFile_, dirDidExist, matchedCase);
 
 	// Ignore entries with wrong case
 	if (found && !matchedCase) {
@@ -662,22 +605,6 @@ void CControlSocket::OnObtainLock()
 {
 	if (opLockManager_.ObtainWaiting(this)) {
 		SendNextCommand();
-	}
-}
-
-void CControlSocket::InvalidateCurrentWorkingDir(CServerPath const& path)
-{
-	if (path.empty() || currentPath_.empty()) {
-		return;
-	}
-
-	if (path.IsParentOf(currentPath_, false, true)) {
-		if (!operations_.empty()) {
-			m_invalidateCurrentPath = true;
-		}
-		else {
-			currentPath_.clear();
-		}
 	}
 }
 
@@ -1063,7 +990,7 @@ bool CControlSocket::SetFileExistsAction(CFileExistsNotification *pFileExistsNot
 			CDirentry entry;
 			bool dir_did_exist;
 			bool matched_case;
-			if (engine_.GetDirectoryCache().LookupFile(entry, currentServer_, data.tryAbsolutePath_ ? data.remotePath_ : currentPath_, data.remoteFile_, dir_did_exist, matched_case) &&
+			if (engine_.GetDirectoryCache().LookupFile(entry, currentServer_, data.remotePath_, data.remoteFile_, dir_did_exist, matched_case) &&
 				matched_case)
 			{
 				data.remoteFileSize_ = entry.size;
@@ -1098,7 +1025,22 @@ bool CControlSocket::SetFileExistsAction(CFileExistsNotification *pFileExistsNot
 	return true;
 }
 
-void CControlSocket::List(CServerPath const&, std::wstring const&, int)
+void CControlSocket::List(CServerPath const& path, std::wstring const& subdir, int flags)
+{
+	if (!subdir.empty()) {
+		auto target = path;
+		if (target.empty() || !target.ChangePath(subdir)) {
+			Push(std::make_unique<ResultOpData>(FZ_REPLY_SYNTAXERROR));
+			return;
+		}
+		List(target, flags);
+	}
+	else {
+		List(path, flags);
+	}
+}
+
+void CControlSocket::List(CServerPath const&, int)
 {
 	Push(std::make_unique<CNotSupportedOpData>());
 }
@@ -1156,13 +1098,13 @@ void CControlSocket::RecordActivity(activity_logger::_direction direction, uint6
 	engine_.activity_logger_.record(direction, amount);
 }
 
-void CControlSocket::SendDirectoryListingNotification(CServerPath const& path, bool failed)
+void CControlSocket::SendDirectoryListingNotification(CServerPath const& path, bool failed, std::optional<bool> primary)
 {
 	if (!currentServer_) {
 		return;
 	}
 
-	engine_.AddNotification(std::make_unique<CDirectoryListingNotification>(path, operations_.size() == 1 && operations_.back()->opId == Command::list, failed));
+	engine_.AddNotification(std::make_unique<CDirectoryListingNotification>(path, primary ? *primary : (operations_.size() == 1 && operations_.back()->opId == Command::list), failed));
 }
 
 void CControlSocket::CallSetAsyncRequestReply(CAsyncRequestNotification *pNotification)
@@ -1172,7 +1114,7 @@ void CControlSocket::CallSetAsyncRequestReply(CAsyncRequestNotification *pNotifi
 	}
 	auto sReqNr = pNotification->requestNumber_.lock();
 	if (!sReqNr) {
-		log(logmsg::debug_info, L"Ignoring request replywith request id %d that isn't pending.", pNotification->GetRequestID());
+		log(logmsg::debug_info, L"Ignoring request reply with request id %d that isn't pending.", pNotification->GetRequestID());
 		return;
 	}
 

@@ -25,7 +25,7 @@ public:
 	wxImageListEx(int width, int height, const bool mask = true, int initialCount = 1);
 
 #ifdef __WXMSW__
-	wxImageListEx(WXHIMAGELIST hList) { m_hImageList = hList; }
+	wxImageListEx(WXHIMAGELIST hList, wxSize const& size) { m_hImageList = hList; m_size = size; }
 	HIMAGELIST GetHandle() const { return reinterpret_cast<HIMAGELIST>(m_hImageList); }
 	HIMAGELIST Detach();
 #endif

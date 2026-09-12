@@ -5,6 +5,7 @@
 #include <wx/font.h>
 #include <wx/window.h>
 
+class COptionsBase;
 class wxSizer;
 class CWrapEngine
 {
@@ -12,9 +13,9 @@ public:
 	CWrapEngine();
 	virtual ~CWrapEngine() {}
 
-	bool LoadCache();
+	void LoadCache(COptionsBase & options);
 
-	static void ClearCache();
+	static void ClearCache(COptionsBase & options);
 
 	enum wrap_result {
 		wrap_failed = 0x01,

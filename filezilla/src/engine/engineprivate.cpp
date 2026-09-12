@@ -22,11 +22,7 @@
 #include <algorithm>
 
 fz::mutex CFileZillaEnginePrivate::global_mutex_{false};
-std::vector<CFileZillaEnginePrivate*> CFileZillaEnginePrivate::m_engineList;
 std::list<CFileZillaEnginePrivate::t_failedLogins> CFileZillaEnginePrivate::m_failedLogins;
-
-struct invalid_current_working_dir_event_type{};
-typedef fz::simple_event<invalid_current_working_dir_event_type, CServer, CServerPath> CInvalidateCurrentWorkingDirEvent;
 
 struct command_event_type{};
 typedef fz::simple_event<command_event_type> CCommandEvent;
@@ -55,11 +51,6 @@ CFileZillaEnginePrivate::CFileZillaEnginePrivate(CFileZillaEngineContext& contex
 	, encoding_converter_(context.GetCustomEncodingConverter())
 	, context_(context)
 {
-	{
-		fz::scoped_lock lock(global_mutex_);
-		m_engineList.push_back(this);
-	}
-
 	logger_ = std::make_unique<CLogging>(*this, context_.GetLogFileWriter());
 
 	{
@@ -79,24 +70,6 @@ bool CFileZillaEnginePrivate::ShouldQueueLogsFromOptions() const
 		options_.get_int(OPTION_LOGGING_RAWLISTING) == 0 &&
 		options_.get_int(OPTION_LOGGING_DEBUGLEVEL) == 0 &&
 		options_.get_int(OPTION_LOGGING_SHOW_DETAILED_LOGS) == 0;
-}
-
-namespace {
-// Removes item from a random access container,
-// filling the hole by moving the last item.
-template<typename C, typename V>
-void erase_unordered(C & container, V const& v) noexcept
-{
-	for (size_t i = 0; i < container.size(); ++i) {
-		if (container[i] == v) {
-			if (i + 1 < container.size()) {
-				container[i] = std::move(container.back());
-			}
-			container.pop_back();
-			return;
-		}
-	}
-}
 }
 
 CFileZillaEnginePrivate::~CFileZillaEnginePrivate()
@@ -129,12 +102,6 @@ void CFileZillaEnginePrivate::shutdown()
 			delete notification;
 		}
 		m_NotificationList.clear();
-	}
-
-	// Remove ourself from the engine list
-	{
-		fz::scoped_lock lock(global_mutex_);
-		erase_unordered(m_engineList, this);
 	}
 }
 
@@ -339,15 +306,27 @@ int CFileZillaEnginePrivate::List(CListCommand const& command)
 		GetPathCache().InvalidateServer(controlSocket_->GetCurrentServer());
 	}
 
-	if (!refresh && !command.GetPath().empty()) {
-		CServer const& server = controlSocket_->GetCurrentServer();
+	CServer const& server = controlSocket_->GetCurrentServer();
+
+	auto path = command.GetPath();
+	if (path.empty()) {
+		path.SetType(server.GetType());
+	}
+	else {
+		if (path.GetType() != server.GetType()) {
+			logger_->log(logmsg::debug_warning, L"Type of remote path not matching server type");
+			return FZ_REPLY_SYNTAXERROR;
+		}
+	}
+
+	if (!refresh && !path.empty()) {
 		if (server) {
-			CServerPath path(path_cache_.Lookup(server, command.GetPath(), command.GetSubDir()));
-			if (path.empty()) {
+			CServerPath target(path_cache_.Lookup(server, path, command.GetSubDir()));
+			if (target.empty()) {
 				if (command.GetSubDir().empty()) {
-					path = command.GetPath();
+					target = path;
 				}
-				else if (server.GetProtocol() == S3 || server.GetProtocol() == STORJ ||
+				else if (server.GetProtocol() == SFTP || server.GetProtocol() == S3 || server.GetProtocol() == STORJ ||
 						server.GetProtocol() == WEBDAV || server.GetProtocol() == INSECURE_WEBDAV ||
 						server.GetProtocol() == AZURE_FILE || server.GetProtocol() == AZURE_BLOB ||
 						server.GetProtocol() == SWIFT || server.GetProtocol() == GOOGLE_CLOUD ||
@@ -356,14 +335,14 @@ int CFileZillaEnginePrivate::List(CListCommand const& command)
 						server.GetProtocol() == BOX || server.GetProtocol() == RACKSPACE ||
 						server.GetProtocol() == STORJ_GRANT || server.GetProtocol() == GOOGLE_CLOUD_SVC_ACC ||
 						server.GetProtocol() == S3_SSO || server.GetProtocol() == CLOUDFLARE_R2) {
-					path = command.GetPath();
-					path.ChangePath(command.GetSubDir());
+					target = path;
+					target.ChangePath(command.GetSubDir());
 				}
 			}
-			if (!path.empty()) {
+			if (!target.empty()) {
 				CDirectoryListing listing;
 				bool is_outdated = false;
-				bool found = directory_cache_.Lookup(listing, server, path, true, is_outdated);
+				bool found = directory_cache_.Lookup(listing, server, target, true, is_outdated);
 				if (found && !is_outdated) {
 					if (listing.get_unsure_flags()) {
 						flags |= LIST_FLAG_REFRESH;
@@ -382,7 +361,7 @@ int CFileZillaEnginePrivate::List(CListCommand const& command)
 		}
 	}
 
-	controlSocket_->List(command.GetPath(), command.GetSubDir(), flags);
+	controlSocket_->List(path, command.GetSubDir(), flags);
 	return FZ_REPLY_CONTINUE;
 }
 
@@ -567,48 +546,15 @@ int CFileZillaEnginePrivate::ContinueConnect()
 	return FZ_REPLY_CONTINUE;
 }
 
-void CFileZillaEnginePrivate::OnInvalidateCurrentWorkingDir(CServer const& server, CServerPath const& path)
-{
-	if (!controlSocket_ || controlSocket_->GetCurrentServer() != server) {
-		return;
-	}
-	controlSocket_->InvalidateCurrentWorkingDir(path);
-}
-
-void CFileZillaEnginePrivate::InvalidateCurrentWorkingDirs(const CServerPath& path)
-{
-	CServer ownServer;
-	{
-		fz::scoped_lock lock(mutex_);
-		if (controlSocket_) {
-			ownServer = controlSocket_->GetCurrentServer();
-		}
-	}
-	if (!ownServer) {
-		// May happen during destruction
-		return;
-	}
-
-	fz::scoped_lock lock(global_mutex_);
-	for (auto & engine : m_engineList) {
-		if (!engine || engine == this) {
-			continue;
-		}
-
-		engine->send_event<CInvalidateCurrentWorkingDirEvent>(ownServer, path);
-	}
-}
-
 void CFileZillaEnginePrivate::operator()(fz::event_base const& ev)
 {
 	fz::scoped_lock lock(mutex_);
 
-	fz::dispatch<CFileZillaEngineEvent, CCommandEvent, CAsyncRequestReplyEvent, fz::timer_event, CInvalidateCurrentWorkingDirEvent, options_changed_event>(ev, this,
+	fz::dispatch<CFileZillaEngineEvent, CCommandEvent, CAsyncRequestReplyEvent, fz::timer_event, options_changed_event>(ev, this,
 		&CFileZillaEnginePrivate::OnEngineEvent,
 		&CFileZillaEnginePrivate::OnCommandEvent,
 		&CFileZillaEnginePrivate::OnSetAsyncRequestReplyEvent,
 		&CFileZillaEnginePrivate::OnTimer,
-		&CFileZillaEnginePrivate::OnInvalidateCurrentWorkingDir,
 		&CFileZillaEnginePrivate::OnOptionsChanged
 		);
 }

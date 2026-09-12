@@ -24,7 +24,6 @@ int CSftpRemoveDirOpData::Send()
 
 	engine_.GetPathCache().InvalidatePath(currentServer_, path_, subDir_);
 
-	engine_.InvalidateCurrentWorkingDirs(fullPath);
 	sftp_->rmdir(this, controlSocket_.ConvToServer(fullPath.GetPath()));
 	return FZ_REPLY_WOULDBLOCK;
 }

@@ -15,6 +15,7 @@ public:
 	int TestResumeCapability();
 
 	bool fileDidExist_{true};
+	bool tryAbsolutePath_{};
 };
 
 #endif

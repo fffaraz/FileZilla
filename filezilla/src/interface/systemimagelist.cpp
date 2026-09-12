@@ -51,14 +51,20 @@ bool CSystemImageList::CreateSystemImageList(int size)
 	}
 
 #ifdef __WXMSW__
-	auto const getImageList = [&size](wchar_t const* buffer) {
+
+	UINT sizeFlag = SHGFI_SMALLICON;
+	if (size != CThemeProvider::GetIconSize(iconSizeSmall).x) {
+		size = (size != CThemeProvider::GetIconSize(iconSizeNormal).x);
+		sizeFlag = SHGFI_ICON;
+	}
+
+	auto const getImageList = [&size, &sizeFlag](wchar_t const* buffer) {
 		SHFILEINFO shFinfo{};
 		return reinterpret_cast<HIMAGELIST>(SHGetFileInfo(buffer,
 			0,
 			&shFinfo,
 			sizeof(shFinfo),
-			SHGFI_SYSICONINDEX |
-			((size != CThemeProvider::GetIconSize(iconSizeSmall).x) ? SHGFI_ICON : SHGFI_SMALLICON)));
+			SHGFI_SYSICONINDEX | sizeFlag));
 	};
 
 	HIMAGELIST imageList{};
@@ -80,7 +86,7 @@ bool CSystemImageList::CreateSystemImageList(int size)
 		return false;
 	}
 
-	m_pImageList = new wxImageListEx(reinterpret_cast<WXHIMAGELIST>(imageList));
+	m_pImageList = new wxImageListEx(reinterpret_cast<WXHIMAGELIST>(imageList), wxSize{size, size});
 #else
 	m_pImageList = new wxImageListEx(size, size);
 

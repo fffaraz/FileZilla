@@ -3,8 +3,6 @@
 
 #include "sftpcontrolsocket.h"
 
-#include <deque>
-
 class CSftpMkdirOpData final : public CMkdirOpData, public CSftpOpData
 {
 public:
@@ -17,8 +15,10 @@ public:
 	virtual int ParseResponse() override { return FZ_REPLY_INTERNALERROR; }
 
 	virtual continuation do_process_status(fz::ssh::sftp::status_code, std::wstring_view) override;
+	virtual continuation process_attributes(fz::ssh::sftp::attributes & attrs) override;
 
 	std::vector<CServerPath> paths_;
+	size_t pos_{};
 };
 
 #endif

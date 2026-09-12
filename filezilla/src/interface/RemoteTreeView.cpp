@@ -982,7 +982,7 @@ void CRemoteTreeView::OnMenuChmod(wxCommandEvent&)
 					continue;
 				}
 
-				std::optional<posix_permissions> p = parse_permissions(fz::to_utf8(*entry.permissions));
+				std::optional<posix_permissions> p = parse_permissions(fz::to_utf8(*entry.permissions), true);
 				if (p) {
 					if (!chmod) {
 						chmod.mask_ = posix_permissions::mask;

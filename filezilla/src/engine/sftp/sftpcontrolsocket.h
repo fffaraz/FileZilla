@@ -21,8 +21,7 @@ public:
 	virtual void Connect(CServer const& server, Credentials const& credentials) override;
 	virtual void FileTransfer(CFileTransferCommand const& cmd) override;
 	virtual bool SetAsyncRequestReply(CAsyncRequestNotification *pNotification) override;
-	void ChangeDir(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), bool link_discovery = false);
-	virtual void List(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), int flags = 0) override;
+	virtual void List(CServerPath const& path = CServerPath(), int flags = 0) override;
 	virtual void Mkdir(CServerPath const& path, transfer_flags const& flags = {}) override;
 	virtual void Delete(CServerPath const& path, std::vector<std::wstring>&& files) override;
 	virtual void RemoveDir(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring()) override;
@@ -50,7 +49,6 @@ protected:
 
 	friend class CSftpOpData;
 	friend class CProtocolOpData<CSftpControlSocket>;
-	friend class CSftpChangeDirOpData;
 	friend class CSftpChmodOpData;
 	friend class CSftpConnectOpData;
 	friend class CSftpDeleteOpData;

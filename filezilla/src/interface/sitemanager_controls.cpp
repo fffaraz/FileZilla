@@ -302,6 +302,7 @@ GeneralSiteControls::GeneralSiteControls(wxWindow & parent, DialogLayout const& 
 			std::wstring keyFile = dlg.GetPath().ToStdWstring();
 
 			if (protocol == SFTP) {
+#if ENABLE_SFTP
 				auto infos = LoadKeyfile(keyFile, false);
 				if (!infos.empty()) {
 					impl_->keyfile_->ChangeValue(keyFile);
@@ -312,6 +313,9 @@ GeneralSiteControls::GeneralSiteControls(wxWindow & parent, DialogLayout const& 
 				else {
 					impl_->keyfile_->SetFocus();
 				}
+#else
+				impl_->keyfile_->ChangeValue(keyFile);
+#endif
 			}
 			if (protocol == GOOGLE_CLOUD_SVC_ACC) {
 				if (ValidateGoogleAccountKeyFile(keyFile)) {
@@ -823,6 +827,7 @@ bool GeneralSiteControls::UpdateSite(Site & site, bool silent)
 		}
 
 		if (protocol == SFTP) {
+#if ENABLE_SFTP
 			auto infos = LoadKeyfile(keyFile, silent);
 			if (infos.empty()) {
 				if (!silent) {
@@ -830,6 +835,7 @@ bool GeneralSiteControls::UpdateSite(Site & site, bool silent)
 				}
 				return false;
 			}
+#endif
 		}
 
 		if (protocol == GOOGLE_CLOUD_SVC_ACC) {
@@ -1123,7 +1129,7 @@ AdvancedSiteControls::AdvancedSiteControls(wxWindow & parent, DialogLayout const
 	impl_->servertype_ = new wxChoice(&parent, nullID);
 	row->Add(impl_->servertype_, lay.valign);
 
-	for (int i = 0; i < SERVERTYPE_MAX; ++i) {
+	for (unsigned int i = 0; i < SERVERTYPE_MAX; ++i) {
 		impl_->servertype_->Append(CServer::GetNameFromServerType(static_cast<ServerType>(i)));
 	}
 	impl_->servertype_->Select(0);

@@ -36,7 +36,7 @@ int CFtpRenameOpData::Send()
 			path = command_.GetFromPath();
 			path.AddSegment(command_.GetFromFile());
 		}
-		engine_.InvalidateCurrentWorkingDirs(path);
+		controlSocket_.InvalidateCurrentWorkingDirs(path);
 
 		engine_.GetPathCache().InvalidatePath(currentServer_, command_.GetFromPath(), command_.GetFromFile());
 		engine_.GetPathCache().InvalidatePath(currentServer_, command_.GetToPath(), command_.GetToFile());

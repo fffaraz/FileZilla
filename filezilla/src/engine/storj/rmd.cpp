@@ -32,8 +32,6 @@ int CStorjRemoveDirOpData::Send()
 	case rmd_rmbucket:
 		engine_.GetDirectoryCache().InvalidateFile(currentServer_, CServerPath(L"/"), path_.GetFirstSegment());
 
-		engine_.InvalidateCurrentWorkingDirs(path_);
-
 		return controlSocket_.SendCommand(L"rmbucket " + controlSocket_.QuoteFilename(path_.GetFirstSegment()));
 	case rmd_rmdir:
 		engine_.GetDirectoryCache().InvalidateFile(currentServer_, path_.GetParent(), path_.GetLastSegment());

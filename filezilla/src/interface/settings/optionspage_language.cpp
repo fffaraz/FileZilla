@@ -103,6 +103,9 @@ void COptionsPageLanguage::GetLocales()
 				continue;
 			}
 		}
+		if (locale == L"en") {
+			continue;
+		}
 
 		wxString name;
 		const wxLanguageInfo* pInfo = wxLocale::FindLanguageInfo(locale);

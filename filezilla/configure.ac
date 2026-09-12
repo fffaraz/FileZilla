@@ -1,4 +1,4 @@
-AC_INIT([FileZilla],[3.70.6],[tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
+AC_INIT([FileZilla],[3.71.1],[tim.kosse@filezilla-project.org],[],[https://filezilla-project.org/])
 
 ENGINE_VERSION="$PACKAGE_VERSION"
 
@@ -188,7 +188,7 @@ if test "$buildmain" = "yes"; then
 
   # Find libfilezilla
   # -----------------
-  PKG_CHECK_MODULES(LIBFILEZILLA, [libfilezilla >= 0.56.1],, [
+  PKG_CHECK_MODULES(LIBFILEZILLA, [libfilezilla >= 0.57.0],, [
 	AC_MSG_ERROR([libfilezilla not found: $LIBFILEZILLA_PKG_ERRORS. You can download it from https://lib.filezilla-project.org/])
   ])
   AC_SUBST(LIBFILEZILLA_CFLAGS)
@@ -196,7 +196,7 @@ if test "$buildmain" = "yes"; then
 
   # Find fzssh
   # -----------------
-  PKG_CHECK_MODULES(LIBFZSSH, [libfzssh-client >= 1.3.0],, [
+  PKG_CHECK_MODULES(LIBFZSSH, [libfzssh-client >= 1.4.0],, [
 	AC_MSG_ERROR([libfzssh-client not found: $LIBFZSSH_PKG_ERRORS. You can download it from https://fzssh.filezilla-project.org/])
   ])
   AC_SUBST(LIBFZSSH_CFLAGS)

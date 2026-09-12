@@ -10,6 +10,20 @@ Legend:
     *nix: Unix (e.g BSD) and Unix-like systems (e.g. Linux)
     macOS/OS X: Apple macOS
 
+3.71.1 (2026-08-26)
+
+- macOS: Work around a bug in macOS 27 where setting the locale to non-English triggers crashes in AppKit
+- SFTP: Improved heuristic when keyboard-interactive requests are treated as a simple password prompt on servers not offering the password authentication method
+
+3.71.0 (2026-08-19)
+
++ FTP(S), SFTP: Entering an empty path in the remote path edit field now returns back to the initial home directory
+- FTP(S): Fix parsing of permissions for chmod dialog on servers that include both perms and unix.mode facts in MLSD output
+- SFTP: Updated fzssh to 1.4.0 to support additional algorithms and key file formats
+- Official binaries are now linked against wxWidgets 3.2.11
+- FTP(S): Fixed parsing of paths on servers with the server type set to DOS. Some malformed paths were wrongly accepted, confusing the engine; such paths are now rejected early.
+- Refactored engine internals to remove influences from FTP-specific concepts that were permeating into other protocols
+
 3.70.6 (2026-06-04)
 
 + SFTP: Added compatibility flag to Site Manager to ignore invalid bits in file attributes flags received from non-compliant servers

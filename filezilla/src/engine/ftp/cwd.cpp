@@ -21,8 +21,8 @@ int CFtpChangeDirOpData::Send()
 	switch (opState)
 	{
 	case cwd_init:
-		path_.SetType(currentServer_.GetType());
 		if (path_.empty()) {
+			path_.SetType(currentServer_.GetType());
 			if (currentPath_.empty()) {
 				opState = cwd_pwd;
 			}

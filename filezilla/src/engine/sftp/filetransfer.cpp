@@ -16,10 +16,11 @@ namespace {
 enum filetransferStates
 {
 	filetransfer_init = 0,
-	filetransfer_waitcwd,
-	filetransfer_waitlist,
+	filetransfer_list,
 	filetransfer_stat,
-	filetransfer_transfer
+	filetransfer_mkdir,
+	filetransfer_checkoverwrite,
+	filetransfer_transfer,
 };
 
 struct can_send_event_type{};
@@ -53,11 +54,18 @@ int CSftpFileTransferOpData::Send()
 		localFileSize_ = download() ? writer_factory_.size() : reader_factory_.size();
 		localFileTime_ = download() ? writer_factory_.mtime() : reader_factory_.mtime();
 
-		opState = filetransfer_waitcwd;
-
-		remotePath_.SetType(currentServer_.GetType());
-
-		controlSocket_.ChangeDir(remotePath_);
+		return CheckRemoteFile(false);
+	}
+	else if (opState == filetransfer_checkoverwrite) {
+		opState = filetransfer_transfer;
+		int res = controlSocket_.CheckOverwriteFile();
+		if (res != FZ_REPLY_OK) {
+			return res;
+		}
+		return FZ_REPLY_CONTINUE;
+	}
+	else if (opState == filetransfer_list) {
+		controlSocket_.List(remotePath_, LIST_FLAG_REFRESH);
 		return FZ_REPLY_CONTINUE;
 	}
 	else if (opState == filetransfer_transfer) {
@@ -126,129 +134,100 @@ int CSftpFileTransferOpData::Send()
 		sftp_->stat(this, remoteFile);
 		return FZ_REPLY_WOULDBLOCK;
 	}
+	else if (opState == filetransfer_mkdir) {
+		controlSocket_.Mkdir(remotePath_);
+		return FZ_REPLY_CONTINUE;
+	}
 
 	return FZ_REPLY_INTERNALERROR;
 }
 
-int CSftpFileTransferOpData::SubcommandResult(int prevResult, COpData const&)
+int CSftpFileTransferOpData::CheckRemoteFile(bool after_listing)
 {
-	if (opState == filetransfer_waitcwd) {
-		if (prevResult == FZ_REPLY_OK) {
-			remotePath_ = currentPath_;
-
-			CDirentry entry;
-			bool dirDidExist;
-			bool matchedCase;
-			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath_, remoteFile_, dirDidExist, matchedCase);
-			if (!found) {
-				if (!dirDidExist) {
-					opState = filetransfer_waitlist;
-				}
-				else if (download() && options_.get_int(OPTION_PRESERVE_TIMESTAMPS)) {
-					opState = filetransfer_stat;
-				}
-				else {
-					opState = filetransfer_transfer;
-				}
+	CDirentry entry;
+	bool dirDidExist;
+	bool matchedCase;
+	bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath_, remoteFile_, dirDidExist, matchedCase);
+	if (!found) {
+		if (!dirDidExist) {
+			if (!after_listing) {
+				opState = filetransfer_list;
 			}
 			else {
-				if (entry.is_unsure()) {
-					opState = filetransfer_waitlist;
+				if (!download() && remotePath_.HasParent()) {
+					opState = filetransfer_mkdir;
 				}
 				else {
-					if (matchedCase) {
-						remoteFileSize_ = entry.size;
-						if (entry.has_date()) {
-							remoteFileTime_ = entry.time;
-						}
-
-						if (download() && !entry.has_time() &&
-							options_.get_int(OPTION_PRESERVE_TIMESTAMPS))
-						{
-							opState = filetransfer_stat;
-						}
-						else {
-							opState = filetransfer_transfer;
-						}
-					}
-					else {
-						opState = filetransfer_stat;
-					}
+					opState = filetransfer_stat;
 				}
 			}
-			if (opState == filetransfer_waitlist) {
-				controlSocket_.List(CServerPath(), L"", LIST_FLAG_REFRESH);
-				return FZ_REPLY_CONTINUE;
+		}
+		else if (download() && options_.get_int(OPTION_PRESERVE_TIMESTAMPS)) {
+			opState = filetransfer_stat;
+		}
+		else {
+			opState = filetransfer_checkoverwrite;
+		}
+	}
+	else {
+		if (entry.is_unsure()) {
+			if (!after_listing) {
+				opState = filetransfer_list;
 			}
-			else if (opState == filetransfer_transfer) {
-				int res = controlSocket_.CheckOverwriteFile();
-				if (res != FZ_REPLY_OK) {
-					return res;
-				}
+			else {
+				opState = filetransfer_stat;
 			}
 		}
 		else {
-			opState = filetransfer_stat;
-		}
-	}
-	else if (opState == filetransfer_waitlist) {
-		if (prevResult == FZ_REPLY_OK) {
-			remotePath_ = currentPath_;
-
-			CDirentry entry;
-			bool dirDidExist;
-			bool matchedCase;
-			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath_, remoteFile_, dirDidExist, matchedCase);
-			if (!found) {
-				if (!dirDidExist) {
-					opState = filetransfer_stat;
+			if (matchedCase) {
+				remoteFileSize_ = entry.size;
+				if (entry.has_date()) {
+					remoteFileTime_ = entry.time;
 				}
-				else if (download() &&
+
+				if (download() && !entry.has_time() &&
 					options_.get_int(OPTION_PRESERVE_TIMESTAMPS))
 				{
 					opState = filetransfer_stat;
 				}
 				else {
-					opState = filetransfer_transfer;
+					opState = filetransfer_checkoverwrite;
 				}
 			}
 			else {
-				if (matchedCase && !entry.is_unsure()) {
-					remoteFileSize_ = entry.size;
-					if (entry.has_date()) {
-						remoteFileTime_ = entry.time;
-					}
-
-					if (download() && !entry.has_time() &&
-						options_.get_int(OPTION_PRESERVE_TIMESTAMPS))
-					{
-						opState = filetransfer_stat;
-					}
-					else {
-						opState = filetransfer_transfer;
-					}
-				}
-				else {
-					opState = filetransfer_stat;
-				}
-			}
-			if (opState == filetransfer_transfer) {
-				int res = controlSocket_.CheckOverwriteFile();
-				if (res != FZ_REPLY_OK) {
-					return res;
-				}
+				opState = filetransfer_stat;
 			}
 		}
-		else {
-			opState = filetransfer_stat;
-		}
-	}
-	else {
-		log(logmsg::debug_warning, L"  Unknown opState (%d)", opState);
-		return FZ_REPLY_INTERNALERROR;
 	}
 
 	return FZ_REPLY_CONTINUE;
+}
+
+int CSftpFileTransferOpData::SubcommandResult(int prevResult, COpData const&)
+{
+	if (opState == filetransfer_list) {
+		if (prevResult == FZ_REPLY_OK) {
+			return CheckRemoteFile(true);
+		}
+		else {
+			if (!download() && remotePath_.HasParent()) {
+				opState = filetransfer_mkdir;
+			}
+			else {
+				opState = filetransfer_stat;
+			}
+			return FZ_REPLY_CONTINUE;
+		}
+	}
+	else if (opState == filetransfer_mkdir) {
+		// Ignore errors
+
+		opState = filetransfer_stat;
+		return FZ_REPLY_CONTINUE;
+	}
+
+	log(logmsg::debug_warning, L"  Unknown opState (%d)", opState);
+	return FZ_REPLY_INTERNALERROR;
 }
 
 void CSftpFileTransferOpData::operator()(fz::event_base const& ev)
@@ -493,7 +472,20 @@ CSftpOpData::continuation CSftpFileTransferOpData::do_process_status(fz::ssh::sf
 		}
 	}
 	else {
-		if (code == fz::ssh::sftp::status_code::SSH_FX_OK) {
+		if (opState == filetransfer_stat) {
+			// Ignore errors. At worse, overwrite check won't see that file already exists.
+			// This behavior is similar to the FTP(S) implementation.
+			//
+			// We could potentially use SSH_FXF_EXCL, but that raises two different questions:
+			// - What is the error code? There's nothing to distinguish between "already exists"
+			//   and other errors.
+			// - Potential lack of server support for this rarely used flag
+
+			log(logmsg::debug_warning, "Could not get file attributes: %s"sv, msg);
+			opState = filetransfer_checkoverwrite;
+			trigger_next();
+		}
+		else if (code == fz::ssh::sftp::status_code::SSH_FX_OK) {
 			engine_.transfer_status_.SetMadeProgress();
 			if (finalizing_ && !sftp_->pending_requests()) {
 				trigger_reset(FZ_REPLY_OK);
@@ -505,8 +497,13 @@ CSftpOpData::continuation CSftpFileTransferOpData::do_process_status(fz::ssh::sf
 			trigger_reset(FZ_REPLY_ERROR);
 		}
 		else {
-			log(logmsg::error, fztranslate("Could not write to remote file: %s"), msg);
-			trigger_reset(FZ_REPLY_ERROR);
+			if (called_fsetstat_ && sftp_->pending_requests() == 1) {
+				log(logmsg::error, fztranslate("Could not set remote file time: %s"), msg);
+			}
+			else {
+				log(logmsg::error, fztranslate("Could not write to remote file: %s"), msg);
+				trigger_reset(FZ_REPLY_ERROR);
+			}
 		}
 	}
 
@@ -529,15 +526,8 @@ CSftpOpData::continuation CSftpFileTransferOpData::process_attributes(fz::ssh::s
 		remoteFileSize_ = *attrs.size_;
 	}
 
-	opState = filetransfer_transfer;
-	int res = controlSocket_.CheckOverwriteFile();
-	if (res == FZ_REPLY_OK) {
-		trigger_next();
-	}
-	else {
-		trigger_reset(res);
-	}
-
+	opState = filetransfer_checkoverwrite;
+	trigger_next();
 	return continuation::next;
 }
 
@@ -560,6 +550,7 @@ void CSftpFileTransferOpData::on_can_send(fz::ssh::sftp::sftp_client*)
 					fz::ssh::sftp::attributes attr;
 					attr.modified_ = mtime;
 					sftp_->fsetstat(this, handle_, attr);
+					called_fsetstat_ = true;
 				}
 			}
 			sftp_->close(this, handle_);

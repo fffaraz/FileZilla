@@ -43,8 +43,6 @@ int CStorjFileTransferOpData::Send()
 			log(logmsg::status, _("Starting upload of %s"), localName_);
 		}
 
-		remotePath_.SetType(currentServer_.GetType());
-
 		bool needs_listing = false;
 
 		// Get information about remote file
@@ -72,7 +70,7 @@ int CStorjFileTransferOpData::Send()
 		}
 
 		if (needs_listing) {
-			controlSocket_.List(remotePath_, L"", LIST_FLAG_REFRESH);
+			controlSocket_.List(remotePath_, LIST_FLAG_REFRESH);
 			return FZ_REPLY_CONTINUE;
 		}
 

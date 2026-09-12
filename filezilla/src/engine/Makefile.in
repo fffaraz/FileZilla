@@ -124,7 +124,6 @@ host_triplet = @host@
 @ENABLE_SFTP_TRUE@am__append_3 = \
 @ENABLE_SFTP_TRUE@		sftp/chmod.cpp \
 @ENABLE_SFTP_TRUE@		sftp/connect.cpp \
-@ENABLE_SFTP_TRUE@		sftp/cwd.cpp \
 @ENABLE_SFTP_TRUE@		sftp/delete.cpp \
 @ENABLE_SFTP_TRUE@		sftp/filetransfer.cpp \
 @ENABLE_SFTP_TRUE@		sftp/list.cpp \
@@ -136,7 +135,6 @@ host_triplet = @host@
 @ENABLE_SFTP_TRUE@am__append_4 = \
 @ENABLE_SFTP_TRUE@		sftp/chmod.h \
 @ENABLE_SFTP_TRUE@		sftp/connect.h \
-@ENABLE_SFTP_TRUE@		sftp/cwd.h \
 @ENABLE_SFTP_TRUE@		sftp/delete.h \
 @ENABLE_SFTP_TRUE@		sftp/filetransfer.h \
 @ENABLE_SFTP_TRUE@		sftp/list.h \
@@ -243,8 +241,8 @@ am__libfzclient_private_la_SOURCES_DIST = activity_logger.cpp \
 	ftp/list.cpp ftp/logon.cpp ftp/mkd.cpp ftp/rawcommand.cpp \
 	ftp/rawtransfer.cpp ftp/rename.cpp ftp/rmd.cpp \
 	ftp/transfersocket.cpp sftp/chmod.cpp sftp/connect.cpp \
-	sftp/cwd.cpp sftp/delete.cpp sftp/filetransfer.cpp \
-	sftp/list.cpp sftp/mkd.cpp sftp/rename.cpp sftp/rmd.cpp \
+	sftp/delete.cpp sftp/filetransfer.cpp sftp/list.cpp \
+	sftp/mkd.cpp sftp/rename.cpp sftp/rmd.cpp \
 	sftp/sftpcontrolsocket.cpp storj/connect.cpp storj/delete.cpp \
 	storj/file_transfer.cpp storj/input_thread.cpp storj/list.cpp \
 	storj/mkd.cpp storj/rmd.cpp storj/storjcontrolsocket.cpp \
@@ -266,7 +264,6 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_SFTP_TRUE@am__objects_2 =  \
 @ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-chmod.lo \
 @ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-connect.lo \
-@ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-cwd.lo \
 @ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-delete.lo \
 @ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-filetransfer.lo \
 @ENABLE_SFTP_TRUE@	sftp/libfzclient_private_la-list.lo \
@@ -394,7 +391,6 @@ am__depfiles_remade =  \
 	http/$(DEPDIR)/libfzclient_private_la-request.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-connect.Plo \
-	sftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-delete.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-filetransfer.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-list.Plo \
@@ -444,12 +440,12 @@ am__noinst_HEADERS_DIST = activity_logger_layer.h controlsocket.h \
 	ftp/chmod.h ftp/cwd.h ftp/delete.h ftp/filetransfer.h \
 	ftp/ftpcontrolsocket.h ftp/list.h ftp/logon.h ftp/mkd.h \
 	ftp/rename.h ftp/rawcommand.h ftp/rawtransfer.h ftp/rmd.h \
-	ftp/transfersocket.h sftp/chmod.h sftp/connect.h sftp/cwd.h \
-	sftp/delete.h sftp/filetransfer.h sftp/list.h sftp/mkd.h \
-	sftp/rename.h sftp/rmd.h sftp/sftpcontrolsocket.h \
-	storj/connect.h storj/delete.h storj/event.h \
-	storj/file_transfer.h storj/input_thread.h storj/list.h \
-	storj/mkd.h storj/rmd.h storj/storjcontrolsocket.h
+	ftp/transfersocket.h sftp/chmod.h sftp/connect.h sftp/delete.h \
+	sftp/filetransfer.h sftp/list.h sftp/mkd.h sftp/rename.h \
+	sftp/rmd.h sftp/sftpcontrolsocket.h storj/connect.h \
+	storj/delete.h storj/event.h storj/file_transfer.h \
+	storj/input_thread.h storj/list.h storj/mkd.h storj/rmd.h \
+	storj/storjcontrolsocket.h
 HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -809,8 +805,6 @@ sftp/libfzclient_private_la-chmod.lo: sftp/$(am__dirstamp) \
 	sftp/$(DEPDIR)/$(am__dirstamp)
 sftp/libfzclient_private_la-connect.lo: sftp/$(am__dirstamp) \
 	sftp/$(DEPDIR)/$(am__dirstamp)
-sftp/libfzclient_private_la-cwd.lo: sftp/$(am__dirstamp) \
-	sftp/$(DEPDIR)/$(am__dirstamp)
 sftp/libfzclient_private_la-delete.lo: sftp/$(am__dirstamp) \
 	sftp/$(DEPDIR)/$(am__dirstamp)
 sftp/libfzclient_private_la-filetransfer.lo: sftp/$(am__dirstamp) \
@@ -926,7 +920,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@http/$(DEPDIR)/libfzclient_private_la-request.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-connect.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-delete.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-filetransfer.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-list.Plo@am__quote@ # am--include-marker
@@ -1316,13 +1309,6 @@ sftp/libfzclient_private_la-connect.lo: sftp/connect.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o sftp/libfzclient_private_la-connect.lo `test -f 'sftp/connect.cpp' || echo '$(srcdir)/'`sftp/connect.cpp
 
-sftp/libfzclient_private_la-cwd.lo: sftp/cwd.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -MT sftp/libfzclient_private_la-cwd.lo -MD -MP -MF sftp/$(DEPDIR)/libfzclient_private_la-cwd.Tpo -c -o sftp/libfzclient_private_la-cwd.lo `test -f 'sftp/cwd.cpp' || echo '$(srcdir)/'`sftp/cwd.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) sftp/$(DEPDIR)/libfzclient_private_la-cwd.Tpo sftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='sftp/cwd.cpp' object='sftp/libfzclient_private_la-cwd.lo' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o sftp/libfzclient_private_la-cwd.lo `test -f 'sftp/cwd.cpp' || echo '$(srcdir)/'`sftp/cwd.cpp
-
 sftp/libfzclient_private_la-delete.lo: sftp/delete.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -MT sftp/libfzclient_private_la-delete.lo -MD -MP -MF sftp/$(DEPDIR)/libfzclient_private_la-delete.Tpo -c -o sftp/libfzclient_private_la-delete.lo `test -f 'sftp/delete.cpp' || echo '$(srcdir)/'`sftp/delete.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) sftp/$(DEPDIR)/libfzclient_private_la-delete.Tpo sftp/$(DEPDIR)/libfzclient_private_la-delete.Plo
@@ -1639,7 +1625,6 @@ distclean: distclean-am
 	-rm -f http/$(DEPDIR)/libfzclient_private_la-request.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-connect.Plo
-	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-delete.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-filetransfer.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-list.Plo
@@ -1750,7 +1735,6 @@ maintainer-clean: maintainer-clean-am
 	-rm -f http/$(DEPDIR)/libfzclient_private_la-request.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-connect.Plo
-	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-delete.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-filetransfer.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-list.Plo

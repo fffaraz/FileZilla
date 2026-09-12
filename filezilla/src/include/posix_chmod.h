@@ -69,7 +69,7 @@ struct posix_chmod {
 
 posix_permissions FZC_PUBLIC_SYMBOL apply(posix_permissions orig, posix_chmod change);
 
-std::optional<posix_permissions> FZC_PUBLIC_SYMBOL parse_permissions(std::string_view in);
+std::optional<posix_permissions> FZC_PUBLIC_SYMBOL parse_permissions(std::string_view in, bool allow_mlsd_perms);
 posix_chmod FZC_PUBLIC_SYMBOL parse_chmod(std::string_view in);
 
 std::string FZC_PUBLIC_SYMBOL to_string(posix_permissions perms); // as in rwxrwxrwx

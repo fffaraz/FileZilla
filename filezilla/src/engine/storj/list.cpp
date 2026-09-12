@@ -16,19 +16,11 @@ int CStorjListOpData::Send()
 {
 	switch (opState) {
 	case list_init:
-		path_ = CServerPath::GetChanged(currentPath_, path_, subDir_);
-		subDir_.clear();
 		if (path_.empty()) {
 			path_ = CServerPath(L"/");
 		}
-		currentPath_ = path_;
 
-		log(logmsg::status, _("Retrieving directory listing of \"%s\"..."), currentPath_.GetPath());
-
-		if (currentPath_.GetType() != UNIX) {
-			log(logmsg::debug_warning, L"CStorjListOpData::Send called with incompatible server type %d in path", currentPath_.GetType());
-			return FZ_REPLY_INTERNALERROR;
-		}
+		log(logmsg::status, _("Retrieving directory listing of \"%s\"..."), path_.GetPath());
 
 		opState = list_waitlock;
 		if (!opLock_) {
@@ -83,7 +75,6 @@ int CStorjListOpData::ParseResponse()
 		engine_.GetDirectoryCache().Store(listing, currentServer_);
 		controlSocket_.SendDirectoryListingNotification(listing.path, false);
 
-		currentPath_ = path_;
 		return FZ_REPLY_OK;
 	}
 

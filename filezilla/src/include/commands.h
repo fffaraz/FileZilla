@@ -31,7 +31,6 @@ enum class Command
 	// Only used internally
 	sleep,
 	lookup,
-	cwd,
 	common_private1, // Internal commands common to multiple protocols
 	common_private2,
 	private1,
@@ -130,9 +129,8 @@ typedef CBasicCommand<Command::disconnect> CDisconnectCommand;
 
 #define LIST_FLAG_REFRESH 1
 #define LIST_FLAG_AVOID 2
-#define LIST_FLAG_FALLBACK_CURRENT 4
-#define LIST_FLAG_LINK 8
-#define LIST_FLAG_CLEARCACHE 16
+#define LIST_FLAG_LINK 4
+#define LIST_FLAG_CLEARCACHE 8
 class FZC_PUBLIC_SYMBOL CListCommand final : public CCommandHelper<CListCommand, Command::list>
 {
 	// Without a given directory, the current directory will be listed.
@@ -144,10 +142,6 @@ class FZC_PUBLIC_SYMBOL CListCommand final : public CCommandHelper<CListCommand,
 	//
 	// Set LIST_FLAG_AVOID to get a directory listing only if cache lookup
 	// fails or contains unsure entries, otherwise don't send listing.
-	//
-	// If LIST_FLAG_FALLBACK_CURRENT is set and CWD fails, list whatever
-	// directory we are currently in. Useful for initial reconnect to the
-	// server when we don't know if remote directory still exists
 	//
 	// LIST_FLAG_LINK is used for symlink discovery. There's unfortunately
 	// no sane way to distinguish between symlinks to files and symlinks to

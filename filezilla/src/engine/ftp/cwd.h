@@ -3,11 +3,11 @@
 
 #include "ftpcontrolsocket.h"
 
-class CFtpChangeDirOpData final : public CChangeDirOpData, public CFtpOpData
+class CFtpChangeDirOpData final : public COpData, public CFtpOpData
 {
 public:
 	CFtpChangeDirOpData(CFtpControlSocket & controlSocket)
-	    : CChangeDirOpData(L"CFtpChangeDirOpData")
+		: COpData(PrivCommand::cwd, L"CFtpChangeDirOpData"sv)
 		, CFtpOpData(controlSocket)
 	{}
 
@@ -20,6 +20,12 @@ public:
 	}
 
 	bool tried_cdup_{};
+	bool tryMkdOnFail_{};
+	bool link_discovery_{};
+
+	CServerPath path_;
+	std::wstring subDir_;
+	CServerPath target_;
 };
 
 #endif

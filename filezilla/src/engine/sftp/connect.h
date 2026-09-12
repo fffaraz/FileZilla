@@ -34,6 +34,7 @@ public:
 	void on_auth_signature_failed(fz::ssh::session*);
 	void on_auth_keyboard_interactive_prompt(fz::ssh::session*, std::string const&, std::string const&, std::vector<fz::ssh::keyboard_interactive_prompt> & prompts);
 	void on_sftp_ready(fz::ssh::sftp::sftp_client*);
+	void on_auth_password_change_requested(fz::ssh::session*);
 
 	void next_auth();
 	bool load_keys();
@@ -47,6 +48,8 @@ private:
 
 	virtual void operator()(fz::event_base const& ev) override;
 	void on_agent_keys(fz::ssh::agent_connection* conn, std::vector<std::unique_ptr<fz::ssh::private_key>> & keys);
+
+	bool interactive_prompt_asks_for_password(std::string_view prompt);
 
 	std::vector<fz::ssh::private_key_info> keys_;
 	std::unique_ptr<fz::ssh::agent_connection> agent_;

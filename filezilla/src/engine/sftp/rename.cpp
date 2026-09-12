@@ -28,7 +28,6 @@ int CSftpRenameOpData::Send()
 		path = command_.GetFromPath();
 		path.AddSegment(command_.GetFromFile());
 	}
-	engine_.InvalidateCurrentWorkingDirs(path);
 
 	sftp_->rename(this, controlSocket_.ConvToServer(oldname), controlSocket_.ConvToServer(newname));
 	return FZ_REPLY_WOULDBLOCK;

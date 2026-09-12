@@ -34,7 +34,7 @@ int CFtpRemoveDirOpData::Send()
 
 		engine_.GetPathCache().InvalidatePath(currentServer_, path_, subDir_);
 
-		engine_.InvalidateCurrentWorkingDirs(path);
+		controlSocket_.InvalidateCurrentWorkingDirs(path);
 
 		if (omitPath_) {
 			return controlSocket_.SendCommand(L"RMD " + subDir_);

@@ -724,15 +724,32 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 	return true;
 }
 
+namespace {
+bool IsChinese(int lang)
+{
+	switch (lang) {
+		case wxLANGUAGE_CHINESE:
+		case wxLANGUAGE_CHINESE_CHINA:
+		case wxLANGUAGE_CHINESE_HONGKONG:
+		case wxLANGUAGE_CHINESE_MACAO:
+		case wxLANGUAGE_CHINESE_SIMPLIFIED_EXPLICIT:
+		case wxLANGUAGE_CHINESE_SIMPLIFIED_HONGKONG:
+		case wxLANGUAGE_CHINESE_SIMPLIFIED_MACAO:
+		case wxLANGUAGE_CHINESE_SINGAPORE:
+		case wxLANGUAGE_CHINESE_TAIWAN:
+		case wxLANGUAGE_CHINESE_TRADITIONAL_EXPLICIT:
+			return true;
+		default:
+			return false;
+		}
+}
+}
+
 wxString CWrapEngine::UnwrapText(const wxString& text)
 {
 	wxString unwrapped;
 	int lang = wxGetApp().GetCurrentLanguage();
-	if (lang == wxLANGUAGE_CHINESE || lang == wxLANGUAGE_CHINESE_SIMPLIFIED ||
-		lang == wxLANGUAGE_CHINESE_TRADITIONAL || lang == wxLANGUAGE_CHINESE_HONGKONG ||
-		lang == wxLANGUAGE_CHINESE_MACAU || lang == wxLANGUAGE_CHINESE_SINGAPORE ||
-		lang == wxLANGUAGE_CHINESE_TAIWAN)
-	{
+	if (IsChinese(lang)) {
 		wxChar const* p = text.c_str();
 		bool wasAscii = false;
 		while (*p) {
@@ -932,20 +949,25 @@ static std::wstring GetLocaleFile(std::wstring const& localesDir, std::wstring n
 	return std::wstring();
 }
 
-bool CWrapEngine::LoadCache()
+void CWrapEngine::LoadCache(COptionsBase & options)
 {
 	// We have to synchronize access to layout.xml so that multiple processes don't write
 	// to the same file or one is reading while the other one writes.
 	CInterProcessMutex mutex(MUTEX_LAYOUT);
 
-	CXmlFile xml(wxGetApp().GetSettingsFile(_T("layout")));
+	std::wstring const path = options.get_string(OPTION_DEFAULT_SETTINGSDIR);
+	if (path.empty()) {
+		m_use_cache = false;
+		return;
+	}
+
+	CXmlFile xml(path + L"layout.xml");
 	auto document = xml.Load(true);
 
 	if (!document) {
 		m_use_cache = false;
 		wxMessageBoxEx(xml.GetError(), _("Error loading xml file"), wxICON_ERROR);
-
-		return false;
+		return;
 	}
 
 	bool cacheValid = true;
@@ -1098,23 +1120,22 @@ bool CWrapEngine::LoadCache()
 		}
 	}
 
-	if (COptions::Get()->get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
+	if (options.get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
 		m_use_cache = cacheValid;
-		return true;
+		return;
 	}
 
 	if (!xml.Save()) {
 		m_use_cache = false;
 	}
-	return true;
 }
 
-void CWrapEngine::ClearCache()
+void CWrapEngine::ClearCache(COptionsBase & options)
 {
 	// We have to synchronize access to layout.xml so that multiple processes don't write
 	// to the same file or one is reading while the other one writes.
 	CInterProcessMutex mutex(MUTEX_LAYOUT);
-	std::wstring const path = COptions::Get()->get_string(OPTION_DEFAULT_SETTINGSDIR);
+	std::wstring const path = options.get_string(OPTION_DEFAULT_SETTINGSDIR);
 	if (!path.empty()) {
 		fz::remove_file(fz::to_native(path + L"layout.xml"), false);
 	}
@@ -1123,12 +1144,7 @@ void CWrapEngine::ClearCache()
 void CWrapEngine::CheckLanguage()
 {
 	int lang = wxGetApp().GetCurrentLanguage();
-	if (lang == wxLANGUAGE_CHINESE || lang == wxLANGUAGE_CHINESE_SIMPLIFIED ||
-		lang == wxLANGUAGE_CHINESE_TRADITIONAL || lang == wxLANGUAGE_CHINESE_HONGKONG ||
-		lang == wxLANGUAGE_CHINESE_MACAU || lang == wxLANGUAGE_CHINESE_SINGAPORE ||
-		lang == wxLANGUAGE_CHINESE_TAIWAN ||
-		lang == wxLANGUAGE_JAPANESE)
-	{
+	if (IsChinese(lang)) {
 		m_wrapOnEveryChar = true;
 		m_noWrapChars = noWrapChars_Chinese;
 	}

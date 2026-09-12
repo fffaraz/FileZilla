@@ -11,6 +11,7 @@
 	#include <CoreFoundation/CFBundle.h>
 	#include <CoreFoundation/CFURL.h>
 #elif defined(FZ_WINDOWS)
+	#include <libfilezilla/glue/dll.hpp>
 	#include <shlobj.h>
 	#include <objbase.h>
 #else
@@ -45,16 +46,32 @@ static std::wstring TryDirectory(std::wstring path, std::wstring const& suffix, 
 }
 #endif
 
+#if FZ_WINDOWS
+std::wstring GetKnownFolder(KNOWNFOLDERID const& id)
+{
+	FZ_DLL_IMPORT(fz::shdlls::get().shell32_, SHGetKnownFolderPath);
+	FZ_DLL_IMPORT(fz::shdlls::get().ole32_, CoTaskMemFree);
+	if (!SHGetKnownFolderPath || !CoTaskMemFree) {
+		return {};
+	}
+
+	std::wstring ret;
+	wchar_t* out{};
+	if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, 0, &out) == S_OK) {
+		ret = out;
+		CoTaskMemFree(out);
+	}
+	return ret;
+}
+#endif
+
 CLocalPath GetHomeDir()
 {
 	CLocalPath ret;
 
 #ifdef FZ_WINDOWS
-	wchar_t* out{};
-	if (SHGetKnownFolderPath(FOLDERID_Profile, 0, 0, &out) == S_OK) {
-		ret.SetPath(out);
-		CoTaskMemFree(out);
-	}
+	// TODO: Fallback to GetUserProfileDirectoryW
+	ret.SetPath(GetKnownFolder(FOLDERID_Profile));
 #else
 	ret.SetPath(GetEnv("HOME"));
 #endif
@@ -99,11 +116,8 @@ CLocalPath GetUnadjustedSettingsDir()
 	CLocalPath ret;
 
 #ifdef FZ_WINDOWS
-	wchar_t* out{};
-	if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, 0, &out) == S_OK) {
-		ret.SetPath(out);
-		CoTaskMemFree(out);
-	}
+	// TODO: As fallback, could look at HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+	ret.SetPath(GetKnownFolder(FOLDERID_RoamingAppData));
 	if (!ret.empty()) {
 		ret.AddSegment(L"FileZilla");
 	}
@@ -587,14 +601,8 @@ CLocalPath GetXdgUserDir(std::string_view type)
 CLocalPath GetDownloadDir()
 {
 #if FZ_WINDOWS
-	PWSTR path;
-	HRESULT result = SHGetKnownFolderPath(FOLDERID_Downloads, 0, 0, &path);
-	if (result == S_OK) {
-		std::wstring dir = path;
-		CoTaskMemFree(path);
-		return CLocalPath(dir);
-	}
-	return {};
+	// TODO: As fallback, could look at HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\User Shell Folders
+	return CLocalPath(GetKnownFolder(FOLDERID_Downloads));
 #elif FZ_MAC
 	CLocalPath ret;
 	char const* url = GetDownloadDirImpl();

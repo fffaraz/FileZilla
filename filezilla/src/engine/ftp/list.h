@@ -6,7 +6,7 @@
 
 class CDirectoryListingParser;
 
-class CFtpListOpData final : public COpData, public CFtpOpData, public CFtpTransferOpData
+class CFtpListOpData final : public CListOpData, public CFtpOpData, public CFtpTransferOpData
 {
 public:
 	CFtpListOpData(CFtpControlSocket & controlSocket, CServerPath const& path, std::wstring const& subDir, int flags);
@@ -18,9 +18,7 @@ public:
 private:
 	int CheckTimezoneDetection(CDirectoryListing& listing);
 
-	CServerPath path_;
 	std::wstring subDir_;
-	bool fallback_to_current_{};
 
 	std::unique_ptr<CDirectoryListingParser> listing_parser_;
 

@@ -1466,6 +1466,7 @@ void CDirectoryListingParserTest::testIndividual()
 	m_sync.unlock();
 
 	CServer server;
+	server.SetProtocol(FTP);
 	server.SetType(entry.serverType);
 
 	CDirectoryListingParser parser(0, server);
@@ -1489,6 +1490,7 @@ void CDirectoryListingParserTest::testIndividual()
 void CDirectoryListingParserTest::testAll()
 {
 	CServer server;
+	server.SetProtocol(FTP);
 	CDirectoryListingParser parser(0, server);
 	for (auto const& entry : m_entries) {
 		server.SetType(entry.serverType);

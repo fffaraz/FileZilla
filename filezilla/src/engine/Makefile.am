@@ -98,7 +98,6 @@ if ENABLE_SFTP
 libfzclient_private_la_SOURCES += \
 		sftp/chmod.cpp \
 		sftp/connect.cpp \
-		sftp/cwd.cpp \
 		sftp/delete.cpp \
 		sftp/filetransfer.cpp \
 		sftp/list.cpp \
@@ -110,7 +109,6 @@ libfzclient_private_la_SOURCES += \
 noinst_HEADERS += \
 		sftp/chmod.h \
 		sftp/connect.h \
-		sftp/cwd.h \
 		sftp/delete.h \
 		sftp/filetransfer.h \
 		sftp/list.h \

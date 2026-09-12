@@ -34,6 +34,8 @@ private:
 	void finalize();
 	void request_data();
 
+	int CheckRemoteFile(bool after_listing);
+
 	uint64_t request_offset_{};
 	uint64_t response_offset_{};
 
@@ -41,6 +43,7 @@ private:
 	std::unique_ptr<fz::writer_base> writer_;
 	bool finalizing_{};
 	bool short_read_{};
+	bool called_fsetstat_{};
 
 	fz::buffer_lease buffer_;
 

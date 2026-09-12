@@ -52,6 +52,7 @@ protected:
 	virtual void Push(std::unique_ptr<COpData> && pNewOpData) override;
 
 	virtual int ResetOperation(int nErrorCode) override;
+	virtual void FinalizeResetOperation() override;
 	virtual int DoClose(int nErrorCode = FZ_REPLY_DISCONNECTED | FZ_REPLY_ERROR) override;
 
 	// Implicit FZ_REPLY_CONTINUE
@@ -69,6 +70,17 @@ protected:
 	void Transfer(std::wstring const& cmd, CFtpTransferOpData* oldData);
 
 	void TransferEnd();
+
+	bool ParsePwdReply(std::wstring reply, const CServerPath& defaultPath = CServerPath());
+
+	// If deleting or renaming a directory, it could be possible that another
+	// CFtpControlSocket instance still has that directory as
+	// current working directory (m_CurrentPath)
+	// Since this would cause problems, this function interates over all
+	// sockets connected to the same server and invalidates the current working
+	// directories if they match or if it is a subdirectory of the changed
+	// directory.
+	void InvalidateCurrentWorkingDirs(CServerPath const& path);
 
 	virtual void OnConnect() override;
 	virtual void OnReceive() override;
@@ -100,6 +112,9 @@ protected:
 
 	std::unique_ptr<CTransferSocket> m_pTransferSocket;
 
+	CServerPath currentPath_;
+	bool m_invalidateCurrentPath{};
+
 	// Some servers keep track of the offset specified by REST between sessions
 	// So we always sent a REST 0 for a normal transfer following a restarted one
 	bool m_sentRestartOffset{};
@@ -128,8 +143,13 @@ protected:
 
 	void OnExternalIPAddress();
 	void OnTimer(fz::timer_id id);
+	void OnInvalidateCurrentWorkingDir(CServer const& server, CServerPath const& path);
+
+	static fz::mutex instance_mtx_;
+	static std::vector<CFtpControlSocket*> instances_;
 
 	friend class CProtocolOpData<CFtpControlSocket>;
+	friend class CFtpOpData;
 	friend class CFtpChangeDirOpData;
 	friend class CFtpChmodOpData;
 	friend class CFtpDeleteOpData;
@@ -143,7 +163,16 @@ protected:
 	friend class CFtpRenameOpData;
 };
 
-typedef CProtocolOpData<CFtpControlSocket> CFtpOpData;
+class CFtpOpData : public CProtocolOpData<CFtpControlSocket>
+{
+public:
+	CFtpOpData(CFtpControlSocket & controlSocket)
+		: CProtocolOpData<CFtpControlSocket>(controlSocket)
+		, currentPath_(controlSocket.currentPath_)
+	{}
+
+	CServerPath & currentPath_;
+};
 
 class CFtpTransferOpData
 {

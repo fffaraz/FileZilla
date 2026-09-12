@@ -75,6 +75,8 @@ void CServerPathTest::testGetPath()
 	const CServerPath dos5(L"C:\\FOO\\", DOS);
 	CPPUNIT_ASSERT(dos5.GetPath() == L"C:\\FOO");
 
+	const CServerPath dos_notabsolute(L"C:NOTABSOLUTE\\", DOS);
+	CPPUNIT_ASSERT(dos_notabsolute.empty());
 
 	const CServerPath mvs1(L"'FOO'", MVS);
 	CPPUNIT_ASSERT(mvs1.GetPath() == L"'FOO'");
@@ -554,6 +556,19 @@ void CServerPathTest::testChangePath()
 		sub = L"baz\\foo";
 		CPPUNIT_ASSERT(dos9.ChangePath(sub, true) && dos9 == dos3 && sub == L"foo");
 		CPPUNIT_ASSERT(dos9.ChangePath(L"md:\\bar\\") && dos9 == dos10);
+	}
+	{
+		// Test drive-relative paths
+
+		CServerPath dos(L"c:\\bar", DOS);
+		CServerPath p;
+
+		p = dos;
+		CPPUNIT_ASSERT(!p.ChangePath(L"d:wrongdrive"));
+
+		p = dos;
+		CPPUNIT_ASSERT(p.ChangePath(L"c:correctDrive"));
+		CPPUNIT_ASSERT(p.GetPath() == L"c:\\bar\\correctDrive");
 	}
 
 	const CServerPath mvs1(L"'BAR.'", MVS);

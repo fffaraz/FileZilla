@@ -65,7 +65,7 @@ noinst_HEADERS = \
 	xmlfunctions.h
 
 if FZ_WINDOWS
-libfzclient_commonui_private_la_LDFLAGS += -lole32 -Wl,-luuid
+libfzclient_commonui_private_la_LDFLAGS += -Wl,-luuid
 endif
 
 if MACAPPBUNDLE

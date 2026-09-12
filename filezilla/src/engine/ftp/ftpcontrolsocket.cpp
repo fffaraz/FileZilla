@@ -39,9 +39,37 @@ using namespace std::literals;
 using namespace ftpLogonStates;
 using namespace FtpRawTransferStates;
 
+struct invalid_current_working_dir_event_type{};
+typedef fz::simple_event<invalid_current_working_dir_event_type, CServer, CServerPath> CInvalidateCurrentWorkingDirEvent;
+
+fz::mutex CFtpControlSocket::instance_mtx_{false};
+std::vector<CFtpControlSocket*> CFtpControlSocket::instances_;
+
 CFtpControlSocket::CFtpControlSocket(CFileZillaEnginePrivate & engine)
 	: CRealControlSocket(engine)
 {
+	{
+		fz::scoped_lock l(instance_mtx_);
+		instances_.push_back(this);
+	}
+}
+
+namespace {
+// Removes item from a random access container,
+// filling the hole by moving the last item.
+template<typename C, typename V>
+void erase_unordered(C & container, V const& v) noexcept
+{
+	for (size_t i = 0; i < container.size(); ++i) {
+		if (container[i] == v) {
+			if (i + 1 < container.size()) {
+				container[i] = std::move(container.back());
+			}
+			container.pop_back();
+			return;
+		}
+	}
+}
 }
 
 CFtpControlSocket::~CFtpControlSocket()
@@ -49,6 +77,11 @@ CFtpControlSocket::~CFtpControlSocket()
 	remove_handler();
 
 	DoClose();
+
+	{
+		fz::scoped_lock l(instance_mtx_);
+		erase_unordered(instances_, this);
+	}
 }
 
 void CFtpControlSocket::OnReceive()
@@ -349,6 +382,7 @@ int CFtpControlSocket::DoClose(int nErrorCode)
 	if ((nErrorCode & FZ_REPLY_PASSWORDFAILED) && send_buffer_.empty() && active_layer_ && active_layer_->get_state() == fz::socket_state::connected) {
 		active_layer_->shutdown();
 	}
+	currentPath_.clear();
 	return CRealControlSocket::DoClose(nErrorCode);
 }
 
@@ -405,6 +439,14 @@ int CFtpControlSocket::ResetOperation(int nErrorCode)
 	}
 
 	return CControlSocket::ResetOperation(nErrorCode);
+}
+
+void CFtpControlSocket::FinalizeResetOperation()
+{
+	if (m_invalidateCurrentPath) {
+		currentPath_.clear();
+		m_invalidateCurrentPath = false;
+	}
 }
 
 bool CFtpControlSocket::CanSendNextCommand()
@@ -817,7 +859,7 @@ void CFtpControlSocket::StartKeepaliveTimer()
 
 void CFtpControlSocket::operator()(fz::event_base const& ev)
 {
-	if (fz::dispatch<fz::timer_event>(ev, this, &CFtpControlSocket::OnTimer)) {
+	if (fz::dispatch<fz::timer_event, CInvalidateCurrentWorkingDirEvent>(ev, this, &CFtpControlSocket::OnTimer, &CFtpControlSocket::OnInvalidateCurrentWorkingDir)) {
 		return;
 	}
 
@@ -867,6 +909,88 @@ void CFtpControlSocket::Push(std::unique_ptr<COpData> && pNewOpData)
 			std::unique_ptr<COpData> connOp = std::make_unique<CFtpLogonOpData>(*this);
 			connOp->topLevelOperation_ = true;
 			CRealControlSocket::Push(std::move(connOp));
+		}
+	}
+}
+
+bool CFtpControlSocket::ParsePwdReply(std::wstring reply, CServerPath const& defaultPath)
+{
+	size_t pos1 = reply.find('"');
+	size_t pos2 = reply.rfind('"');
+	// Due to searching the same character, pos1 is npos iff pos2 is npos
+
+	if (pos1 == std::wstring::npos || pos1 >= pos2) {
+		pos1 = reply.find('\'');
+		pos2 = reply.rfind('\'');
+
+		if (pos1 != std::wstring::npos && pos1 < pos2) {
+			log(logmsg::debug_info, L"Broken server sending single-quoted path instead of double-quoted path.");
+		}
+	}
+	if (pos1 == std::wstring::npos || pos1 >= pos2) {
+		log(logmsg::debug_info, L"Broken server, no quoted path found in pwd reply, trying first token as path");
+		pos1 = reply.find(' ');
+		if (pos1 != std::wstring::npos) {
+			reply = reply.substr(pos1 + 1);
+			pos2 = reply.find(' ');
+			if (pos2 != std::wstring::npos)
+				reply = reply.substr(0, pos2);
+		}
+		else {
+			reply.clear();
+		}
+	}
+	else {
+		reply = reply.substr(pos1 + 1, pos2 - pos1 - 1);
+		fz::replace_substrings(reply, L"\"\"", L"\"");
+	}
+
+	currentPath_ = ParsePath(reply);
+	if (currentPath_.empty()) {
+		if (defaultPath.empty()) {
+			return false;
+		}
+
+		log(logmsg::debug_warning, L"Assuming path is '%s'.", defaultPath.GetPath());
+		currentPath_ = defaultPath;
+	}
+
+	return true;
+}
+
+void CFtpControlSocket::InvalidateCurrentWorkingDirs(CServerPath const& path)
+{
+	if (!currentServer_) {
+		return;
+	}
+
+	fz::scoped_lock lock(instance_mtx_);
+	for (auto * controlSocket : instances_) {
+		if (!controlSocket || controlSocket == this) {
+			continue;
+		}
+
+		controlSocket->send_event<CInvalidateCurrentWorkingDirEvent>(currentServer_, path);
+	}
+}
+
+
+void CFtpControlSocket::OnInvalidateCurrentWorkingDir(CServer const& server, CServerPath const& path)
+{
+	if (currentServer_ != server) {
+		return;
+	}
+
+	if (path.empty() || currentPath_.empty()) {
+		return;
+	}
+
+	if (path.IsParentOf(currentPath_, false, true)) {
+		if (!operations_.empty()) {
+			m_invalidateCurrentPath = true;
+		}
+		else {
+			currentPath_.clear();
 		}
 	}
 }

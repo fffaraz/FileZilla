@@ -256,10 +256,24 @@ wxDragResult DropSource::DoFileDragDrop(int flags)
 	}
 
 	if (mouseUpTarget) {
+#if wxCHECK_VERSION(3, 2, 6)
+		const auto wxpeer = (wxWidgetCocoaImpl*)mouseUpTarget->GetPeer();
+		for ( auto wxevent : wxpeer->TranslateMouseEvent(theEvent) )
+		{
+			if ( wxevent.GetEventType() == wxEVT_LEFT_DOWN )
+			{
+				wxevent.SetEventType(wxEVT_LEFT_UP);
+
+				mouseUpTarget->HandleWindowEvent(wxevent);
+				break;
+			}
+		}
+#else
 		wxMouseEvent wxevent(wxEVT_LEFT_DOWN);
 		((wxWidgetCocoaImpl*)mouseUpTarget->GetPeer())->SetupMouseEvent(wxevent , theEvent) ;
 		wxevent.SetEventType(wxEVT_LEFT_UP);
 		mouseUpTarget->HandleWindowEvent(wxevent);
+#endif
 	}
 
 	return result;

@@ -53,8 +53,6 @@ int CFtpFileTransferOpData::Send()
 
 		opState = filetransfer_waitcwd;
 
-		remotePath_.SetType(currentServer_.GetType());
-
 		controlSocket_.ChangeDir(remotePath_);
 		return FZ_REPLY_CONTINUE;
 	case filetransfer_size:
@@ -317,10 +315,12 @@ int CFtpFileTransferOpData::SubcommandResult(int prevResult, COpData const&)
 {
 	if (opState == filetransfer_waitcwd) {
 		if (prevResult == FZ_REPLY_OK) {
+			remotePath_ = currentPath_;
+
 			CDirentry entry;
 			bool dirDidExist;
 			bool matchedCase;
-			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, tryAbsolutePath_ ? remotePath_ : currentPath_, remoteFile_, dirDidExist, matchedCase);
+			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath_, remoteFile_, dirDidExist, matchedCase);
 			if (!found) {
 				if (!dirDidExist) {
 					opState = filetransfer_waitlist;
@@ -380,7 +380,7 @@ int CFtpFileTransferOpData::SubcommandResult(int prevResult, COpData const&)
 			CDirentry entry;
 			bool dirDidExist;
 			bool matchedCase;
-			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, tryAbsolutePath_ ? remotePath_ : currentPath_, remoteFile_, dirDidExist, matchedCase);
+			bool found = engine_.GetDirectoryCache().LookupFile(entry, currentServer_, remotePath_, remoteFile_, dirDidExist, matchedCase);
 			if (!found) {
 				if (!dirDidExist) {
 					opState = filetransfer_size;

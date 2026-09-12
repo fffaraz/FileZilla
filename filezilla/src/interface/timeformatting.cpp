@@ -4,6 +4,11 @@
 
 #include "option_change_event_handler.h"
 
+#include "filezillaapp.h"
+#if USE_UILOCALE
+#include <wx/uilocale.h>
+#endif
+
 using namespace std::literals;
 
 class TimeFormatter::Impl final : public wxEvtHandler, public COptionChangeEventHandler
@@ -38,11 +43,11 @@ public:
 				m_dateFormat = dateFormat;
 			}
 			else {
-				m_dateFormat = L"%x"sv;
+				m_dateFormat = GetSystemDefaultDate();
 			}
 		}
 		else {
-			m_dateFormat = L"%x"sv;
+			m_dateFormat = GetSystemDefaultDate();
 		}
 
 		m_dateTimeFormat = m_dateFormat;
@@ -57,11 +62,11 @@ public:
 				m_dateTimeFormat += timeFormat;
 			}
 			else {
-				m_dateTimeFormat += L"%X"sv;
+				m_dateTimeFormat += GetSystemDefaultTime();
 			}
 		}
 		else {
-			m_dateTimeFormat += L"%X"sv;
+			m_dateTimeFormat += GetSystemDefaultTime();
 		}
 	}
 
@@ -70,10 +75,33 @@ public:
 		InitFormat();
 	}
 
-	COptionsBase & options_;
-
 	std::wstring m_dateFormat;
 	std::wstring m_dateTimeFormat;
+
+private:
+	std::wstring GetSystemDefaultDate()
+	{
+	#if USE_UILOCALE
+		auto fmt = wxUILocale::GetCurrent().GetInfo(wxLOCALE_SHORT_DATE_FMT);
+		if (!fmt.empty()) {
+			return fmt.ToStdWstring();
+		}
+	#endif
+		return L"%x"s;
+	}
+
+	std::wstring GetSystemDefaultTime()
+	{
+	#if USE_UILOCALE
+		auto fmt = wxUILocale::GetCurrent().GetInfo(wxLOCALE_TIME_FMT);
+		if (!fmt.empty()) {
+			return fmt.ToStdWstring();
+		}
+	#endif
+		return L"%X"s;
+	}
+
+	COptionsBase & options_;
 };
 
 TimeFormatter::TimeFormatter(COptionsBase & options)

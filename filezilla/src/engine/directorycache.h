@@ -165,7 +165,7 @@ protected:
 
 	int64_t m_totalFileCount{};
 
-	fz::duration ttl_{fz::duration::from_seconds(600)};
+	fz::duration ttl_{fz::duration::from_seconds(300)};
 };
 
 #endif

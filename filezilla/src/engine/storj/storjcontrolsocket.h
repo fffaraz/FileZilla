@@ -18,7 +18,7 @@ public:
 
 	virtual void Connect(CServer const& server, Credentials const& credentials) override;
 
-	virtual void List(CServerPath const& path = CServerPath(), std::wstring const& subDir = std::wstring(), int flags = 0) override;
+	virtual void List(CServerPath const& path, int flags) override;
 	virtual void FileTransfer(CFileTransferCommand const& cmd) override;
 	virtual void Delete(CServerPath const& path, std::vector<std::wstring>&& files) override;
 	virtual void Mkdir(const CServerPath& path, transfer_flags const& flags = {}) override;

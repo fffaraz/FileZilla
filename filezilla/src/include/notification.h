@@ -367,7 +367,6 @@ class FZC_PUBLIC_SYMBOL CInsecureConnectionNotification final : public CAsyncReq
 {
 public:
 	CInsecureConnectionNotification(CServer const& server);
-	virtual RequestId GetRequestID() const { return reqId_insecure_connection; }
 
 	CServer const server_;
 	bool allow_{};

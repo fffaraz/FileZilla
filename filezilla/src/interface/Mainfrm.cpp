@@ -765,7 +765,7 @@ void CMainFrame::OnMenuHandler(wxCommandEvent &event)
 		}
 	}
 	else if (id == XRCID("ID_CLEARCACHE_LAYOUT")) {
-		CWrapEngine::ClearCache();
+		CWrapEngine::ClearCache(options_);
 	}
 	else if (id == XRCID("ID_CLEAR_UPDATER")) {
 #if FZ_MANUALUPDATECHECK

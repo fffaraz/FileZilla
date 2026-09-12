@@ -56,7 +56,7 @@ CSftpOpData::continuation CSftpChmodOpData::process_attributes(fz::ssh::sftp::at
 	fz::ssh::sftp::attributes newAttrs;
 	newAttrs.perms_ = *attrs.perms_ & ~07777;
 
-	auto perms = parse_permissions(fz::to_utf8(command_.GetPermission()));
+	auto perms = parse_permissions(fz::to_utf8(command_.GetPermission()), false);
 	if (!perms) {
 		log(logmsg::error, _("Could not parse new permissions"));
 		trigger_reset(FZ_REPLY_SYNTAXERROR);

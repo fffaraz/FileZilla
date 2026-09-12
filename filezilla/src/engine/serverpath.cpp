@@ -629,15 +629,33 @@ bool CServerPath::DoChangePath(std::wstring &subdir, bool isFile)
 				sep = dir.size();
 			}
 			size_t colon = dir.find(':');
-			if (colon != std::wstring::npos && colon > 0 && colon == sep - 1) {
-				is_absolute = true;
+			if (!colon) {
+				return false;
+			}
+			else if (colon != std::wstring::npos) {
+				if (colon == sep - 1) {
+					is_absolute = true;
+				}
+				else if (colon > sep) {
+					// malformed: c\bad:
+					return false;
+				}
+
+				if (colon + 1 < sep) {
+					// Relative to the last working dir of the given drive...
+					if (data.m_segments.empty() || data.m_segments[0] != std::wstring_view(dir).substr(0, colon + 1)) {
+						// ..but we have no dir
+						return false;
+					}
+					dir = dir.substr(colon + 1);
+				}
 			}
 
 			if (is_absolute) {
 				data.m_segments.clear();
 			}
 			else if (IsSeparator(dir[0])) {
-				// Drive-relative path
+				// Relative to root of current drive
 				if (data.m_segments.empty()) {
 					return false;
 				}

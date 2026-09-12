@@ -23,28 +23,36 @@ static_assert(static_cast<std::underlying_type_t<posix_permissions>>(posix_permi
 static_assert(static_cast<std::underlying_type_t<posix_permissions>>(posix_permissions::sticky)        == S_ISVTX, "Exotic platform, need mapping layer");
 #endif
 
-std::optional<posix_permissions> parse_permissions(std::string_view in)
+namespace {
+std::optional<posix_permissions> parse_octal_file_mode(std::string_view in)
 {
-	if (!in.empty() && in[0] >= '0' && in[0] <= '7') {
-		while (!in.empty() && in[0] == '0') {
-			in.remove_prefix(1);
-		}
-		if (in.size() > 4) {
+	//Octal file mode
+	if (in.empty() || in[0] < '0' || in[0] > '7') {
+		return {};
+	}
+
+	while (!in.empty() && in[0] == '0') {
+		in.remove_prefix(1);
+	}
+	if (in.size() > 4) {
+		return {};
+	}
+
+	uint16_t perms{};
+	uint16_t shift{};
+
+	for (auto c = in.rbegin(); c != in.rend(); ++c) {
+		if (*c < '0' || *c > '7') {
 			return {};
 		}
-
-		uint16_t perms{};
-		uint16_t shift{};
-
-		for (auto c = in.rbegin(); c != in.rend(); ++c) {
-			if (*c < '0' || *c > '7') {
-				return {};
-			}
-			perms |= (*c - '0') << shift;
-			shift += 3;
-		}
-		return static_cast<posix_permissions>(perms);
+		perms |= (*c - '0') << shift;
+		shift += 3;
 	}
+	return static_cast<posix_permissions>(perms);
+}
+
+std::optional<posix_permissions> parse_symbolic_file_mode(std::string_view in)
+{
 	if (in.size() != 10) {
 		return {};
 	}
@@ -142,6 +150,91 @@ std::optional<posix_permissions> parse_permissions(std::string_view in)
 	}
 	else if (in[9] != '-') {
 		return {};
+	}
+
+	return ret;
+}
+
+std::optional<posix_permissions> parse_mlsd_permissions(std::string_view in)
+{
+	// perm fact per RFC 3659
+
+	// This is just a heuristic to make up similar posix permissions, assuming umask 0022
+
+	// Intentionally strict
+	if (in.empty() || in.size() > 10) {
+		return {};
+	}
+
+	uint8_t seen[10] = {0};
+	posix_permissions ret{};
+	for (auto c : in) {
+		if (c >= 'A' && c <= 'Z') {
+			c = 'a' + (c - 'A');
+		}
+		size_t i{};
+		switch (c) {
+		case 'a':
+			i = 0;
+			break;
+		case 'c':
+			i = 1;
+			ret |= posix_permissions::user_write;
+			break;
+		case 'd':
+			i = 2;
+			break;
+		case 'e':
+			i = 3;
+			ret |= posix_permissions::all_execute;
+			break;
+		case 'f':
+			i = 4;
+			break;
+		case 'l':
+			i = 5;
+			ret |= posix_permissions::all_read;
+			break;
+		case 'm':
+			i = 6;
+			break;
+		case 'p':
+			i = 7;
+			break;
+		case 'r':
+			i = 8;
+			ret |= posix_permissions::all_read;
+			break;
+		case 'w':
+			i = 9;
+			ret |= posix_permissions::user_write;
+			break;
+		default:
+			return {};
+		}
+		if (seen[i]++) {
+			return {};
+		}
+	}
+
+	return ret;
+}
+}
+
+std::optional<posix_permissions> parse_permissions(std::string_view in, bool allow_mlsd_perms)
+{
+	// Deal with permissions from parsed MLSD listings that have both perms and unix.mode facts, e.g. cdel (755)
+	if (size_t pos; allow_mlsd_perms && !in.empty() && in.back() == ')' && (pos = in.find(" ("sv)) != std::string_view::npos) {
+		in.remove_prefix(pos + 2);
+		in.remove_suffix(1);
+	}
+
+	std::optional<posix_permissions> ret = parse_octal_file_mode(in);
+	if (!ret) {
+		ret = parse_symbolic_file_mode(in);
+	}
+	if (!ret && allow_mlsd_perms) {
+		ret = parse_mlsd_permissions(in);
 	}
 
 	return ret;
