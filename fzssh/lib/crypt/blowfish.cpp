@@ -391,5 +391,6 @@ BlowfishContext *blowfish_make_context(void)
 
 void blowfish_free_context(BlowfishContext *ctx)
 {
+    smemclr(ctx, sizeof(*ctx));
     sfree(ctx);
 }

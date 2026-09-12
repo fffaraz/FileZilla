@@ -22,7 +22,7 @@ public:
 	    , requires_random_padding_(requires_random_padding)
 	{}
 
-	virtual ~cipher_base() noexcept = default;
+	virtual ~cipher_base() noexcept;
 
 	virtual std::string_view name() const = 0;
 
@@ -30,13 +30,19 @@ public:
 	virtual bool decrypt_length(uint8_t* cipher, size_t size) = 0;
 	virtual bool decrypt(uint8_t* cipher, size_t size) = 0;
 	virtual bool set_key(uint8_t const* key, size_t len) = 0;
-	virtual bool set_iv(std::vector<uint8_t> && iv) = 0;
+	virtual bool set_iv(uint8_t const* iv, size_t len);
 	virtual void add_authenticated_data(uint8_t const* /*data*/, size_t /*size*/) {};
 
 	template <typename Data,
-		std::enable_if_t<sizeof(typename Data::value_type) == sizeof(uint8_t)>* = nullptr>
+			 std::enable_if_t<sizeof(typename Data::value_type) == sizeof(uint8_t)>* = nullptr>
 	bool set_key(Data const& d) {
 		return set_key(reinterpret_cast<uint8_t const*>(d.data()), d.size());
+	}
+
+	template <typename Data,
+			 std::enable_if_t<sizeof(typename Data::value_type) == sizeof(uint8_t)>* = nullptr>
+	bool set_iv(Data const& d) {
+		return set_iv(reinterpret_cast<uint8_t const*>(d.data()), d.size());
 	}
 
 	size_t block_size() const { return block_size_; }
@@ -51,6 +57,8 @@ public:
 	size_t auth_size() const { return auth_size_; }
 
 protected:
+	std::vector<uint8_t> iv_;
+
 	size_t const block_size_;
 	size_t const key_size_;
 	size_t const iv_size_;
@@ -62,6 +70,7 @@ protected:
 
 std::unique_ptr<cipher_base> create_cipher(std::string_view const& alg);
 size_t get_cipher_bits(std::string_view const& alg);
+bool is_aead(std::string_view const& alg);
 }
 
 #endif

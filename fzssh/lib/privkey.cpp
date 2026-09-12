@@ -94,14 +94,14 @@ public:
 
 	virtual bool generate() override;
 
-	virtual buffer sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
+	virtual buffer do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
 
 	virtual bool parse_openssh_blob(std::string_view & data) override;
 	virtual bool parse_putty_blobs(std::string_view pub, std::string_view priv) override;
 	virtual bool parse_der(std::string_view data) override;
 	virtual bool parse_inner_pkcs8(std::string_view data, std::string_view opt_pubblob, bool pubblob_constructed) override;
 
-	virtual bool export_pkcs8(std::string & out) const override;
+	virtual bool export_pkcs8(secure_buffer & out) const override;
 
 	virtual std::unique_ptr<private_key> clone() const override;
 private:
@@ -139,7 +139,7 @@ bool private_key_ed25519::generate()
 	return selftest();
 }
 
-buffer private_key_ed25519::sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
+buffer private_key_ed25519::do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
 {
 	if (pub_.empty() || priv_.empty() || data.empty() || signature_algorithm != name()) {
 		return {};
@@ -245,7 +245,7 @@ bool private_key_ed25519::parse_der(std::string_view data)
 	return selftest();
 }
 
-bool private_key_ed25519::export_pkcs8(std::string & out) const
+bool private_key_ed25519::export_pkcs8(secure_buffer & out) const
 {
 	if (pub_.empty()) {
 		return {};
@@ -258,9 +258,9 @@ bool private_key_ed25519::export_pkcs8(std::string & out) const
 
 	der_encode(out, oid, ASN1Type::Sequence, true);
 
-	std::string inner;
+	secure_buffer inner;
 	der_encode(inner, std::string_view(reinterpret_cast<char const*>(priv_.data()), priv_.size()), ASN1Type::OctetString, false);
-	der_encode(out, inner, ASN1Type::OctetString, false);
+	der_encode(out, inner.to_view(), ASN1Type::OctetString, false);
 
 	if (pub_[0]) {
 		der_encode(out, pub_.to_view().substr(pub_.size() - 32), ASN1Class::context_specific, 1, false);
@@ -269,6 +269,194 @@ bool private_key_ed25519::export_pkcs8(std::string & out) const
 		std::string padded;
 		padded += '\0';
 		padded += pub_.to_view().substr(pub_.size() - 32);
+		der_encode(out, padded, ASN1Class::context_specific, 1, false);
+	}
+
+	return true;
+}
+
+class private_key_ed448 final : public concrete_private_key_impl
+{
+public:
+	~private_key_ed448();
+
+	virtual std::string_view name() const override {
+		return "ssh-ed448"sv;
+	}
+
+	virtual bool generate() override;
+
+	virtual buffer do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
+
+	virtual bool parse_openssh_blob(std::string_view & data) override;
+	virtual bool parse_putty_blobs(std::string_view pub, std::string_view priv) override;
+	virtual bool parse_der(std::string_view data) override;
+	virtual bool parse_inner_pkcs8(std::string_view data, std::string_view opt_pubblob, bool pubblob_constructed) override;
+
+	virtual bool export_pkcs8(secure_buffer & out) const override;
+
+	virtual std::unique_ptr<private_key> clone() const override;
+private:
+	std::vector<uint8_t> priv_;
+};
+
+std::unique_ptr<private_key> private_key_ed448::clone() const
+{
+	if (pub_.empty()) {
+		return {};
+	}
+
+	auto ret = std::make_unique<private_key_ed448>();
+	ret->priv_ = priv_;
+	ret->comment_ = comment_;
+	ret->pub_ = pub_;
+	return ret;
+}
+
+private_key_ed448::~private_key_ed448()
+{
+	wipe(priv_);
+}
+
+bool private_key_ed448::generate()
+{
+	priv_ = random_bytes(ED448_KEY_SIZE);
+
+	pub_.clear();
+	write_string(pub_, name());
+	write_uint32(pub_, ED448_KEY_SIZE);
+	nettle_ed448_shake256_public_key(pub_.get(ED448_KEY_SIZE), priv_.data());
+	pub_.add(ED448_KEY_SIZE);
+
+	return selftest();
+}
+
+buffer private_key_ed448::do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
+{
+	if (pub_.empty() || priv_.empty() || data.empty() || signature_algorithm != name()) {
+		return {};
+	}
+
+	buffer sig;
+	write_string(sig, "ssh-ed448"sv);
+	write_uint32(sig, ED448_SIGNATURE_SIZE);
+	nettle_ed448_shake256_sign(pub_.data() + pub_.size() - ED448_KEY_SIZE, priv_.data(), data.size(), data.data(), sig.get(ED448_SIGNATURE_SIZE));
+	sig.add(ED448_SIGNATURE_SIZE);
+	return sig;
+}
+
+bool private_key_ed448::parse_openssh_blob(std::string_view & data)
+{
+	pub_.clear();
+	wipe(priv_);
+	priv_.clear();
+
+	auto pub = extract_blob(data);
+	auto priv = extract_blob(data);
+	if (!pub || !priv) {
+		return false;
+	}
+	if (pub->size() != ED448_KEY_SIZE || priv->size() != 2*ED448_KEY_SIZE) {
+		return false;
+	}
+	if (priv->substr(ED448_KEY_SIZE) != *pub) {
+		return false;
+	}
+	priv_.assign(priv->begin(), priv->begin() + ED448_KEY_SIZE);
+	write_string(pub_, name());
+	write_string(pub_, *pub);
+
+	return selftest();
+}
+
+bool private_key_ed448::parse_putty_blobs(std::string_view pubblob, std::string_view privblob)
+{
+	pub_.clear();
+	wipe(priv_);
+	priv_.clear();
+
+	auto pub = extract_blob(pubblob);
+	auto priv = extract_blob(privblob);
+	if (!pub || !priv) {
+		return false;
+	}
+	if (pub->size() != ED448_KEY_SIZE || priv->size() != ED448_KEY_SIZE) {
+		return false;
+	}
+
+	priv_.assign(priv->begin(), priv->end());
+	write_string(pub_, name());
+	write_string(pub_, *pub);
+
+	return selftest();
+}
+
+bool private_key_ed448::parse_inner_pkcs8(std::string_view data, std::string_view opt_pubblob, bool /*pubblob_constructed*/)
+{
+	if (!parse_der(data)) {
+		return false;
+	}
+
+	if (!opt_pubblob.empty()) {
+		if (!opt_pubblob[0]) {
+			opt_pubblob.remove_prefix(1);
+		}
+		if (opt_pubblob != pub_.to_view().substr(17)) {
+			pub_.clear();
+			wipe(priv_);
+			priv_.clear();
+			return false;
+		}
+	}
+	return true;
+}
+
+bool private_key_ed448::parse_der(std::string_view data)
+{
+	pub_.clear();
+	wipe(priv_);
+	priv_.clear();
+
+	ASN1Value raw = parseDer(data, ASN1Type::OctetString);
+	if (raw.data_.size() != ED448_KEY_SIZE) {
+		return false;
+	}
+
+	priv_.assign(raw.data_.begin(), raw.data_.end());
+
+	pub_.clear();
+	write_string(pub_, name());
+	write_uint32(pub_, ED448_KEY_SIZE);
+	nettle_ed448_shake256_public_key(pub_.get(ED448_KEY_SIZE), priv_.data());
+	pub_.add(ED448_KEY_SIZE);
+
+	return selftest();
+}
+
+bool private_key_ed448::export_pkcs8(secure_buffer & out) const
+{
+	if (pub_.empty()) {
+		return {};
+	}
+
+	std::string oid;
+	if (!der_encode_oid(oid, "1.3.101.113"sv) ) {
+		return {};
+	}
+
+	der_encode(out, oid, ASN1Type::Sequence, true);
+
+	secure_buffer inner;
+	der_encode(inner, std::string_view(reinterpret_cast<char const*>(priv_.data()), priv_.size()), ASN1Type::OctetString, false);
+	der_encode(out, inner.to_view(), ASN1Type::OctetString, false);
+
+	if (pub_[0]) {
+		der_encode(out, pub_.to_view().substr(pub_.size() - ED448_KEY_SIZE), ASN1Class::context_specific, 1, false);
+	}
+	else {
+		std::string padded;
+		padded += '\0';
+		padded += pub_.to_view().substr(pub_.size() - ED448_KEY_SIZE);
 		der_encode(out, padded, ASN1Class::context_specific, 1, false);
 	}
 
@@ -287,14 +475,14 @@ public:
 
 	virtual bool generate() override;
 
-	virtual buffer sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
+	virtual buffer do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
 
 	virtual bool parse_openssh_blob(std::string_view & data) override;
 	virtual bool parse_putty_blobs(std::string_view pub, std::string_view priv) override;
 	virtual bool parse_der(std::string_view data) override;
 	virtual bool parse_inner_pkcs8(std::string_view data, std::string_view opt_pubblob, bool pubblob_constructed) override;
 
-	virtual bool export_pkcs8(std::string & out) const override;
+	virtual bool export_pkcs8(secure_buffer & out) const override;
 
 	virtual std::unique_ptr<private_key> clone() const override;
 private:
@@ -326,6 +514,7 @@ std::unique_ptr<private_key> private_key_ecdsa_sha2_nistp::clone() const
 	}
 	auto ret = std::make_unique<private_key_ecdsa_sha2_nistp>(curve_);
 	mpz v;
+	fz::scoped_wiper w(v);
 	ecc_scalar_get(priv_, v);
 	ecc_scalar_set(ret->priv_, v);
 	ret->comment_ = comment_;
@@ -354,7 +543,7 @@ bool private_key_ecdsa_sha2_nistp::generate()
 	return selftest();
 }
 
-buffer private_key_ecdsa_sha2_nistp::sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
+buffer private_key_ecdsa_sha2_nistp::do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
 {
 	if (pub_.empty() || data.empty() || signature_algorithm != name()) {
 		return {};
@@ -396,6 +585,8 @@ bool private_key_ecdsa_sha2_nistp::parse_raw_blobs(std::string_view const& pub, 
 	}
 
 	mpz key;
+	fz::scoped_wiper w(key);
+
 	mpz_import(key, priv.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(priv.data()));
 	if (!ecc_scalar_set(priv_, key)) {
 		return false;
@@ -498,7 +689,7 @@ bool private_key_ecdsa_sha2_nistp::parse_inner_pkcs8(std::string_view data, std:
 	return parse_raw_blobs(rawpub.data_, rawkey.data_);
 }
 
-bool private_key_ecdsa_sha2_nistp::export_pkcs8(std::string & out) const
+bool private_key_ecdsa_sha2_nistp::export_pkcs8(secure_buffer & out) const
 {
 	if (pub_.empty()) {
 		return {};
@@ -511,12 +702,15 @@ bool private_key_ecdsa_sha2_nistp::export_pkcs8(std::string & out) const
 
 	der_encode(out, oid, ASN1Type::Sequence, true);
 
-	std::string seq;
+	secure_buffer seq;
 	der_encode(seq, 1);
 
 	mpz key;
 	ecc_scalar_get(priv_, key);
-	der_encode(seq, to_string(key).to_view(), ASN1Type::OctetString, false);
+
+	der_encode_generated(seq, to_string_size(key, 0), [&](uint8_t* out, size_t size) { to_string_append(out, size, key, 0); }, ASN1Type::OctetString, false);
+
+	wipe(key);
 
 	std::string pubraw;
 	pubraw += '\0';
@@ -526,9 +720,9 @@ bool private_key_ecdsa_sha2_nistp::export_pkcs8(std::string & out) const
 	der_encode(pubbs, pubraw, ASN1Type::BitString, false);
 	der_encode(seq, pubbs, ASN1Class::context_specific, 1, true);
 
-	std::string inner;
-	der_encode(inner, seq, ASN1Type::Sequence, true);
-	der_encode(out, inner, ASN1Type::OctetString, false);
+	secure_buffer inner;
+	der_encode(inner, seq.to_view(), ASN1Type::Sequence, true);
+	der_encode(out, inner.to_view(), ASN1Type::OctetString, false);
 
 	return true;
 }
@@ -573,14 +767,14 @@ public:
 
 	bool generate(size_t bits);
 
-	virtual buffer sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
+	virtual buffer do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override;
 
 	virtual bool parse_openssh_blob(std::string_view & data) override;
 	virtual bool parse_putty_blobs(std::string_view pub, std::string_view priv) override;
 	virtual bool parse_der(std::string_view data) override;
 	virtual bool parse_inner_pkcs8(std::string_view data, std::string_view /*opt_pubblob*/, bool /*pubblob_constructed*/) override { return parse_der(data); }
 
-	bool export_pkcs8(std::string & out) const override;
+	bool export_pkcs8(secure_buffer & out) const override;
 
 	virtual std::unique_ptr<private_key> clone() const override;
 
@@ -597,8 +791,21 @@ private_key_rsa::private_key_rsa()
 	nettle_rsa_public_key_init(&rsa_pub_);
 }
 
+namespace {
+void wipe_priv(rsa_private_key & priv)
+{
+	wipe(priv.a);
+	wipe(priv.b);
+	wipe(priv.c);
+	wipe(priv.d);
+	wipe(priv.p);
+	wipe(priv.q);
+}
+}
+
 private_key_rsa::~private_key_rsa()
 {
+	wipe_priv(priv_);
 	nettle_rsa_private_key_clear(&priv_);
 	nettle_rsa_public_key_clear(&rsa_pub_);
 }
@@ -647,7 +854,7 @@ bool private_key_rsa::generate(size_t bits)
 	return selftest();
 }
 
-buffer private_key_rsa::sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
+buffer private_key_rsa::do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm)
 {
 	if (pub_.empty() || data.empty()) {
 		return {};
@@ -698,6 +905,7 @@ buffer private_key_rsa::sign(std::basic_string_view<uint8_t> const& data, std::s
 bool private_key_rsa::set_values(std::string_view const& n, std::string_view const& e, std::string_view const& d, std::string_view const& p, std::string_view const& q, std::string_view const& iqmp)
 {
 	pub_.clear();
+	wipe_priv(priv_);
 
 	if (n.empty() || e.empty() || d.empty() || p.empty() || q.empty() || iqmp.empty()) {
 		return false;
@@ -721,10 +929,12 @@ bool private_key_rsa::set_values(std::string_view const& n, std::string_view con
 	mpz p1;
 	mpz_sub_ui(p1, priv_.p, 1);
 	mpz_fdiv_r(priv_.a, priv_.d, p1);
+	wipe(p1);
 
 	mpz q1;
 	mpz_sub_ui(q1, priv_.q, 1);
 	mpz_fdiv_r(priv_.b, priv_.d, q1);
+	wipe(q1);
 
 	if (nettle_rsa_private_key_prepare(&priv_) != 1) {
 		return false;
@@ -802,25 +1012,7 @@ bool private_key_rsa::parse_der(std::string_view data)
 
 }
 
-namespace {
-void der_encode(std::string& out, mpz_t const& v)
-{
-	auto s = to_string(v);
-	size_t octets = s.size();
-	if (s[0] & 0x80) {
-		++octets;
-	}
-
-	out += static_cast<char>(ASN1Type::Integer);
-	der_encode_length(out, octets);
-	if (s[0] & 0x80) {
-		out += '\0';
-	}
-	out += s.to_view();
-}
-}
-
-bool private_key_rsa::export_pkcs8(std::string & out) const
+bool private_key_rsa::export_pkcs8(secure_buffer & out) const
 {
 	if (pub_.empty()) {
 		return false;
@@ -834,7 +1026,7 @@ bool private_key_rsa::export_pkcs8(std::string & out) const
 
 	der_encode(out, oid, ASN1Type::Sequence, true);
 
-	std::string seq;
+	secure_buffer seq;
 	der_encode(seq, 0);
 
 	der_encode(seq, rsa_pub_.n);
@@ -846,9 +1038,9 @@ bool private_key_rsa::export_pkcs8(std::string & out) const
 	der_encode(seq, priv_.b);
 	der_encode(seq, priv_.c);
 
-	std::string inner;
-	der_encode(inner, seq, ASN1Type::Sequence, true);
-	der_encode(out, inner, ASN1Type::OctetString, false);
+	secure_buffer inner;
+	der_encode(inner, seq.to_view(), ASN1Type::Sequence, true);
+	der_encode(out, inner.to_view(), ASN1Type::OctetString, false);
 
 	return true;
 }
@@ -858,6 +1050,9 @@ std::unique_ptr<concrete_private_key_impl> create_concrete_key(std::string_view 
 	std::unique_ptr<concrete_private_key_impl> ret;
 	if (alg == "ssh-ed25519"sv) {
 		ret = std::make_unique<private_key_ed25519>();
+	}
+	else if (alg == "ssh-ed448"sv) {
+		ret = std::make_unique<private_key_ed448>();
 	}
 	else if (alg == "ecdsa-sha2-nistp256"sv) {
 		ret = std::make_unique<private_key_ecdsa_sha2_nistp>(nistp_curve::nistp256);
@@ -888,27 +1083,29 @@ std::unique_ptr<private_key> create_private_key(std::string_view const& alg)
 	return create_concrete_key(alg, true);
 }
 
-std::string FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const& key, bool pem)
+secure_buffer FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const& key, bool pem)
 {
 	auto concrete = dynamic_cast<concrete_private_key*>(key.get());
 	if (!concrete) {
 		return {};
 	}
 
-	std::string seq;
+	secure_buffer seq;
+
 	der_encode(seq,  0);
 	if (!concrete->export_pkcs8(seq)) {
 		return {};
 	}
 
-	std::string der;
-	der_encode(der, seq, ASN1Type::Sequence, true);
+	secure_buffer der;
+	der_encode(der, seq.to_view(), ASN1Type::Sequence, true);
 
 	if (!pem) {
 		return der;
 	}
 	else {
-		std::string ret{"-----BEGIN PRIVATE KEY-----\n"sv};
+		secure_buffer ret;
+		ret.append("-----BEGIN PRIVATE KEY-----\n"sv);
 
 		auto append_splitted = [&ret](std::string_view str) {
 			for (auto v = str; !v.empty();) {
@@ -919,7 +1116,9 @@ std::string FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const&
 			}
 		};
 
-		append_splitted(fz::base64_encode(der));
+		std::string encoded = fz::base64_encode(der.to_view());
+		append_splitted(encoded);
+		wipe(encoded);
 
 		ret += "-----END PRIVATE KEY-----"sv;
 

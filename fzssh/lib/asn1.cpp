@@ -1,5 +1,6 @@
 #include "asn1.hpp"
 
+#include <libfilezilla/buffer.hpp>
 #include <libfilezilla/string.hpp>
 #include <libfilezilla/util.hpp>
 
@@ -302,8 +303,9 @@ std::string parse_oid(ASN1Value const& v)
 	return ret;
 }
 
-
-void der_encode_length(std::string& out, size_t len)
+namespace {
+template<typename T>
+void der_encode_length_impl(T& out, size_t len)
 {
 	if (len < 128) {
 		out.push_back(static_cast<char>(len));
@@ -319,7 +321,8 @@ void der_encode_length(std::string& out, size_t len)
 	}
 }
 
-void der_encode(std::string& out, uint64_t v)
+template<typename T>
+void der_encode_impl(T & out, uint64_t v)
 {
 	out.push_back(static_cast<char>(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(ASN1Type::Integer)));
 
@@ -331,9 +334,31 @@ void der_encode(std::string& out, uint64_t v)
 		v >>= 8;
 	}
 }
+}
+
+void der_encode_length(secure_buffer& out, size_t len)
+{
+	return der_encode_length_impl(out, len);
+}
+
+void der_encode_length(std::string& out, size_t len)
+{
+	return der_encode_length_impl(out, len);
+}
+
+void der_encode(std::string& out, uint64_t v)
+{
+	return der_encode_impl(out, v);
+}
+
+void der_encode(secure_buffer& out, uint64_t v)
+{
+	return der_encode_impl(out, v);
+}
 
 namespace {
-void encode_base128(std::string & out, uint64_t v)
+template<typename T>
+void encode_base128(T & out, uint64_t v)
 {
 	auto octets = v ? ((bitscan_reverse(v) + 7) / 7) : 1;
 	out.resize(out.size() + octets);
@@ -386,17 +411,130 @@ void der_encode(std::string& out, std::string_view data, ASN1Type type, bool con
 	out += data;
 }
 
-void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed)
+void der_encode(secure_buffer& out, std::string_view data, ASN1Type type, bool constructed)
+{
+	out.push_back(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(type) | (constructed ? 0x20u : 0u));
+
+	der_encode_length(out, data.size());
+	out += data;
+}
+
+namespace {
+template<typename T>
+void der_encode_impl(T& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed)
 {
 	if (tag < 31) {
-		out.push_back(static_cast<char>(static_cast<uint8_t>(cl) | static_cast<uint8_t>(tag) | (constructed ? 0x20u : 0u)));
+		out.push_back(static_cast<typename T::value_type>(static_cast<uint8_t>(cl) | static_cast<uint8_t>(tag) | (constructed ? 0x20u : 0u)));
 	}
 	else {
-		out.push_back(static_cast<char>(static_cast<uint8_t>(cl) | 0x1fu | (constructed ? 0x20u : 0u)));
+		out.push_back(static_cast<typename T::value_type>(static_cast<uint8_t>(cl) | 0x1fu | (constructed ? 0x20u : 0u)));
 		encode_base128(out, tag);
 	}
 	der_encode_length(out, data.size());
 	out += data;
 }
+}
 
+void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed)
+{
+	return der_encode_impl(out, data, cl, tag, constructed);
+}
+
+void der_encode(secure_buffer& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed)
+{
+	return der_encode_impl(out, data, cl, tag, constructed);
+}
+
+void der_encode_generated(secure_buffer& out, size_t size, der_writer const& writer, ASN1Type type, bool constructed)
+{
+	out.push_back(static_cast<uint8_t>(ASN1Class::universal) | static_cast<uint8_t>(type) | (constructed ? 0x20u : 0u));
+	der_encode_length(out, size);
+	writer(out.get(size), size);
+	out.add(size);
+}
+
+secure_buffer to_bmpstring(std::string_view const& s)
+{
+	if (s.empty()) {
+		return {};
+	}
+	secure_buffer ret;
+
+	auto p = s.data();
+	auto const end = p + s.size();
+	unsigned char c{};
+
+	while (p != end) {
+		c = *p++;
+		if (c < 0x80) {
+			ret.append('\0');
+			ret.append(c);
+		}
+		else if (c >= 0xf0u) {
+			// Outside BMP
+			return {};
+		}
+		else if (c >= 0xe0u) {
+			// 2 continuation bytes
+			if (p == end) {
+				return {};
+			}
+			uint16_t cp = (c & 0x0fu) << 12u;
+			if (c == 0xe0u) {
+				// Check for overlong
+				c = *p++;
+				if (c < 0xa0u || c > 0xbfu) {
+					return {};
+				}
+			}
+			else if (c == 0xedu) {
+				// Check for surrogates
+				c = *p++;
+				if (c < 0x80u || c > 0x9fu) {
+					return {};
+				}
+			}
+			else {
+				c = *p++;
+				if ((c & 0xc0u) != 0x80u) {
+					return {};
+				}
+			}
+			cp |= (c & 0x3fu) << 6u;
+
+			if (p == end) {
+				return {};
+			}
+			c = *p++;
+			if ((c & 0xc0u) != 0x80u) {
+				return {};
+			}
+
+			cp |= (c & 0x3fu);
+			ret.append(cp >> 8u);
+			ret.append(cp & 0xffu);
+		}
+		else if (c >= 0xc2u) {
+			uint64_t cp = (c & 0x1fu) << 6u;
+
+			// 1 continuation byte
+			if (p == end) {
+				return {};
+			}
+			c = *p++;
+			if ((c & 0xc0u) != 0x80u) {
+				return {};
+			}
+
+			cp |= (c & 0x3fu);
+
+			ret.append(cp >> 8u);
+			ret.append(cp & 0xffu);
+		}
+		else if (c >= 0x80u) {
+			return {};
+		}
+	}
+	return ret;
+}
 }

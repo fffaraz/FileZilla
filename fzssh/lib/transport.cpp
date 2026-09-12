@@ -64,6 +64,7 @@ std::string_view to_string(message_id id)
 		idtos(SSH_MSG_USERAUTH_FAILURE);
 		idtos(SSH_MSG_USERAUTH_SUCCESS);
 		idtos(SSH_MSG_USERAUTH_BANNER);
+		idtos(SSH_MSG_USERAUTH_PASSWD_CHANGEREQ);
 		idtos(SSH_MSG_USERAUTH_PK_OK);
 		idtos(SSH_MSG_USERAUTH_INFO_REQUEST);
 		idtos(SSH_MSG_USERAUTH_INFO_RESPONSE);
@@ -1163,10 +1164,10 @@ continuation transport::process_kexinit(std::string_view packet)
 			return send_disconnect(disconnect_reason::SSH_DISCONNECT_KEY_EXCHANGE_FAILED, "No matching server-to-client encryption algorithm"sv);
 		}
 
-		if (algorithms_next_.cipher_c2s_ == "aes256-gcm@openssh.com"sv) {
+		if (is_aead(algorithms_next_.cipher_c2s_)) {
 			algorithms_next_.mac_c2s_ = algorithms_next_.cipher_c2s_;
 		}
-		if (algorithms_next_.cipher_s2c_ == "aes256-gcm@openssh.com"sv) {
+		if (is_aead(algorithms_next_.cipher_s2c_)) {
 			algorithms_next_.mac_s2c_ = algorithms_next_.cipher_s2c_;
 		}
 
@@ -1483,16 +1484,19 @@ std::tuple<buffer, std::vector<uint8_t>> transport::compute_exchange_hash()
 }
 
 namespace {
-std::vector<uint8_t> derive_key(hash_algorithm alg, buffer const& shared_secret, std::vector<uint8_t> const& exchange_hash, std::vector<uint8_t> const& session_id, unsigned char type, size_t bytes)
+secure_buffer derive_key(hash_algorithm alg, buffer const& shared_secret, std::vector<uint8_t> const& exchange_hash, std::vector<uint8_t> const& session_id, unsigned char type, size_t bytes)
 {
-	if (!bytes) {
+	if (!bytes || bytes > 1024 * 1024 * 1024) {
 		return {};
 	}
 
-	std::vector<uint8_t> ret;
-	ret.reserve(bytes);
+	auto const digest_size = get_digest_size(alg);
+	auto const iterations = (bytes + digest_size - 1) / digest_size;
 
-	while (true) {
+	secure_buffer ret;
+	ret.reserve(iterations * digest_size);
+
+	for (size_t i = 0; i < iterations; ++i) {
 		hash_accumulator h(alg);
 		h.update(shared_secret);
 		h.update(exchange_hash);
@@ -1501,19 +1505,13 @@ std::vector<uint8_t> derive_key(hash_algorithm alg, buffer const& shared_secret,
 			h.update(session_id);
 		}
 		else {
-			h.update(ret);
+			h.update(ret.to_view());
 		}
 
-		auto digest = h.digest();
-		if (digest.size() < bytes) {
-			ret.insert(ret.cend(), digest.cbegin(), digest.cend());
-			bytes -= digest.size();
-		}
-		else {
-			ret.insert(ret.cend(), digest.cbegin(), digest.cbegin() + bytes);
-			break;
-		}
+		h.digest(ret.get(digest_size), digest_size);
+		ret.add(digest_size);
 	}
+	ret.resize(bytes);
 	return ret;
 }
 }
@@ -1540,27 +1538,29 @@ bool transport::derive_keys(buffer const& shared_secret, std::vector<uint8_t> co
 	auto c2s_mac_key = derive_key(exchange_hash_alg_, shared_secret, exchange_hash, session_id_, 'E', mac_key_size(algorithms_next_.mac_c2s_));
 	auto s2c_mac_key = derive_key(exchange_hash_alg_, shared_secret, exchange_hash, session_id_, 'F', mac_key_size(algorithms_next_.mac_s2c_));
 
-	auto mac_c2s = create_mac(algorithms_next_.mac_c2s_, c2s_mac_key);
+#if DEBUG_DUMP_SECRETS
+	logger_.log(logmsg::debug_debug, "Next c2s enc iv: %s"sv, fz::hex_encode<std::string>(c2s_iv));
+	logger_.log(logmsg::debug_debug, "Next c2s enc key: %s"sv, fz::hex_encode<std::string>(c2s_enc_key));
+	logger_.log(logmsg::debug_debug, "Next s2c enc iv: %s"sv, fz::hex_encode<std::string>(s2c_iv));
+	logger_.log(logmsg::debug_debug, "Next s2c enc key: %s"sv, fz::hex_encode<std::string>(s2c_enc_key));
+#endif
+
+	auto mac_c2s = create_mac(algorithms_next_.mac_c2s_, c2s_mac_key.to_view());
 	if (!mac_c2s) {
 		send_disconnect(disconnect_reason::SSH_DISCONNECT_KEY_EXCHANGE_FAILED, "Could not initialize new c2s MAC"sv);
 		return false;
 	}
 
-	auto mac_s2c = create_mac(algorithms_next_.mac_s2c_, s2c_mac_key);
+	auto mac_s2c = create_mac(algorithms_next_.mac_s2c_, s2c_mac_key.to_view());
 	if (!mac_s2c) {
 		send_disconnect(disconnect_reason::SSH_DISCONNECT_KEY_EXCHANGE_FAILED, "Could not initialize new s2c MAC"sv);
 		return false;
 	}
 
-#if DEBUG_DUMP_SECRETS
-	logger_.log(logmsg::debug_debug, "Next c2s enc iv: %s"sv, fz::hex_encode<std::string>(c2s_iv));
-	logger_.log(logmsg::debug_debug, "Next c2s enc key: %s"sv, fz::hex_encode<std::string>(c2s_enc_key));
-#endif
-
 	enc_c2s->set_key(c2s_enc_key);
 	enc_s2c->set_key(s2c_enc_key);
-	enc_c2s->set_iv(std::move(c2s_iv));
-	enc_s2c->set_iv(std::move(s2c_iv));
+	enc_c2s->set_iv(c2s_iv);
+	enc_s2c->set_iv(s2c_iv);
 
 	out_.enc_next_ = std::move(server_ ? enc_s2c : enc_c2s);
 	in_.enc_next_ = std::move(server_ ? enc_c2s : enc_s2c);
@@ -1800,8 +1800,8 @@ bool transport::protect_packet(size_t offset, uint32_t payload_size, bool extra_
 		return false;
 	}
 
-	bool const etm = out_.mac_->etm();
 	bool const aead = out_.enc_->aead();
+	bool const etm = out_.mac_->etm();
 	size_t const block_size = std::max(out_.enc_->block_size(), size_t(8));
 	size_t const to_pad = payload_size + 1 + (etm ? 0 : 4);
 	size_t padding = 4 + block_size - (to_pad + 4) % block_size;

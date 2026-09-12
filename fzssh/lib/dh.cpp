@@ -200,7 +200,13 @@ buffer dh_privkey_sha2_nistp::shared_secret(std::unique_ptr<dh_pubkey_base> cons
 
 	nettle_ecc_point_get(shared, xz, yz);
 
-	return to_string(xz, curve_bytes(curve_));
+	auto ret = to_string(xz, curve_bytes(curve_));
+
+	wipe(shared);
+	wipe(xz);
+	wipe(yz);
+
+	return ret;
 }
 
 namespace {

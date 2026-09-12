@@ -51,6 +51,8 @@ continuation userauth::process_binary_packet(message_id id, std::string_view pac
 		return process_auth_failure(packet);
 	case message_id::SSH_MSG_USERAUTH_SUCCESS:
 		return process_auth_success(packet);
+	case message_id::SSH_MSG_USERAUTH_PASSWD_CHANGEREQ:
+		return process_auth_password_change_request(packet);
 	case message_id::SSH_MSG_USERAUTH_PK_OK:
 		return process_auth_pubkey_ok(packet);
 	case message_id::SSH_MSG_USERAUTH_INFO_REQUEST:

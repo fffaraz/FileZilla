@@ -50,6 +50,14 @@ std::string_view FZSSH_PUBLIC_SYMBOL to_string(channel_type id);
 size_t constexpr channel_overhead = 1 + 4 + 4 + 4; //type, channel id, data_type_code (if type is extdata), size(4)
 size_t constexpr channel_limit = 16;
 
+// If there are going to be multiple channels, use a very small value
+// so that one channel cannot choke the others
+uint32_t constexpr multi_channel_window = max_payload_size * 16;
+
+// Even in no-flow-control or single-channel mode, the input buffer needs to be limited in size.
+size_t constexpr channel_inbuf_size_limit = max_payload_size * 16;
+
+
 enum class open_failure : uint32_t {
 	SSH_OPEN_ADMINISTRATIVELY_PROHIBITED = 1,
 	SSH_OPEN_CONNECT_FAILED = 2,

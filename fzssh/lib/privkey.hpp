@@ -9,8 +9,11 @@ class concrete_private_key_impl : public concrete_private_key
 public:
 	virtual bool generate() = 0;
 
-	using concrete_private_key::sign;
-	virtual bool sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm, event_handler& h) override {
+	virtual buffer sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) override final {
+		return do_sign(data, signature_algorithm);
+	}
+
+	virtual bool sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm, event_handler& h) override final {
 		auto sig = sign(data, signature_algorithm);
 		if (sig.empty()) {
 			return false;
@@ -19,6 +22,8 @@ public:
 		h.send_event<signature_event>(*this, std::move(sig));
 		return true;
 	}
+
+	virtual buffer do_sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) = 0;
 
 	bool selftest();
 

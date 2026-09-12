@@ -124,6 +124,39 @@ std::string public_key::fingerprint(hash_algorithm alg, bool base64) const
 	return fingerprint_from_blob(key_, alg, base64);
 }
 
+namespace {
+std::string putty_hex_decode(std::string_view data, bool reverse, size_t pad)
+{
+	if (!starts_with(data, "0x"sv)) {
+		return {};
+	}
+	data.remove_prefix(2);
+
+	std::string ret;
+	size_t expected = (data.size() + 1) / 2;
+	if (data.size() % 2) {
+		ret += static_cast<char>(fz::hex_char_to_int(data.front()));
+		data.remove_prefix(1);
+	}
+	ret += fz::hex_decode<std::string>(data);
+	if (ret.size() != expected) {
+		return {};
+	}
+	if (reverse) {
+		std::reverse(ret.begin(), ret.end());
+		if (ret.size() < pad) {
+			ret.append(pad - ret.size(), '\0');
+		}
+	}
+	else {
+		if (ret.size() < pad) {
+			ret = std::string(pad - ret.size(), '\0') + ret;
+		}
+	}
+	return ret;
+}
+}
+
 class public_key_ed25519 final : public public_key
 {
 public:
@@ -168,39 +201,6 @@ bool public_key_ed25519::parse(std::string_view key)
 	key_ = inkey;
 
 	return true;
-}
-
-namespace {
-std::string putty_hex_decode(std::string_view data, bool reverse, size_t pad)
-{
-	if (!starts_with(data, "0x"sv)) {
-		return {};
-	}
-	data.remove_prefix(2);
-
-	std::string ret;
-	size_t expected = (data.size() + 1) / 2;
-	if (data.size() % 2) {
-		ret += static_cast<char>(fz::hex_char_to_int(data.front()));
-		data.remove_prefix(1);
-	}
-	ret += fz::hex_decode<std::string>(data);
-	if (ret.size() != expected) {
-		return {};
-	}
-	if (reverse) {
-		std::reverse(ret.begin(), ret.end());
-		if (ret.size() < pad) {
-			ret.append(pad - ret.size(), '\0');
-		}
-	}
-	else {
-		if (ret.size() < pad) {
-			ret = std::string(pad - ret.size(), '\0') + ret;
-		}
-	}
-	return ret;
-}
 }
 
 bool public_key_ed25519::parse_putty(std::string_view key)
@@ -249,6 +249,101 @@ bool public_key_ed25519::verify(std::string_view const& data, std::string_view s
 	}
 
 	return nettle_ed25519_sha512_verify(reinterpret_cast<uint8_t const*>(key_.data() + key_.size() - 32), data.size(), reinterpret_cast<uint8_t const*>(data.data()), reinterpret_cast<uint8_t const*>(s->data()));
+}
+
+
+class public_key_ed448 final : public public_key
+{
+public:
+	virtual std::string_view name() const override {
+		return "ssh-ed448"sv;
+	}
+
+	virtual std::unique_ptr<public_key> clone() const override {
+		if (key_.empty()) {
+			return {};
+		}
+		auto ret = std::make_unique<public_key_ed448>();
+		ret->key_ = key_;
+		ret->comment_ = comment_;
+		return ret;
+	}
+
+	virtual bool parse(std::string_view key) override;
+	virtual bool parse_putty(std::string_view key) override;
+	virtual bool verify(std::string_view const& data, std::string_view sig) const override;
+};
+
+bool public_key_ed448::parse(std::string_view key)
+{
+	key_.clear();
+
+	auto const inkey = key;
+
+	auto n = extract_blob(key);
+	if (!n || *n != name()) {
+		return false;
+	}
+
+	auto k = extract_blob(key);
+	if (!k || k->size() != ED448_KEY_SIZE) {
+		return false;
+	}
+
+	if (!key.empty()) {
+		return false;
+	}
+	key_ = inkey;
+
+	return true;
+}
+
+bool public_key_ed448::parse_putty(std::string_view key)
+{
+	key_.clear();
+
+	auto tokens = strtok(key, ',', false);
+	if (tokens.size() != 2) {
+		return false;
+	}
+
+	auto x = putty_hex_decode(tokens[0], true, ED448_KEY_SIZE);
+	auto y = putty_hex_decode(tokens[1], true, ED448_KEY_SIZE);
+	if (x.size() != ED448_KEY_SIZE || y.size() != ED448_KEY_SIZE) {
+		return false;
+	}
+
+	// Point compression, set sign of x coordinate to y
+	auto c = static_cast<unsigned char>(y.back());
+	c &= 0x7fu;
+	c |= (static_cast<unsigned char>(x.front()) & 0x1u) << 7u;
+	y.back() = static_cast<char>(c);
+
+	fz::buffer buf;
+	write_string(buf, name());
+	write_string(buf, y);
+	key_ = buf.to_view();
+
+	return true;
+}
+
+bool public_key_ed448::verify(std::string_view const& data, std::string_view sig) const
+{
+	if (key_.empty() || data.empty()) {
+		return false;
+	}
+
+	auto n = extract_string(sig, string_type::ascii, false);
+	if (!n || *n != name()) {
+		return false;
+	}
+
+	auto s = extract_blob(sig);
+	if (!s || s->size() != ED448_SIGNATURE_SIZE) {
+		return false;
+	}
+
+	return nettle_ed448_shake256_verify(reinterpret_cast<uint8_t const*>(key_.data() + key_.size() - ED448_KEY_SIZE), data.size(), reinterpret_cast<uint8_t const*>(data.data()), reinterpret_cast<uint8_t const*>(s->data()));
 }
 
 class public_key_ecdsa_sha2_nistp final : public public_key
@@ -566,6 +661,9 @@ std::unique_ptr<public_key> create_public_key(std::string_view const& alg)
 	if (alg == "ssh-ed25519"sv) {
 		ret = std::make_unique<public_key_ed25519>();
 	}
+	else if (alg == "ssh-ed448"sv) {
+		ret = std::make_unique<public_key_ed448>();
+	}
 	else if (alg == "ecdsa-sha2-nistp256"sv) {
 		ret = std::make_unique<public_key_ecdsa_sha2_nistp>(nistp_curve::nistp256);
 	}
@@ -592,12 +690,15 @@ std::unique_ptr<public_key> create_public_key(std::string_view const& alg)
 
 std::string_view get_known_pubkey_signature_algorithms()
 {
-	return "ssh-ed25519,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa"sv;
+	return "ssh-ed25519,ssh-ed448,ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,rsa-sha2-512,rsa-sha2-256,ssh-rsa"sv;
 }
 
 bool supports_signature_algorithm(std::string_view key_alg, std::string_view sig_alg)
 {
 	if (sig_alg == "ssh-ed25519"sv) {
+		return key_alg == sig_alg;
+	}
+	else if (sig_alg == "ssh-ed448"sv) {
 		return key_alg == sig_alg;
 	}
 	else if (sig_alg == "ecdsa-sha2-nistp256"sv) {

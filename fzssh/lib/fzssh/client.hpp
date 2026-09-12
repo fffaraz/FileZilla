@@ -47,7 +47,7 @@ public:
 	void auth_with_key(std::unique_ptr<public_key> const& key, std::string_view const& signature_algorithm = {});
 
 	/// Can be called after getting auth_requested_event
-	void auth_with_password(std::string_view const& pw);
+	void auth_with_password(std::string_view const& password, std::string_view const& new_password = {});
 
 	/// Can be called after getting auth_requested_event. If server accepts to use keyboard-interactive auth, it will send prompts, wait for //TODO
 	void auth_keyboard_interactive();
@@ -72,6 +72,11 @@ typedef event_with_source<auth_done_event_type, client*> auth_done_event;
 struct auth_requested_event_type;
 /// The server requires authentication
 typedef event_with_source<auth_requested_event_type, client*, std::string /*methods*/, bool /*is_continuation*/> auth_requested_event;
+
+/// \private
+struct auth_password_change_request_event_type;
+/// Sent after auth_with_password if the server wants the client change the password
+typedef event_with_source<auth_password_change_request_event_type, client*> auth_password_change_request_event;
 
 /// \private
 struct auth_public_key_okay_event_type;

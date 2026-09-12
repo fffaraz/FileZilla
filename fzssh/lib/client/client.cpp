@@ -48,9 +48,9 @@ void client::auth_with_key(std::unique_ptr<public_key> const& key, std::string_v
 	return static_cast<client_userauth&>(*impl_->auth_).auth_with_key(key, signature_algorithm);
 }
 
-void client::auth_with_password(std::string_view const& pw)
+void client::auth_with_password(std::string_view const& pw, std::string_view const& new_password)
 {
-	return static_cast<client_userauth&>(*impl_->auth_).auth_with_password(pw);
+	return static_cast<client_userauth&>(*impl_->auth_).auth_with_password(pw, new_password);
 }
 
 void client::auth_keyboard_interactive()

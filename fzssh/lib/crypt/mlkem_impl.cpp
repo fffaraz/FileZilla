@@ -329,8 +329,8 @@ static void mlkem_matrix_mul(mlkem_matrix *out, const mlkem_matrix *left,
                              const mlkem_matrix *right, bool left_transposed)
 {
     const uint64_t Qrecip = reciprocal_for_reduction(Q);
-    size_t left_nrows = (left_transposed ? left->ncols : left->nrows);
-    size_t left_ncols = (left_transposed ? left->nrows : left->ncols);
+    [[maybe_unused]] size_t left_nrows = (left_transposed ? left->ncols : left->nrows);
+    [[maybe_unused]] size_t left_ncols = (left_transposed ? left->nrows : left->ncols);
 
     assert(out->nrows == left_nrows);
     assert(left_ncols == right->nrows);
@@ -972,7 +972,7 @@ bool mlkem_decaps(BinarySink *k_out, const mlkem_params *params,
     buffer_sink c_sink[1], k_sink[1];
     buffer_sink_init(c_sink, c_regen, sizeof(c_regen));
     buffer_sink_init(k_sink, k, sizeof(k));
-    bool success = mlkem_encaps_internal(
+    [[maybe_unused]] bool success = mlkem_encaps_internal(
         BinarySink_UPCAST(c_sink), BinarySink_UPCAST(k_sink), params, ek, m);
     /* If any application of ML-KEM uses a dk given to it by someone
      * else, then perhaps they have to worry about being given an

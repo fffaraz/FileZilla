@@ -24,6 +24,7 @@ public:
 	virtual continuation process_auth_request(std::string_view) { return continuation::error_badside; }
 	virtual continuation process_auth_success(std::string_view) { return continuation::error_badside; }
 	virtual continuation process_auth_failure(std::string_view) { return continuation::error_badside; }
+	virtual continuation process_auth_password_change_request(std::string_view) { return continuation::error_badside; }
 	virtual continuation process_auth_pubkey_ok(std::string_view) { return continuation::error_badside; }
 	virtual continuation process_auth_info_request(std::string_view) { return continuation::error_badside; }
 	virtual continuation process_auth_info_response(std::string_view) { return continuation::error_badside; }

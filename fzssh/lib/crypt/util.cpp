@@ -151,7 +151,7 @@ void shake_xof_read(ShakeXOF* h, void* out, size_t len)
 
 void shake_xof_free(ShakeXOF *h)
 {
-	fz::wipe(h, sizeof(h));
+	fz::wipe(h, sizeof(*h));
 	delete h;
 }
 

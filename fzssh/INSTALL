@@ -1,6 +1,7 @@
 Building fzssh requires the following tools and libraries:
 
 meson
+libfilezilla
 GMP
 Nettle
 libargon2

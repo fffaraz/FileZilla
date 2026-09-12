@@ -196,7 +196,8 @@ bool socket_agent_connection::connect()
 	s_.emplace(pool_, this);
 	int res = s_->connect(fz::to_native(path), 0, address_type::unix);
 	if (res) {
-		logger_.log(logmsg::error, "Could not connect to agent (%s): Socket error %d"sv, name_, res);
+		auto lvl = (flags_ & agent_compatibility_flags::suppress_agent_connection_error) ? logmsg::debug_warning : logmsg::error;
+		logger_.log(lvl, "Could not connect to agent (%s): Socket error %d"sv, name_, res);
 		fail(true);
 		return false;
 	}

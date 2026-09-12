@@ -22,7 +22,8 @@ class private_key;
 enum class agent_compatibility_flags : unsigned
 {
 	none,
-	allow_keys_with_unknown_types = 1
+	allow_keys_with_unknown_types = 1,
+	suppress_agent_connection_error = 2 // Mainly useful on platforms that use sandboxing, to reduce log spam on every connection
 };
 
 inline bool operator&(agent_compatibility_flags lhs, agent_compatibility_flags rhs) {

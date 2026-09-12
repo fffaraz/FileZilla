@@ -61,7 +61,7 @@ class FZSSH_PUBLIC_SYMBOL concrete_private_key : public private_key
 public:
 	using private_key::sign;
 	virtual buffer sign(std::basic_string_view<uint8_t> const& data, std::string_view signature_algorithm) = 0;
-	virtual bool export_pkcs8(std::string & out) const = 0;
+	virtual bool export_pkcs8(secure_buffer & out) const = 0;
 };
 
 struct signature_event_type;
@@ -88,13 +88,13 @@ public:
 	///\private
 	std::string type_;
 	std::string headers_;
-	std::string ciphertext_;
+	secure_buffer ciphertext_;
 };
 
 std::vector<private_key_info> FZSSH_PUBLIC_SYMBOL load_private_key_infos(std::string_view const& data, logger_interface & logger, std::optional<std::string_view> const& password = {});
 std::vector<private_key_info> FZSSH_PUBLIC_SYMBOL load_private_key_file(native_string const& filename, logger_interface & logger, std::optional<std::string_view> const& password = {});
 
-std::string FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const& key, bool pem);
+secure_buffer FZSSH_PUBLIC_SYMBOL export_pkcs8(std::unique_ptr<private_key> const& key, bool pem);
 
 }
 

@@ -1,6 +1,6 @@
 project('fzssh', ['cpp'],
 	meson_version: '>=1.3',
-	version: '1.3.0',
+	version: '1.4.0',
 	default_options: ['cpp_std=c++20,c++2a', 'b_pie=true', 'warning_level=3']
 )
 
@@ -10,7 +10,13 @@ project('fzssh', ['cpp'],
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-soversion = '13.0.0'
+soversion = '14.0.0'
+
+lfz_dep = dependency('libfilezilla', version: '>= 0.57.0')
+nettle_dep = dependency('nettle', version: '>= 3.10')
+hogweed_dep = dependency('hogweed', version: '>= 3.10')
+gmp_dep = dependency('gmp', version: '>= 6.2')
+argon2_dep = dependency('libargon2')
 
 if host_machine.system() == 'windows'
 	platform = 'windows'
@@ -19,12 +25,6 @@ elif host_machine.system() == 'darwin'
 else
 	platform = 'unix'
 endif
-
-lfz_dep = dependency('libfilezilla', version: '>= 0.55.3')
-nettle_dep = dependency('nettle', version: '>= 3.10')
-hogweed_dep = dependency('hogweed', version: '>= 3.10')
-gmp_dep = dependency('gmp', version: '>= 6.2')
-argon2_dep = dependency('libargon2')
 
 # Substitutions going into configuration headers and other generated files
 conf = configuration_data()
@@ -82,7 +82,7 @@ endif
 fzssh_crypt = shared_library('fzssh-crypt', fzssh_crypt_sources,
 	dependencies: fzssh_crypt_deps,
 	install: true,
-	gnu_symbol_visibility: 'hidden',
+	gnu_symbol_visibility: 'inlineshidden',
 	cpp_args: ['-DBUILDING_FZSSH_CRYPT'],
 	soversion: soversion
 )
@@ -145,7 +145,7 @@ endif
 fzssh = shared_library('fzssh', fzssh_sources,
 	dependencies: fzssh_deps,
 	install: true,
-	gnu_symbol_visibility: 'hidden',
+	gnu_symbol_visibility: 'inlineshidden',
 	cpp_args: ['-DBUILDING_FZSSH'],
 	soversion: soversion,
 	link_with: fzssh_crypt
@@ -196,7 +196,7 @@ endif
 fzssh_client = shared_library('fzssh-client', fzssh_client_sources,
 	dependencies: fzssh_client_deps,
 	install: true,
-	gnu_symbol_visibility: 'hidden',
+	gnu_symbol_visibility: 'inlineshidden',
 	cpp_args: ['-DBUILDING_FZSSH_CLIENT'],
 	link_with: fzssh,
 	soversion: soversion

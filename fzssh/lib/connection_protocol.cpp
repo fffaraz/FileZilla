@@ -431,7 +431,8 @@ continuation connection_protocol::process_channel_data(channel_data & channel, s
 		logger_.log(logmsg::debug_warning, "Received data in excess of window on channel %u, broken peer software. Connection might stall as result."sv, channel.own_id_);
 	}
 
-	if (channel.in_buf_.size() + data->size() > channel.window_in_max_) {
+	size_t cap = std::min(static_cast<size_t>(channel.window_in_max_), channel_inbuf_size_limit);
+	if (channel.in_buf_.size() >= cap || data->size() > cap - channel.in_buf_.size()) {
 		logger_.log(logmsg::debug_info, "Input buffer on channel %u is full, waiting for space to become available"sv, channel.own_id_);
 		input_block_ = channel.own_id_;
 		return continuation::wait;

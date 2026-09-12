@@ -2,10 +2,14 @@
 #define FZSSH_ASN1_HEADER
 
 #include <cstdint>
+#include <functional>
 #include <string_view>
 #include <optional>
 
-namespace fz::ssh {
+namespace fz {
+class secure_buffer;
+
+namespace ssh {
 
 enum class ASN1Type : uint64_t
 {
@@ -64,14 +68,28 @@ ASN1Value parseDer(std::string_view & data, ASN1Type expected);
 ASN1Value parseDer(std::string_view & data, ASN1Class cl, int64_t tag);
 
 void der_encode_length(std::string& out, size_t len);
+void der_encode_length(secure_buffer& out, size_t len);
+
 void der_encode(std::string& out, uint64_t v);
+void der_encode(secure_buffer& out, uint64_t v);
 
 // Constraint: OID arcs are capped to uin64_t
 bool der_encode_oid(std::string& out, std::string_view oid);
 
 void der_encode(std::string& out, std::string_view data, ASN1Type type, bool constructed);
-void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed);
+void der_encode(secure_buffer& out, std::string_view data, ASN1Type type, bool constructed);
 
+void der_encode(std::string& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed);
+void der_encode(secure_buffer& out, std::string_view data, ASN1Class cl, uint64_t tag, bool constructed);
+
+/// The writer must write exactly size bytes
+using der_writer = std::function<void(uint8_t*, size_t)>;
+void der_encode_generated(secure_buffer& out, size_t size, der_writer const& writer, ASN1Type type, bool constructed);
+
+// Returns just the string itself, doesn't include tag or length
+secure_buffer to_bmpstring(std::string_view const& s);
+
+}
 }
 
 #endif

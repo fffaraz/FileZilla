@@ -130,6 +130,8 @@ std::string openssh_bcrypt(std::string_view passphrase, std::string_view salt, u
 		for (size_t i = residue, j = 0; i < out.size(); i += modulus, j++)
             out[i] = outblock[j];
     }
+	wipe(block, sizeof(block));
+	wipe(outblock, sizeof(outblock));
 	wipe(hashed_passphrase);
 
 	return out;

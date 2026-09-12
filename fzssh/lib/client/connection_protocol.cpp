@@ -134,8 +134,17 @@ continuation client_connection_protocol::process_channel_open_failure(channel_da
 	return continuation::next;
 }
 
-continuation client_connection_protocol::process_channel_request(channel_data & channel, std::string_view, bool want_reply, std::string_view)
+continuation client_connection_protocol::process_channel_request(channel_data & channel, std::string_view type, bool want_reply, std::string_view data)
 {
+	if (type == "exit-status"sv) {
+		uint32_t ustatus;
+		if (!extract_uint32(data, ustatus)) {
+			return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_CHANNEL_REQUEST of type 'exit-status', could not extract status."sv);
+		}
+		auto sstatus = static_cast<int32_t>(ustatus);
+		logger_.log(sstatus ? logmsg::debug_warning : logmsg::debug_info, "Exit status is %d", sstatus);
+	}
+
 	if (want_reply) {
 		packet_builder b(transport_, message_id::SSH_MSG_CHANNEL_FAILURE);
 		write_uint32(b.buf_, channel.peer_id_);
@@ -197,10 +206,6 @@ uint32_t client_connection_protocol::calculate_window_in_max()
 	// Yet some servers violate the spec and seemingly use signed 32-bit integers,
 	// so only windows of up to 2^31 - 1 octets can be used
 	uint32_t constexpr large_window_signed_int_safe = 0x7fffffffu;
-
-	// If there are going to be multiple channels, use a very small value
-	// so that one channel cannot choke the others
-	uint32_t constexpr multi_channel_window = max_payload_size * 16;
 
 	if (no_flow_control_) {
 		return large_window_max;

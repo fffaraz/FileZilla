@@ -500,11 +500,31 @@ continuation sftp_client_impl::process_version(std::string_view data)
 	return continuation::next;
 }
 
+namespace {
+extracted_string extract_handle(std::string_view & packet)
+{
+	auto h = extract_blob(packet);
+	if (!h) {
+		return h;
+	}
+
+	if (h->empty()) {
+		return {extract_fail, "Handle cannot be empty"sv};
+	}
+
+	if (h->size() > 256) {
+		return {extract_fail, "Handle too long"sv};
+	}
+
+	return h;
+}
+}
+
 continuation sftp_client_impl::process_handle(response_handler* handler, std::string_view data)
 {
-	auto h = extract_blob(data);
-	if (!h || h->size() > 256) {
-		logger_.log(logmsg::error, "Could not extract handle"sv);
+	auto h = extract_handle(data);
+	if (!h) {
+		logger_.log(logmsg::error, "Could not extract handle: %s"sv, *h);
 		return handler->failure();
 	}
 

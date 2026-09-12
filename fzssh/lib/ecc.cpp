@@ -103,8 +103,19 @@ curve_scalar::curve_scalar(nistp_curve c)
 
 curve_scalar::~curve_scalar()
 {
-	nettle_ecc_scalar_set(&p, mpz(1));
+	if (p.p) {
+		fz::wipe(p.p, static_cast<size_t>(nettle_ecc_size(p.ecc)) * sizeof(*p.p));
+	}
 	nettle_ecc_scalar_clear(&p);
 }
+
+
+void wipe(curve_point & p)
+{
+	if (p.p.p) {
+		fz::wipe(p.p.p, static_cast<size_t>(nettle_ecc_size_a(p.p.ecc)) * sizeof(*p.p.p));
+	}
+}
+
 
 }

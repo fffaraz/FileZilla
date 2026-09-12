@@ -2,6 +2,7 @@
 #define FZSSH_ECC_HEADER
 
 #include <libfilezilla/hash.hpp>
+#include <libfilezilla/util.hpp>
 
 #include <nettle/ecc.h>
 
@@ -50,6 +51,9 @@ struct curve_scalar final
 
 	ecc_scalar p;
 };
+
+void wipe(curve_point & p);
+using fz::wipe;
 
 }
 

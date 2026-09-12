@@ -14,11 +14,12 @@ public:
 	virtual continuation process_auth_banner(std::string_view packet) override;
 	virtual continuation process_auth_success(std::string_view packet) override;
 	virtual continuation process_auth_failure(std::string_view packet) override;
+	virtual continuation process_auth_password_change_request(std::string_view packet) override;
 	virtual continuation process_auth_pubkey_ok(std::string_view packet) override;
 	virtual continuation process_auth_info_request(std::string_view packet) override;
 
 	continuation auth_none();
-	void auth_with_password(std::string_view const& pw);
+	void auth_with_password(std::string_view const& pw, std::string_view const& new_pw);
 	void auth_with_key(std::unique_ptr<private_key> const& key, bool with_signature, std::string_view signature_algorithm);
 	void auth_with_key(std::unique_ptr<public_key> const& key, std::string_view signature_algorithm);
 	void auth_keyboard_interactive();

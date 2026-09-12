@@ -40,14 +40,17 @@ continuation client_userauth::auth_none()
 	return continuation::next;
 }
 
-void client_userauth::auth_with_password(std::string_view const& pw)
+void client_userauth::auth_with_password(std::string_view const& pw, std::string_view const& new_pw)
 {
 	packet_builder b(transport_, message_id::SSH_MSG_USERAUTH_REQUEST, "method=password"sv);
 	write_string(b.buf_, user_);
 	write_string(b.buf_, "ssh-connection"sv);
 	write_string(b.buf_, "password"sv);
-	b.buf_.append(0);
+	b.buf_.append(new_pw.empty() ? 0 : 1);
 	write_string(b.buf_, pw);
+	if (!new_pw.empty()) {
+		write_string(b.buf_, new_pw);
+	}
 	b.commit(true);
 
 	pending_auths_.emplace_back("password", false);
@@ -267,6 +270,30 @@ continuation client_userauth::process_auth_failure(std::string_view packet)
 	return continuation::next;
 }
 
+continuation client_userauth::process_auth_password_change_request(std::string_view packet)
+{
+	if (pending_auths_.empty() || pending_auths_.front().name_ != "password"sv || !pending_auths_.front().request_only_) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_PASSWD_CHANGEREQ when not having sent a password authentication request"sv);
+	}
+	pending_auths_.pop_front();
+
+	auto prompt = extract_string(packet, string_type::utf8, true);
+	if (!prompt) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_USERAUTH_PASSWD_CHANGEREQ, cannot extract prompt"sv);
+	}
+	auto lang = extract_string(packet, string_type::ascii, true);
+	if (!lang) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Malformed SSH_MSG_USERAUTH_PASSWD_CHANGEREQ, cannot extract language tag"sv);
+	}
+
+	if (!packet.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_USERAUTH_PASSWD_CHANGEREQ with excessive data"sv);
+	}
+
+	transport_.handler_.send_event<auth_password_change_request_event>(static_cast<client*>(&transport_.session_));
+	return continuation::next;
+}
+
 continuation client_userauth::process_auth_pubkey_ok(std::string_view packet)
 {
 	if (pending_auths_.empty() || pending_auths_.front().name_ != "publickey"sv || !pending_auths_.front().request_only_) {
@@ -332,7 +359,10 @@ message_id client_userauth::get_method_flag()
 {
 	if (!pending_auths_.empty()) {
 		auto const& auth = pending_auths_.front();
-		if (auth.name_ == "publickey"sv) {
+		if (auth.name_ == "password"sv) {
+			return message_id::FLAG_USERAUTH_PASSWORD;
+		}
+		else if (auth.name_ == "publickey"sv) {
 			return message_id::FLAG_USERAUTH_PK;
 		}
 		else if (auth.name_ == "keyboard-interactive"sv) {

@@ -275,7 +275,13 @@ void sftp_base::on_read()
 		}
 	}
 	else {
-		payload = packet.substr(in_packet_->type > message_type::SSH_FXP_VERSION ? 5+4 : 5);
+		size_t id_size = (in_packet_->type > message_type::SSH_FXP_VERSION) ? 4 : 0;
+		if (in_packet_->len < 1 + id_size) {
+			logger_.log(logmsg::error, "Invalid size of packet queued for retry"sv);
+			stop(true);
+			return;
+		}
+		payload = packet.substr(5 + id_size, in_packet_->len - 1 - id_size);
 
 		logger_.log(logmsg::debug_verbose, L"Retrying %s, id=%u, len=%u"sv, to_string(in_packet_->type), in_packet_->id, in_packet_->len);
 	}

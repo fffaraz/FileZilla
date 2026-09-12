@@ -26,7 +26,7 @@ protected:
 	bool const etm_;
 };
 
-std::unique_ptr<mac_base> create_mac(std::string_view const& alg, std::vector<uint8_t> const& key);
+std::unique_ptr<mac_base> create_mac(std::string_view const& alg, std::string_view const& key);
 size_t mac_key_size(std::string_view const& alg);
 
 }
