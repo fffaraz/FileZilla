@@ -14,7 +14,7 @@ else
 	DOCKERFILE=Dockerfile.ubuntu
 fi
 
-docker build -f "$DOCKERFILE" -t filezilla .
+docker build -f "docker/$DOCKERFILE" -t filezilla .
 
 # -it only when attached to a terminal, so this also works in CI
 RUN_FLAGS=(--privileged)

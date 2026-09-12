@@ -37,7 +37,7 @@ RUN \
 	meson install
 
 ADD ./filezilla /opt/filezilla
-ADD ./transfer-limits.patch /opt/transfer-limits.patch
+ADD ./docker/transfer-limits.patch /opt/transfer-limits.patch
 RUN \
 	patch -p1 < /opt/transfer-limits.patch && \
 	cd filezilla && \
@@ -47,8 +47,8 @@ RUN \
 	make -j$(nproc) && \
 	make install
 
-ADD ./AppRun.sh /opt/approot/AppRun
-ADD ./bundle-libs.sh /opt/bundle-libs.sh
+ADD ./docker/AppRun.sh /opt/approot/AppRun
+ADD ./docker/bundle-libs.sh /opt/bundle-libs.sh
 RUN \
 	mkdir -p /opt/approot/opt/filezilla /opt/approot/usr/share/applications /opt/approot/usr/share/icons/hicolor/scalable/apps && \
 	cp /usr/local/bin/filezilla /opt/approot/opt/filezilla && \
