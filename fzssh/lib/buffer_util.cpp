@@ -58,10 +58,10 @@ extracted_string extract_blob(std::string_view & packet)
 {
 	uint32_t s{};
 	if (!extract_uint32(packet, s)) {
-		return {extract_fail, "Bad length"sv};
+		return {extract_fail, "Could not extract string length"sv};
 	}
 	if (s > packet.size()) {
-		return {extract_fail, "Bad length"sv};
+		return {extract_fail, "Extracted string length exceeds available data"sv};
 	}
 	auto ret = packet.substr(0, s);
 	packet.remove_prefix(s);

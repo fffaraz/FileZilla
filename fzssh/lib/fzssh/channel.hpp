@@ -27,6 +27,10 @@ public:
 	virtual int inbuf(std::string_view &, int & error) = 0;
 	virtual void consume_inbuf(size_t count) = 0;
 	virtual void want_more() = 0;
+
+	/// An estimate of channel RTT. Only available client-side.
+	/// Measured during channel establishment, not updated afterwards.
+	virtual duration initial_rtt() = 0;
 };
 
 }

@@ -84,6 +84,9 @@ std::string_view to_string(message_id id)
 		idtos(SSH_MSG_CHANNEL_REQUEST);
 		idtos(SSH_MSG_CHANNEL_SUCCESS);
 		idtos(SSH_MSG_CHANNEL_FAILURE);
+
+		idtos(SSH_MSG_PING);
+		idtos(SSH_MSG_PONG);
 	default:
 		return {};
 	}
@@ -107,6 +110,9 @@ message_type get_type(message_id id)
 	}
 	else if (id >= message_id::SSH_MSG_CONNECTION_MIN && id <= message_id::SSH_MSG_CONNECTION_MAX) {
 		return message_type::connection;
+	}
+	else if (id >= message_id::SSH_MSG_LOCAL_EXTENSION_MIN) {
+		return message_type::local_extension;
 	}
 	return message_type::unknown;
 }
@@ -207,6 +213,11 @@ void rekey_buffer_mutex::release(event_handler & h)
 		}
 	}
 }
+
+compatibility_flags sanitize(compatibility_flags flags)
+{
+	return static_cast<compatibility_flags>(static_cast<std::underlying_type_t<compatibility_flags>>(flags) & 0xffffffu);
+}
 }
 
 transport::transport(session &sess, parameters const& params, socket_interface & s, bool server, event_handler & h, logger_interface & logger)
@@ -216,7 +227,7 @@ transport::transport(session &sess, parameters const& params, socket_interface &
     , handler_(h)
     , s_(s)
     , server_(server)
-    , compatibility_flags_(params.compatibility_flags_)
+    , compatibility_flags_(sanitize(params.compatibility_flags_))
     , read_event_(&s_, socket_event_flag::read, 0)
     , write_event_(&s_, socket_event_flag::write, 0)
 {
@@ -500,6 +511,7 @@ continuation transport::read_version()
 				// Could verify/parse the rest here.
 
 				peer_version_ = line;
+				check_peer_compatibility(true);
 				logger_.log(logmsg::debug_info, "Received protover: %s"sv, peer_version_);
 				inbuf_.consume(i);
 				decrypted_ = 0;
@@ -930,6 +942,9 @@ continuation transport::process_binary_packet(uint32_t in_seq, message_type type
 		}
 		else if (type == message_type::connection) {
 			return connection_protocol_->process_binary_packet(id, packet);
+		}
+		else if (type == message_type::local_extension) {
+			return process_local_extension(id, packet);
 		}
 		return continuation::next;
 	};
@@ -1900,6 +1915,10 @@ bool must_queue_due_to_keying(message_id id, keying_state k)
 {
 	id &= message_id::WIRE_MASK;
 	if (id <= message_id::SSH_MSG_TRANSPORT_MAX && id != message_id::SSH_MSG_SERVICE_REQUEST && id != message_id::SSH_MSG_SERVICE_ACCEPT) {
+		return false;
+	}
+	else if (id == message_id::SSH_MSG_PING || id == message_id::SSH_MSG_PONG) {
+		// Timing is important, these cannot be queued
 		return false;
 	}
 

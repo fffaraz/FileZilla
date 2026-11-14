@@ -7,8 +7,9 @@
 #include <libfilezilla/event_handler.hpp>
 #include <libfilezilla/socket.hpp>
 
-#include "fzssh/visibility.hpp"
+#include "fzssh/channel.hpp"
 #include "fzssh/sftp/sftp.hpp"
+#include "fzssh/visibility.hpp"
 
 namespace fz {
 
@@ -102,6 +103,8 @@ protected:
 	buffer inbuf_;
 
 	bool is_retrying_process_{};
+	bool channel_is_fzssh_{};
+
 	compatibility_flags compatibility_flags_{};
 
 private:
@@ -114,7 +117,6 @@ private:
 
 	std::optional<packet_type> in_packet_;
 
-	bool channel_is_fzssh_{};
 };
 
 void FZSSH_PUBLIC_SYMBOL write_attributes(buffer& buf, attributes const& attrs);

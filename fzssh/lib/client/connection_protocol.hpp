@@ -16,13 +16,14 @@ public:
 	virtual continuation process_channel_request(channel_data & channel, std::string_view type, bool want_reply, std::string_view args) override;
 	virtual continuation process_channel_success(channel_data & channel, std::string_view packet) override;
 	virtual continuation process_channel_failure(channel_data & channel, std::string_view packet) override;
+	virtual continuation process_global_request_result(pending_request & req, bool success) override;
 
-	std::unique_ptr<socket_interface> open_channel(channel_type type, std::string_view const& cmd);
+	std::unique_ptr<socket_interface> open_channel(channel_type type, std::string_view const& cmd, channel_flags flags);
 
 	continuation on_auth_success();
 
 private:
-	uint32_t calculate_window_in_max();
+	uint32_t calculate_window_in_max(channel_flags flags);
 	bool send_channel_open(channel_data & channel);
 };
 

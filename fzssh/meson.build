@@ -1,6 +1,6 @@
 project('fzssh', ['cpp'],
 	meson_version: '>=1.3',
-	version: '1.4.0',
+	version: '1.5.2',
 	default_options: ['cpp_std=c++20,c++2a', 'b_pie=true', 'warning_level=3']
 )
 
@@ -10,9 +10,9 @@ project('fzssh', ['cpp'],
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-soversion = '14.0.0'
+soversion = '16.1.0'
 
-lfz_dep = dependency('libfilezilla', version: '>= 0.57.0')
+lfz_dep = dependency('libfilezilla', version: '>= 0.58.0')
 nettle_dep = dependency('nettle', version: '>= 3.10')
 hogweed_dep = dependency('hogweed', version: '>= 3.10')
 gmp_dep = dependency('gmp', version: '>= 6.2')

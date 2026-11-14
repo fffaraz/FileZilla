@@ -5,6 +5,8 @@
 #include "ssh.hpp"
 #include "visibility_client.hpp"
 
+#include <libfilezilla/time.hpp>
+
 namespace fz {
 class logger_interface;
 class socket;
@@ -29,8 +31,8 @@ public:
 	client(client_parameters const& params, std::string_view username, socket_interface &, event_handler & h, logger_interface & logger);
 	virtual ~client();
 
-	/// Make sure to destroy all channels prior to destroying the client
-	std::unique_ptr<socket_interface> open_channel(channel_type type, std::string_view const& name);
+	/// Wait for a read/write event before reading/writing on the channel
+	std::unique_ptr<socket_interface> open_channel(channel_type type, std::string_view const& name, channel_flags flags = channel_flags::none);
 
 	/// Call after getting hostkey_verification_event
 	void hostkey_decision(bool accept);
@@ -56,6 +58,13 @@ public:
 	///
 	/// Number of respones must be equal to number of prompts
 	void auth_keyboard_interactive_response(std::vector<std::string> const& responses);
+
+	/// \brief Measure transport-level round-trip-time
+	///
+	/// Will eventually result in pong_event
+	///
+	/// Can only be called after authentication has succeeded.
+	void ping();
 };
 
 /// \private
@@ -91,6 +100,13 @@ typedef event_with_source<auth_signature_failure_event_type, client*> auth_signa
 
 struct auth_keyboard_interactive_prompt_event_type;
 typedef event_with_source<auth_keyboard_interactive_prompt_event_type, client*, std::string /*name*/, std::string /*instruction*/, std::vector<keyboard_interactive_prompt> /*prompts*/> auth_keyboard_interactive_prompt_event;
+
+/// \private
+struct pong_event_type;
+/// The result of the RTT measurement.
+///
+/// If unsupported by the server, or during too frequent re-keying, pinging can fail and duration is not available.
+typedef event_with_source<pong_event_type, client*, std::optional<duration>> pong_event;
 
 }
 }

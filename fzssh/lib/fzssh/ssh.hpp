@@ -89,6 +89,26 @@ struct algorithm_info
 
 bool FZSSH_PUBLIC_SYMBOL operator==(algorithm_info const& lhs, algorithm_info const& rhs);
 
+enum class channel_flags : unsigned
+{
+	none,
+
+	/// Even on SSH seession that may share multiple channels, force a huge window on the channel.
+	/// This may negatively affect interactivity on other channels
+	huge_window = 0x01
+};
+
+inline bool operator&(channel_flags lhs, channel_flags rhs) {
+	return (static_cast<std::underlying_type_t<channel_flags>>(lhs) & static_cast<std::underlying_type_t<channel_flags>>(rhs)) != 0;
+}
+inline channel_flags operator|(channel_flags lhs, channel_flags rhs) {
+	return static_cast<channel_flags>(static_cast<std::underlying_type_t<channel_flags>>(lhs) | static_cast<std::underlying_type_t<channel_flags>>(rhs));
+}
+inline channel_flags& operator|=(channel_flags & lhs, channel_flags rhs) {
+	lhs = lhs | rhs;
+	return lhs;
+}
+
 class transport;
 class FZSSH_PUBLIC_SYMBOL session : public event_source
 {

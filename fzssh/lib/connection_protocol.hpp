@@ -5,6 +5,7 @@
 #include "fzssh/ssh.hpp"
 #include "transport.hpp"
 
+#include <list>
 #include <map>
 #include <set>
 
@@ -83,6 +84,12 @@ public:
 	// True after there has been at least one successfully opened channel
 	bool had_valid_channel();
 
+	struct pending_request {
+		std::string type_;
+		std::string data_;
+	};
+	std::list<pending_request> pending_global_requests_;
+
 protected:
 	friend class ssh_channel_layer;
 	friend class transport;
@@ -94,6 +101,7 @@ protected:
 	virtual continuation process_global_request(std::string_view const& type, bool want_reply, std::string_view packet);
 	continuation process_global_request_success(std::string_view packet);
 	continuation process_global_request_failure(std::string_view packet);
+	virtual continuation process_global_request_result(pending_request & /*req*/, bool /*success*/) { return continuation::next; }
 	continuation process_channel_open(std::string_view packet);
 	virtual continuation process_channel_open(std::string_view type, uint32_t peer_id, uint32_t window, uint32_t max_size, std::string_view packet) = 0;
 	virtual continuation process_channel_open_confirmation(channel_data &, std::string_view) { return continuation::error_badside; }
@@ -111,6 +119,7 @@ protected:
 	virtual bool send_close(channel_data & channel);
 
 	continuation disconnect_channel(channel_data & channel);
+	void notify_disconnect(channel_data & channel);
 	void erase_channel(uint32_t id);
 
 	bool consumed_input(channel_data& channel);
@@ -128,7 +137,7 @@ protected:
 	bool had_valid_channel_{};
 };
 
-class FZSSH_PUBLIC_SYMBOL ssh_channel_layer : public ssh_channel
+class FZSSH_PUBLIC_SYMBOL ssh_channel_layer final : public ssh_channel
 {
 public:
 	ssh_channel_layer(connection_protocol* conn, std::shared_ptr<channel_data> const& data)
@@ -159,6 +168,11 @@ public:
 	virtual int inbuf(std::string_view & in, int & error) override;
 	virtual void consume_inbuf(size_t count) override;
 	virtual void want_more() override;
+
+	// Only used client-side
+	virtual duration initial_rtt() override { return initial_rtt_; }
+	monotonic_clock rtt_measurement_start_;
+	duration initial_rtt_{};
 
 	fz::event_handler * handler_{};
 

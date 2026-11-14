@@ -23,9 +23,9 @@ client::~client()
 	}
 }
 
-std::unique_ptr<socket_interface> client::open_channel(channel_type type, std::string_view const& cmd)
+std::unique_ptr<socket_interface> client::open_channel(channel_type type, std::string_view const& cmd, channel_flags flags)
 {
-	return static_cast<client_connection_protocol&>(*impl_->connection_protocol_).open_channel(type, cmd);
+	return static_cast<client_connection_protocol&>(*impl_->connection_protocol_).open_channel(type, cmd, flags);
 }
 
 void client::hostkey_decision(bool accept)
@@ -40,7 +40,7 @@ std::string client::accepted_pubkey_algorithms()
 
 void client::auth_with_key(std::unique_ptr<private_key> const& key, bool with_signature, std::string_view const& signature_algorithm)
 {
-	return static_cast<client_userauth&>(*impl_->auth_).auth_with_key(key, with_signature, signature_algorithm);
+	static_cast<client_userauth&>(*impl_->auth_).auth_with_key(key, with_signature, signature_algorithm);
 }
 
 void client::auth_with_key(std::unique_ptr<public_key> const& key, std::string_view const& signature_algorithm)
@@ -50,16 +50,21 @@ void client::auth_with_key(std::unique_ptr<public_key> const& key, std::string_v
 
 void client::auth_with_password(std::string_view const& pw, std::string_view const& new_password)
 {
-	return static_cast<client_userauth&>(*impl_->auth_).auth_with_password(pw, new_password);
+	static_cast<client_userauth&>(*impl_->auth_).auth_with_password(pw, new_password);
 }
 
 void client::auth_keyboard_interactive()
 {
-	return static_cast<client_userauth&>(*impl_->auth_).auth_keyboard_interactive();
+	static_cast<client_userauth&>(*impl_->auth_).auth_keyboard_interactive();
 }
 
 void client::auth_keyboard_interactive_response(std::vector<std::string> const& responses)
 {
-	return static_cast<client_userauth&>(*impl_->auth_).auth_keyboard_interactive_response(responses);
+	static_cast<client_userauth&>(*impl_->auth_).auth_keyboard_interactive_response(responses);
+}
+
+void client::ping()
+{
+	static_cast<client_transport&>(*impl_).ping();
 }
 }

@@ -913,7 +913,17 @@ bool private_key_rsa::set_values(std::string_view const& n, std::string_view con
 
 	mpz_import(rsa_pub_.e, e.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(e.data()));
 	mpz_import(rsa_pub_.n, n.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(n.data()));
-	if (mpz_sizeinbase(rsa_pub_.n, 2) < 1024) {
+
+	auto bits = mpz_sizeinbase(rsa_pub_.n, 2);
+	if (bits < 1024 || bits > 16384) {
+		return false;
+	}
+
+	if (mpz_cmp_ui(rsa_pub_.e, 1) <= 0 || !mpz_odd_p(rsa_pub_.e)) {
+		return false;
+	}
+
+	if (mpz_cmp(rsa_pub_.e, rsa_pub_.n) >= 0) {
 		return false;
 	}
 
@@ -926,6 +936,13 @@ bool private_key_rsa::set_values(std::string_view const& n, std::string_view con
 	mpz_import(priv_.q, q.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(q.data()));
 	mpz_import(priv_.c, iqmp.size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(iqmp.data()));
 
+	if (mpz_cmp_ui(priv_.p, 1) <= 0) {
+		return false;
+	}
+	if (mpz_cmp_ui(priv_.q, 1) <= 0) {
+		return false;
+	}
+
 	mpz p1;
 	mpz_sub_ui(p1, priv_.p, 1);
 	mpz_fdiv_r(priv_.a, priv_.d, p1);
@@ -935,6 +952,12 @@ bool private_key_rsa::set_values(std::string_view const& n, std::string_view con
 	mpz_sub_ui(q1, priv_.q, 1);
 	mpz_fdiv_r(priv_.b, priv_.d, q1);
 	wipe(q1);
+
+	mpz pq;
+	mpz_mul(pq, priv_.p, priv_.q);
+	if (mpz_cmp(pq, rsa_pub_.n) != 0) {
+		return false;
+	}
 
 	if (nettle_rsa_private_key_prepare(&priv_) != 1) {
 		return false;

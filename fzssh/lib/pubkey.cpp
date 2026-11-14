@@ -562,7 +562,19 @@ bool public_key_rsa::parse(std::string_view key)
 
 	mpz_import(pub_.e, e->size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(e->data()));
 	mpz_import(pub_.n, n->size(), 1, 1, 0, 0, reinterpret_cast<uint8_t const*>(n->data()));
-	if (mpz_sizeinbase(pub_.n, 2) < 1024) {
+
+	auto bits = mpz_sizeinbase(pub_.n, 2);
+	if (bits < 1024 || bits > 16384) {
+		return false;
+	}
+
+	if (mpz_cmp_ui(pub_.e, 1) <= 0 || !mpz_odd_p(pub_.e)) {
+		return false;
+	}
+
+	// PKCS#1 requires e < n. While the SSH public keys on the wire aren't defined in terms of PKCS #1,
+	// and performance isn't affected unlike a huge n, reject large e anyhow.
+	if (mpz_cmp(pub_.e, pub_.n) >= 0) {
 		return false;
 	}
 

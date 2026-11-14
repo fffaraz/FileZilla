@@ -1,3 +1,18 @@
+1.5.2 (2026-11-13)
+
+! Fixed a crash parsing invalid RSA private keys and reduced maximum allowed modulus size
+
+1.5.1 (2026-11-03)
+
++ Added channel_flags allowing to request hgue channel windows even in case of multiplexed transports
+- Improved state tracking in the the socket interface representing opened channels
+
+1.5.0 (2026-10-23)
+
++ Added support for pin@openssh.com extension
++ Added sftp_client::initial_rtt() as estimate of initial channel rtt
+- Improved logging when processing File Attributes with malformed extended attributes
+
 1.4.0 (2026-08-18)
 
 + Added auth_password_change_request_event

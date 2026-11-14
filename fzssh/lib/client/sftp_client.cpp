@@ -76,6 +76,9 @@ private:
 	event_handler* waiting_for_on_can_send_{};
 	bool is_retrying_process_in_queue_{};
 
+	monotonic_clock start_time_;
+	duration initial_rtt_;
+
 	friend class request_builder;
 };
 
@@ -258,6 +261,7 @@ void sftp_client_impl::operator()(const event_base &ev)
 void sftp_client_impl::on_connect()
 {
 	if (!peer_version_) {
+		start_time_ = monotonic_clock::now();
 		request_builder b(*this, message_type::SSH_FXP_INIT);
 		write_uint32(b.buf_, 3);
 	}
@@ -370,7 +374,7 @@ continuation sftp_client_impl::process_names(response_handler* handler, message_
 	}
 
 	if (count > data.size() / 12) {
-		logger_.log(logmsg::error, "Nonsensical name count in received SSH_FXP_NAME packet"sv);
+		logger_.log(logmsg::error, "Nonsensical name count %u for %u byte(s) of remaining data in received SSH_FXP_NAME packet"sv, count, data.size());
 		return handler->failure();
 	}
 
@@ -476,6 +480,11 @@ continuation sftp_client_impl::process_pending_responses()
 
 continuation sftp_client_impl::process_version(std::string_view data)
 {
+	initial_rtt_ = monotonic_clock::now() - start_time_;
+	if (channel_is_fzssh_) {
+		initial_rtt_ = std::min(initial_rtt_, static_cast<ssh_channel&>(*socket_).initial_rtt());
+	}
+
 	if (!extract_uint32(data, peer_version_)) {
 		logger_.log(logmsg::error, "Could not read peer SFTP version"sv);
 		return continuation::error;
@@ -822,6 +831,11 @@ void sftp_client::rmdir(response_handler* handler, std::string_view name)
 void sftp_client::disconnect()
 {
 	impl_->disconnect();
+}
+
+duration sftp_client::initial_rtt()
+{
+	return impl_->initial_rtt_;
 }
 
 }

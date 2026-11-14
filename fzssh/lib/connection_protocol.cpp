@@ -176,7 +176,20 @@ int ssh_channel_layer::connect(native_string const&, unsigned int, address_type)
 
 socket_state ssh_channel_layer::get_state() const
 {
-	return socket_state::none;
+	if (!data_) {
+		return socket_state::failed;
+	}
+	else if (data_->out_eof_ == 2) {
+		return socket_state::shut_down;
+	}
+	else if (data_->out_eof_ == 1) {
+		return socket_state::shutting_down;
+	}
+	else if (!conn_) {
+		return socket_state::failed;
+	}
+
+	return (data_->state_ == channel_state::active) ? socket_state::connected : socket_state::connecting;
 }
 
 int ssh_channel_layer::shutdown()
@@ -260,7 +273,14 @@ void ssh_channel_layer::consume_inbuf(size_t count)
 
 void ssh_channel_layer::want_more()
 {
-	wait_in_ = true;
+	if (conn_) {
+		wait_in_ = true;
+	}
+	else {
+		if (handler_) {
+			handler_->send_event<socket_event>(this, socket_event_flag::read, ECONNABORTED);
+		}
+	}
 }
 
 connection_protocol::connection_protocol(transport & t)
@@ -273,9 +293,7 @@ connection_protocol::connection_protocol(transport & t)
 connection_protocol::~connection_protocol()
 {
 	for (auto & channel : channels_) {
-		if (channel.second->layer_) {
-			channel.second->layer_->conn_ = nullptr;
-		}
+		notify_disconnect(*channel.second);
 	}
 }
 
@@ -606,12 +624,49 @@ continuation connection_protocol::process_global_request(std::string_view const&
 
 continuation connection_protocol::process_global_request_success(std::string_view)
 {
-	return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_REQUEST_SUCCESS even though no request wanting a reply was sent."sv);
+	if (pending_global_requests_.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_REQUEST_SUCCESS even though no request wanting a reply was sent."sv);
+	}
+	continuation ret = process_global_request_result(pending_global_requests_.front(), true);
+	pending_global_requests_.pop_front();
+	return ret;
 }
 
 continuation connection_protocol::process_global_request_failure(std::string_view)
 {
-	return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_REQUEST_FAILURE even though no request wanting a reply was sent."sv);
+	if (pending_global_requests_.empty()) {
+		return transport_.send_disconnect(disconnect_reason::SSH_DISCONNECT_PROTOCOL_ERROR, "Received SSH_MSG_REQUEST_FAILURE even though no request wanting a reply was sent."sv);
+	}
+	continuation ret = process_global_request_result(pending_global_requests_.front(), false);
+	pending_global_requests_.pop_front();
+	return ret;
+}
+
+void connection_protocol::notify_disconnect(channel_data & channel)
+{
+	if (!channel.layer_) {
+		return;
+	}
+
+	if (!transport_.server() && channel.state_ < channel_state::active) {
+		if (channel.layer_->handler_) {
+			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::connection, ECONNABORTED);
+		}
+	}
+	else if (channel.layer_->wait_in_) {
+		channel.layer_->wait_in_ = false;
+		if (channel.layer_->handler_) {
+			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::read, channel.in_buf_.empty() ? ECONNABORTED : 0);
+		}
+	}
+	else if (channel.layer_->wait_out_) {
+		channel.layer_->wait_out_ = false;
+		if (channel.layer_->handler_) {
+			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::write, ECONNABORTED);
+		}
+	}
+	channel.layer_->conn_ = nullptr;
+	channel.layer_ = nullptr;
 }
 
 continuation connection_protocol::disconnect_channel(channel_data & channel)
@@ -619,33 +674,22 @@ continuation connection_protocol::disconnect_channel(channel_data & channel)
 	logger_.log(logmsg::debug_info, "disconnect_channel(%u)"sv, channel.own_id_);
 
 	if (channel.state_ == channel_state::closing) {
-		logger_.log(logmsg::debug_info, "Channel %u is already closing"sv, channel.own_id_);
+		if (!transport_.disconnecting_) {
+			logger_.log(logmsg::debug_info, "Channel %u is already closing"sv, channel.own_id_);
+		}
 		return continuation::next;
 	}
 
-	if (channel.layer_) {
-		if (channel.layer_->wait_in_) {
-			channel.layer_->wait_in_ = false;
-			if (channel.layer_->handler_) {
-				channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::read, channel.in_buf_.empty() ? ECONNABORTED : 0);
-			}
-		}
-		else if (channel.layer_->wait_out_) {
-			channel.layer_->wait_out_ = false;
-			if (channel.layer_->handler_) {
-				channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::write, ECONNABORTED);
-			}
-		}
-		channel.layer_->conn_ = nullptr;
-		channel.layer_ = nullptr;
-	}
+	notify_disconnect(channel);
 
 	if (channel.own_id_ == input_block_) {
 		transport_.unblock_read();
 	}
 
 	if (channel.state_ == channel_state::pending_auth) {
-		logger_.log(logmsg::debug_info, "No need to send SSH_MSG_CHANNEL_CLOSE as SSH_MSG_CHANNEL_OPEN has not yet been sent"sv, channel.own_id_);
+		if (!transport_.disconnecting_) {
+			logger_.log(logmsg::debug_info, "No need to send SSH_MSG_CHANNEL_CLOSE as SSH_MSG_CHANNEL_OPEN has not yet been sent"sv, channel.own_id_);
+		}
 
 		auto id = channel.own_id_;
 		erase_channel(id);
@@ -654,7 +698,9 @@ continuation connection_protocol::disconnect_channel(channel_data & channel)
 	}
 
 	if (channel.state_ == channel_state::setup) {
-		logger_.log(logmsg::debug_info, "Cannot send SSH_MSG_CHANNEL_CLOSE on channel %u yet, still awaiting peer id"sv, channel.own_id_);
+		if (!transport_.disconnecting_) {
+			logger_.log(logmsg::debug_info, "Cannot send SSH_MSG_CHANNEL_CLOSE on channel %u yet, still awaiting peer id"sv, channel.own_id_);
+		}
 		return continuation::next;
 	}
 	channel.state_ = channel_state::closing;

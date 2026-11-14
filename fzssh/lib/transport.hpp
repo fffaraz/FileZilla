@@ -13,7 +13,6 @@
 
 #include <map>
 
-
 namespace fz {
 
 class logger_interface;
@@ -36,6 +35,7 @@ enum class message_type
 	userauth,
 	userauth_method, // A subset of userauth
 	connection,
+	local_extension,
 };
 
 enum class message_id : unsigned
@@ -82,7 +82,7 @@ enum class message_id : unsigned
 	SSH_MSG_KEX_MIN = 30,
 	SSH_MSG_KEX_MAX = 49,
 
-	SSH_MSG_TRANSPORT_MIN = 0,
+	SSH_MSG_TRANSPORT_MIN = 1,
 	SSH_MSG_TRANSPORT_MAX = 49,
 
 	// Userauth protocol
@@ -122,6 +122,12 @@ enum class message_id : unsigned
 
 	SSH_MSG_CONNECTION_MIN = 80,
 	SSH_MSG_CONNECTION_MAX = 127,
+
+	// Local extensions
+	SSH_MSG_LOCAL_EXTENSION_MIN = 192,
+
+	SSH_MSG_PING = 192,
+	SSH_MSG_PONG = 193
 };
 
 inline message_id operator&(message_id lhs, message_id rhs) {
@@ -224,6 +230,11 @@ enum class rekey_buffer_state {
 	exclusive
 };
 
+namespace private_compatibility_flags
+{
+	constexpr auto chokes_on_hostkeys_advertisement = static_cast<compatibility_flags>(1u << 31);
+}
+
 class FZSSH_PUBLIC_SYMBOL transport : public event_handler
 {
 public:
@@ -263,6 +274,8 @@ public:
 
 	bool disconnecting_{};
 
+	bool server() const { return server_; }
+
 private:
 	void on_socket_event(fz::socket_event_source*, fz::socket_event_flag type, int error);
 
@@ -281,7 +294,7 @@ private:
 	continuation process_ignore(std::string_view packet);
 	continuation process_unimplemented(std::string_view packet);
 	continuation process_debug(std::string_view packet);
-	continuation process_kexinit(std::string_view packet);
+	virtual continuation process_kexinit(std::string_view packet);
 	virtual continuation process_dh_gex_request(std::string_view /*packet*/) { return continuation::error_badside; }
 	virtual continuation process_dh_gex_group(std::string_view /*packet*/) { return continuation::error_badside; }
 	virtual continuation process_dh_init(std::string_view /*name*/, std::string_view /*packet*/) { return continuation::error_badside; }
@@ -291,8 +304,11 @@ private:
 	virtual continuation process_service_request(std::string_view /*packet*/) { return continuation::error_badside; }
 	virtual continuation process_service_accept(std::string_view /*packet*/) { return continuation::error_badside; }
 
+	virtual void check_peer_compatibility(bool preliminary) = 0;
 	continuation process_ext_info(std::string_view packet);
 	virtual continuation process_ext_info(std::string_view /*name*/, std::string_view /*value*/) { return continuation::next; }
+
+	virtual continuation process_local_extension(message_id /*id*/, std::string_view /*packet*/) { return continuation::error_unimplemented; }
 
 	virtual bool setup_hostkey() = 0;
 
@@ -345,6 +361,9 @@ protected:
 	compatibility_flags compatibility_flags_{};
 	compatibility_flags used_compatibility_flags_{};
 
+	std::string own_version_;
+	std::string peer_version_;
+
 private:
 	bool augment_message_id(message_id & id, message_type type);
 	bool should_suppress_read_socket_error() const;
@@ -357,8 +376,6 @@ private:
 	hash_algorithm exchange_hash_alg_{};
 	buffer peer_kex_payload_;
 	buffer own_kex_payload_;
-	std::string own_version_;
-	std::string peer_version_;
 	kex_init_data<std::string> own_kex_init_data_;
 
 	bool strict_kex_extension_{};

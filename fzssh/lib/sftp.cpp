@@ -537,9 +537,19 @@ std::optional<attributes> extract_attributes(std::string_view & data, fz::logger
 			logger.log(fz::logmsg::error, "Could not extract extended attribute count"sv);
 			return {};
 		}
+		if (extended_count > data.size() / 8) { // Two strings per attribute
+			logger.log(fz::logmsg::error, "Nonsensical extended attribute count %u for %u byte(s) of remaining data"sv, extended_count, data.size());
+			return {};
+		}
 		for (uint32_t j = 0; j < extended_count; ++j) {
-			if (!extract_string(data, string_type::ascii, false) || !extract_string(data, string_type::blob, true)) {
-				logger.log(fz::logmsg::error, "Could not extract extended attribute %u"sv, j);
+			auto name = extract_string(data, string_type::ascii, false);
+			if (!name) {
+				logger.log(fz::logmsg::error, "Could not extract name of extended attribute %u of %u: %s"sv, j, extended_count, *name);
+				return {};
+			}
+			auto value = extract_blob(data);
+			if (!value) {
+				logger.log(fz::logmsg::error, "Could not extract value of extended attribute %u of %u with name %s: %s"sv, j, extended_count, *name, *value);
 				return {};
 			}
 		}

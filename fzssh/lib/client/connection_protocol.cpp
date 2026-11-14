@@ -1,4 +1,5 @@
 #include "connection_protocol.hpp"
+#include "transport.hpp"
 
 #include "../buffer_util.hpp"
 
@@ -57,9 +58,12 @@ continuation client_connection_protocol::process_channel_open_confirmation(chann
 	channel.state_ = channel_state::pending_accept;
 	channel.peer_id_ = peer_id;
 
+
 	if (!channel.layer_) {
 		return disconnect_channel(channel);
 	}
+
+	channel.layer_->initial_rtt_ = monotonic_clock::now() - channel.layer_->rtt_measurement_start_;
 
 	channel.window_out_ = no_flow_control_ ? 0xffffffffu : window_out;
 	channel.max_packet_size_out_ = std::min(static_cast<size_t>(max_size), max_payload_size) - channel_overhead;
@@ -85,6 +89,8 @@ continuation client_connection_protocol::process_channel_open_confirmation(chann
 	if (!b.commit()) {
 		return continuation::error;
 	}
+
+	channel.layer_->rtt_measurement_start_ = monotonic_clock::now();
 
 	return continuation::next;
 }
@@ -164,9 +170,12 @@ continuation client_connection_protocol::process_channel_success(channel_data & 
 		logger_.log(logmsg::debug_warning, "Ignoring SSH_MSG_CHANNEL_SUCCESS on channel %u, wrong channel state."sv, channel.own_id_);
 		return continuation::next;
 	}
+
+
 	channel.state_ = channel_state::active;
 	had_valid_channel_ = true;
 	if (channel.layer_) {
+		channel.layer_->initial_rtt_ = std::min(channel.layer_->initial_rtt_, (monotonic_clock::now() - channel.layer_->rtt_measurement_start_));
 		if (channel.layer_->handler_) {
 			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::connection, 0);
 		}
@@ -186,10 +195,11 @@ continuation client_connection_protocol::process_channel_failure(channel_data & 
 		return continuation::next;
 	}
 	if (channel.layer_) {
-		channel.layer_->conn_ = nullptr;
 		if (channel.layer_->handler_) {
 			channel.layer_->handler_->send_event<socket_event>(channel.layer_, socket_event_flag::connection, ECONNREFUSED);
 		}
+		channel.layer_->conn_ = nullptr;
+		channel.layer_ = nullptr;
 	}
 
 	disconnect_channel(channel);
@@ -197,7 +207,7 @@ continuation client_connection_protocol::process_channel_failure(channel_data & 
 	return continuation::next;
 }
 
-uint32_t client_connection_protocol::calculate_window_in_max()
+uint32_t client_connection_protocol::calculate_window_in_max(channel_flags flags)
 {
 	// RFC 4254 mandates that every implementation MUST be able to handle
 	// receive windows of 2^32 - 1 octets
@@ -210,7 +220,7 @@ uint32_t client_connection_protocol::calculate_window_in_max()
 	if (no_flow_control_) {
 		return large_window_max;
 	}
-	if (single_channel_) {
+	if (single_channel_ || flags & channel_flags::huge_window) {
 		auto peer_version = transport_.peer_version();
 
 		// Check for known-good
@@ -234,7 +244,7 @@ uint32_t client_connection_protocol::calculate_window_in_max()
 	return multi_channel_window;
 }
 
-std::unique_ptr<socket_interface> client_connection_protocol::open_channel(channel_type type, std::string_view const& cmd)
+std::unique_ptr<socket_interface> client_connection_protocol::open_channel(channel_type type, std::string_view const& cmd, channel_flags flags)
 {
 	auto tname = to_string(type);
 	if (tname.empty()) {
@@ -280,8 +290,11 @@ std::unique_ptr<socket_interface> client_connection_protocol::open_channel(chann
 	channel.type_ = type;
 	channel.cmd_ = cmd;
 	channel.own_id_ = own_id;
-	channel.window_in_max_ = calculate_window_in_max();
+	channel.window_in_max_ = calculate_window_in_max(flags);
 	channel.window_in_ = channel.window_in_max_;
+
+	auto layer = std::make_unique<ssh_channel_layer>(this, schannel);
+	channel.layer_ = layer.get();
 
 	if (transport_.service_ != service_type::connection) {
 		logger_.log(logmsg::debug_info, "Deferring channel request until authentication is complete"sv);
@@ -289,12 +302,12 @@ std::unique_ptr<socket_interface> client_connection_protocol::open_channel(chann
 	}
 	else {
 		if (!send_channel_open(channel)) {
+			// The transport has failed. Explicly unhook the channel to avoid some redundant logging
+			channel.layer_ = nullptr;
+			layer->data_ = nullptr;
 			return {};
 		}
 	}
-
-	auto layer = std::make_unique<ssh_channel_layer>(this, schannel);
-	channel.layer_ = layer.get();
 
 	return layer;
 }
@@ -329,7 +342,13 @@ bool client_connection_protocol::send_channel_open(channel_data& channel)
 		}
 	}
 
-	return b.commit();
+	bool ret =  b.commit();
+
+	if (channel.layer_) {
+		channel.layer_->rtt_measurement_start_ = monotonic_clock::now();
+	}
+
+	return ret;
 }
 
 continuation client_connection_protocol::on_auth_success()
@@ -344,6 +363,14 @@ continuation client_connection_protocol::on_auth_success()
 		}
 	}
 
+	return continuation::next;
+}
+
+continuation client_connection_protocol::process_global_request_result(pending_request & req, bool /*success*/)
+{
+	if (req.type_ == "keepalive@openssh.com"sv) {
+		static_cast<client_transport&>(transport_).continue_process_pong(req.data_);
+	}
 	return continuation::next;
 }
 

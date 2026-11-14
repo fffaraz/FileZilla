@@ -80,6 +80,10 @@ continuation client_transport::finalize_kexinit(std::string_view peer_hostkeys, 
 		}
 	}
 
+	if (ping_state_.timer_) {
+		ping_state_.interrupted_by_keying_ = true;
+	}
+
 	if (kex_type_ == kex_type::dhge) {
 		keying_ = keying_state::gex;
 		packet_builder b(*this, message_id::SSH_MSG_KEX_DH_GEX_REQUEST);
@@ -273,6 +277,17 @@ void client_transport::hostkey_decision(bool accept)
 	unblock_read();
 }
 
+void client_transport::check_peer_compatibility(bool preliminary)
+{
+	if (preliminary) {
+		// Mainly older versions that don't support the ping extension, but are known to properly handle global channel reqeuests
+		if (fz::starts_with(peer_version_, "SSH-2.0-OpenSSH_"sv) ||
+			fz::starts_with(peer_version_, "SSH-2.0-fzssh_"sv))
+		{
+			ping_state_.mode_ = ping_mode::fallback;
+		}
+	}
+}
 
 continuation client_transport::process_ext_info(std::string_view name, std::string_view value)
 {
@@ -299,6 +314,15 @@ continuation client_transport::process_ext_info(std::string_view name, std::stri
 			logger_.log(logmsg::debug_warning, "Unsupported extension version, cannot use this extension."sv);
 		}
 	}
+	else if (name == "ping@openssh.com"sv) {
+		if (value == "0"sv) {
+			logger_.log(logmsg::debug_info, "Extension version is \"0\", enabling use of this extension."sv);
+			ping_state_.mode_ = ping_mode::supported;
+		}
+		else {
+			logger_.log(logmsg::debug_warning, "Unsupported extension version, cannot use this extension."sv);
+		}
+	}
 
 	return continuation::next;
 }
@@ -311,4 +335,190 @@ continuation client_transport::on_auth_success()
 	return static_cast<client_connection_protocol&>(*connection_protocol_).on_auth_success();
 }
 
+continuation client_transport::process_local_extension(message_id id, std::string_view packet)
+{
+	if (id == message_id::SSH_MSG_PONG) {
+		return process_pong(packet);
+	}
+
+	return continuation::error_unimplemented;
+}
+
+continuation client_transport::process_pong(std::string_view packet)
+{
+	if (!ping_state_.sent_ || ping_state_.mode_ != ping_mode::supported) {
+		logger_.log(logmsg::debug_info, "Ignoring unexpected or stale SSH_MSG_PONG."sv);
+		return continuation::next;
+	}
+
+	auto value = extract_blob(packet);
+	if (!value) {
+		logger_.log(logmsg::error, "Received malformed SSH_MSG_PONG, disabling ping functionality: %s"sv, *value);
+		ping_state_.mode_ = ping_mode::unsupported;
+		stop_ping({});
+		return continuation::next;
+	}
+
+	if (!packet.empty()) {
+		logger_.log(logmsg::debug_warning, "Received malformed SSH_MSG_PONG with trailing data, disabling ping functionality."sv);
+		ping_state_.mode_ = ping_mode::unsupported;
+		stop_ping({});
+		return continuation::next;
+	}
+
+	continue_process_pong(*value);
+	return continuation::next;
+}
+
+void client_transport::continue_process_pong(std::string_view data)
+{
+	if (!ping_state_.sent_) {
+		return;
+	}
+
+	if (data.size() != 4 || read_uint32(data.data()) != ping_state_.data_) {
+		logger_.log(logmsg::debug_info, "Ignoring stale pong."sv);
+		return;
+	}
+
+	if (ping_state_.interrupted_by_keying_) {
+		if (++ping_state_.retries_ > 2) {
+			logger_.log(logmsg::debug_warning, "Too many retries, aborting ping"sv);
+			stop_ping({});
+			return;
+		}
+		logger_.log(logmsg::debug_info, "Ping got interrupted by re-keying, need to retry"sv);
+		ping_state_.sent_ = false;
+		send_ping(false);
+		return;
+	}
+
+	auto rtt = monotonic_clock::now() - ping_state_.start_;
+	logger_.log(logmsg::debug_info, "Measured transport layer RTT of %u ms", rtt.get_milliseconds());
+	stop_ping(rtt);
+}
+
+void client_transport::operator()(event_base const& ev)
+{
+	if (!fz::dispatch<timer_event>(ev, this, &client_transport::on_timer)) {
+		transport::operator ()(ev);
+	}
+}
+
+void client_transport::on_timer(timer_id t)
+{
+	if (t != ping_state_.timer_) {
+		return;
+	}
+
+	if (disconnecting_) {
+		stop_ping({});
+		return;
+	}
+
+	if ((fz::monotonic_clock::now() - ping_state_.start_) >= duration::from_seconds(3)) {
+		stop_ping({});
+		return;
+	}
+
+	if (ping_state_.mode_ == ping_mode::supported) {
+		if (ping_state_.sent_ && ping_state_.interrupted_by_keying_) {
+			if (++ping_state_.retries_ > 2) {
+				logger_.log(logmsg::debug_warning, "Too many retries, aborting ping"sv);
+				stop_ping({});
+				return;
+			}
+			logger_.log(logmsg::debug_info, "Ping got interrupted by re-keying, need to retry"sv);
+			ping_state_.sent_ = false;
+		}
+	}
+	if (!ping_state_.sent_) {
+		send_ping(false);
+	}
+}
+
+void client_transport::ping()
+{
+	if (disconnecting_ || service_ != service_type::connection) {
+		return;
+	}
+
+	if (ping_state_.mode_ == ping_mode::unsupported || ping_state_.timer_) {
+		handler_.send_event<pong_event>(static_cast<client*>(&session_), std::nullopt);
+		return;
+	}
+
+	ping_state_.timer_ = add_timer(duration::from_milliseconds(100), false);
+	ping_state_.start_ = fz::monotonic_clock::now();
+	send_ping(true);
+}
+
+void client_transport::stop_ping(std::optional<duration> const& rtt)
+{
+	if (ping_state_.timer_) {
+		if (!disconnecting_) {
+			handler_.send_event<pong_event>(static_cast<client*>(&session_), rtt);
+		}
+		stop_timer(ping_state_.timer_);
+	}
+	ping_state_.timer_ = timer_id{};
+	ping_state_.start_ = fz::monotonic_clock();
+	ping_state_.retries_ = 0;
+	ping_state_.sent_ = false;
+	ping_state_.interrupted_by_keying_ = false;
+}
+
+void client_transport::send_ping(bool  from_ping)
+{
+	if (keying_ != keying_state::no) {
+		if (from_ping) {
+			logger_.log(logmsg::debug_verbose, "Deferring ping, keying in progress."sv);
+		}
+		return;
+	}
+
+	if (ping_state_.mode_ == ping_mode::fallback) {
+		for (auto const& req : connection_protocol_->pending_global_requests_) {
+			if (req.type_ == "keepalive@openssh.com"sv) {
+				if (from_ping) {
+					logger_.log(logmsg::debug_verbose, "Deferring ping, there are still pending global requests."sv);
+				}
+				return;
+			}
+		}
+	}
+
+	ping_state_.interrupted_by_keying_ = false;
+
+	++ping_state_.data_;
+
+	ping_state_.start_ = fz::monotonic_clock::now();
+
+	if (ping_state_.mode_ == ping_mode::supported) {
+		packet_builder b(*this, message_id::SSH_MSG_PING);
+		write_uint32(b.buf_, 4);
+		write_uint32(b.buf_, ping_state_.data_);
+		if (!b.commit()) {
+			stop_ping({});
+			return;
+		}
+	}
+	else {
+		packet_builder b(*this, message_id::SSH_MSG_GLOBAL_REQUEST, "type=\"keepalive@openssh.com\", want_reply=TRUE"sv);
+		write_string(b.buf_, "keepalive@openssh.com"sv);
+		b.buf_.append(1);
+		if (!b.commit()) {
+			stop_ping({});
+			return;
+		}
+
+		connection_protocol::pending_request req;
+		req.type_ = "keepalive@openssh.com"sv;
+		req.data_.resize(4);
+		write_uint32(req.data_.data(), ping_state_.data_);
+
+		connection_protocol_->pending_global_requests_.emplace_back(std::move(req));
+	}
+	ping_state_.sent_ = true;
+}
 }

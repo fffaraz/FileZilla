@@ -22,6 +22,7 @@ struct entry : public attributes
 	std::string_view longname_;
 };
 
+// Do not delete the sftp_client from inside the response handler. Instead return continuation::error and wait for done_event.
 class FZSSH_CLIENT_PUBLIC_SYMBOL response_handler
 {
 protected:
@@ -88,6 +89,9 @@ public:
 	void rmdir(response_handler* handler, std::string_view name);
 
 	void disconnect();
+
+	/// Returns an estimate of RTT, measured during initialization.
+	duration initial_rtt();
 
 	struct done_event_type;
 	typedef simple_event<done_event_type, sftp_client*> done_event;
