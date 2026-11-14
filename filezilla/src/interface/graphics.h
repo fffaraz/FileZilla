@@ -79,4 +79,8 @@ private:
 	wxWindow& m_wnd;
 };
 
+#ifdef __WXMAC__
+void SetMacChromeBackground(wxWindow& window);
+#endif
+
 #endif

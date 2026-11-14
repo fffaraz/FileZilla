@@ -2,6 +2,10 @@
 #include "filelist_statusbar.h"
 #include "Options.h"
 
+#ifdef __WXMAC__
+#include "graphics.h"
+#endif
+
 #include "../include/sizeformatting.h"
 
 BEGIN_EVENT_TABLE(CFilelistStatusBar, CFilelistStatusBarBase)
@@ -11,8 +15,12 @@ END_EVENT_TABLE()
 CFilelistStatusBar::CFilelistStatusBar(wxWindow* pParent, COptionsBase & options)
 	: CFilelistStatusBarBase(pParent, wxID_ANY, 0)
 	, COptionChangeEventHandler(this)
-    , options_(options)
+	, options_(options)
 {
+#ifdef __WXMAC__
+        SetMacChromeBackground(*this);
+#endif
+
 	m_updateTimer.SetOwner(this);
 
 	m_empty_string = _("Empty directory.");

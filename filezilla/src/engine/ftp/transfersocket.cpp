@@ -197,6 +197,16 @@ void CTransferSocket::OnAccept(int error)
 	}
 	socketServer_.reset();
 
+	if (socket_->peer_ip() != controlSocket_.socket_->peer_ip()) {
+		bool relaxed = controlSocket_.GetCurrentServer().GetExtraParameter("relaxed_dataconnection_ip") == L"1"sv;
+		controlSocket_.log(relaxed ? logmsg::debug_warning : logmsg::error, _("Peer IP of data connection does not match peer IP of control connection."));
+		if (!relaxed) {
+			socket_.reset();
+			TransferEnd(TransferEndReason::transfer_failure);
+			return;
+		}
+	}
+
 	if (!InitLayers(true)) {
 		TransferEnd(TransferEndReason::transfer_failure);
 		return;
@@ -548,7 +558,7 @@ bool CTransferSocket::InitLayers(bool active)
 			return false;
 		}
 
-		proxy_layer_ = CreateProxy(nullptr, *active_layer_, &controlSocket_, controlSocket_.proxy_layer_->GetProxyType(), proxy_host, proxy_port, controlSocket_.proxy_layer_->GetUser(), controlSocket_.proxy_layer_->GetPass());
+		proxy_layer_ = CreateProxy(nullptr, *active_layer_, &controlSocket_, controlSocket_.proxy_layer_->GetProxyType(), proxy_host, proxy_port, controlSocket_.proxy_layer_->GetUser(), controlSocket_.proxy_layer_->GetPass(), controlSocket_.proxy_layer_.get());
 		active_layer_ = proxy_layer_.get();
 	}
 

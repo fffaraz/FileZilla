@@ -10,6 +10,7 @@
 #ifdef __WXMAC__
 #include "filezillaapp.h"
 #include "dropsource.h"
+#include "graphics.h"
 #endif
 
 
@@ -200,6 +201,10 @@ bool wxDialogEx::IsActiveTLW(wxTopLevelWindow * parent)
 
 void wxDialogEx::InitDialog()
 {
+#ifdef __WXMAC__
+        SetMacChromeBackground(*this);
+#endif
+
 #ifdef __WXGTK__
 	// Some controls only report proper size after the call to Show(), e.g.
 	// wxStaticBox::GetBordersForSizer is affected by this.

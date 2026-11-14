@@ -5,12 +5,11 @@
 
 #include <map>
 
+class COptionsBase;
 class wxAuiTabArtEx;
 class wxAuiNotebookEx : public wxAuiNotebook
 {
 public:
-	wxAuiNotebookEx() = default;
-
 	void RemoveExtraBorders();
 
 	void SetExArtProvider();

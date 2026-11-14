@@ -53,8 +53,8 @@ bool CSystemImageList::CreateSystemImageList(int size)
 #ifdef __WXMSW__
 
 	UINT sizeFlag = SHGFI_SMALLICON;
-	if (size != CThemeProvider::GetIconSize(iconSizeSmall).x) {
-		size = (size != CThemeProvider::GetIconSize(iconSizeNormal).x);
+	if (size != CThemeProvider::GetIconSize(IconSize::small).x) {
+		size = (size != CThemeProvider::GetIconSize(IconSize::normal).x);
 		sizeFlag = SHGFI_ICON;
 	}
 
@@ -212,7 +212,7 @@ int CSystemImageList::GetIconIndex(iconType type, std::wstring const& fileName, 
 		wxIcon newIcon(loc);
 
 		if (newIcon.Ok()) {
-			wxBitmap bmp = PrepareIcon(newIcon, CThemeProvider::GetIconSize(iconSizeSmall));
+			wxBitmap bmp = PrepareIcon(newIcon, CThemeProvider::GetIconSize(IconSize::small));
 			if (symlink) {
 				OverlaySymlink(bmp);
 			}

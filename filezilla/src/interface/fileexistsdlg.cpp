@@ -161,7 +161,7 @@ void CFileExistsDlg::LoadIcon(int id, std::wstring const& file)
 		return;
 	}
 
-	wxSize size = CThemeProvider::GetIconSize(iconSizeNormal);
+	wxSize size = CThemeProvider::GetIconSize(IconSize::normal);
 	pStatBmp->SetInitialSize(size);
 	pStatBmp->InvalidateBestSize();
 

@@ -15,6 +15,7 @@ enum class ProxyType {
 };
 
 class CControlSocket;
+class SshAuth;
 class ProxyBase : public fz::event_handler, public fz::socket_layer
 {
 public:
@@ -77,38 +78,12 @@ private:
 	bool m_can_read{};
 };
 
-namespace fz::ssh {
-class client;
-}
-
-class SSHProxy final : public ProxyBase
-{
-public:
-	using ProxyBase::ProxyBase;
-
-	virtual ~SSHProxy();
-
-	virtual int connect(fz::native_string const& host, unsigned int port, fz::address_type family = fz::address_type::unknown) override;
-	virtual int read(void *buffer, unsigned int size, int& error) override;
-	virtual int write(void const* buffer, unsigned int size, int& error) override;
-	virtual int shutdown() override;
-	virtual void set_event_handler(event_handler* handler, fz::socket_event_flag retrigger_block) override;
-
-private:
-	virtual void operator()(fz::event_base const& ev) override;
-	void OnSocketEvent(socket_event_source* s, fz::socket_event_flag t, int error);
-	void on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> & key, fz::ssh::algorithm_info & algs);
-	void on_auth_requested(fz::ssh::session*, std::string const& methods, bool is_continuation);
-	void on_auth_done(fz::ssh::session*);
-	void on_auth_pubkey_ok(fz::ssh::session*);
-	void on_auth_signature_failed(fz::ssh::session*);
-
-
-	std::unique_ptr<fz::ssh::client> ssh_;
-	std::unique_ptr<fz::socket_interface> channel_;
-};
+std::unique_ptr<ProxyBase> CreateProxy(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner,
+									   ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass,
+									   ProxyBase* parent_proxy);
 
 std::unique_ptr<ProxyBase> CreateProxy(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner,
-	ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass);
+									   ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass,
+									   bool used_by_multi_connection_protocol = false);
 
 #endif

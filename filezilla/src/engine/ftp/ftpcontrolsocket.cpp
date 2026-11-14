@@ -132,6 +132,10 @@ void CFtpControlSocket::OnReceive()
 					receiveBuffer_.consume(i + 1);
 					i = 0;
 
+					if (!receiveBuffer_.empty() && receiveBuffer_[0] == '\n') {
+						receiveBuffer_.consume(1);
+					}
+
 					ParseLine(line);
 
 					// Abort if connection got closed
@@ -350,16 +354,16 @@ int CFtpControlSocket::SendCommand(std::wstring const& str, bool maskArgs, bool 
 		return FZ_REPLY_ERROR;
 	}
 	buffer += "\r\n";
-	bool res = CRealControlSocket::Send(buffer.c_str(), buffer.size());
-	if (res) {
+	int res = CRealControlSocket::Send(buffer.c_str(), buffer.size());
+	if (res == FZ_REPLY_WOULDBLOCK) {
 		++m_pendingReplies;
+
+		if (measureRTT) {
+			m_rtt.Start();
+		}
 	}
 
-	if (measureRTT) {
-		m_rtt.Start();
-	}
-
-	return res ? FZ_REPLY_WOULDBLOCK : FZ_REPLY_ERROR;
+	return res;
 }
 
 void CFtpControlSocket::List(CServerPath const& path, std::wstring const& subDir, int flags)

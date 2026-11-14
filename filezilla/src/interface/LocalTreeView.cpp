@@ -239,7 +239,7 @@ END_EVENT_TABLE()
 
 CLocalTreeView::CLocalTreeView(wxWindow* parent, wxWindowID id, CState& state, CQueueView *pQueueView, COptionsBase & options, login_manager & lim)
 	: wxTreeCtrlEx(parent, id, wxDefaultPosition, wxDefaultSize, DEFAULT_TREE_STYLE | wxTAB_TRAVERSAL | wxTR_EDIT_LABELS | wxNO_BORDER)
-	, CSystemImageList(CThemeProvider::GetIconSize(iconSizeSmall).x)
+	, CSystemImageList(CThemeProvider::GetIconSize(IconSize::small).x)
 	, CStateEventHandler(state)
 	, COptionChangeEventHandler(this)
 	, m_pQueueView(pQueueView)

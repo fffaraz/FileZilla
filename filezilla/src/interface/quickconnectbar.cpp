@@ -11,6 +11,10 @@
 #include "textctrlex.h"
 #include "themeprovider.h"
 
+#ifdef __WXMAC__
+#include "graphics.h"
+#endif
+
 #include <wx/bmpbuttn.h>
 #include <wx/menu.h>
 #include <wx/statline.h>
@@ -27,6 +31,10 @@ CQuickconnectBar::CQuickconnectBar(CMainFrame & parent)
 	, options_(parent.GetOptions())
 	, mainFrame_(parent)
 {
+#ifdef __WXMAC__
+        SetMacChromeBackground(*this);
+#endif
+
 	auto sizer = new wxBoxSizer(wxVERTICAL);
 	SetSizer(sizer);
 #ifndef __WXMAC__
@@ -65,7 +73,7 @@ CQuickconnectBar::CQuickconnectBar(CMainFrame & parent)
 	connect->SetDefault();
 	connectSizer->Add(connect, wxSizerFlags().Align(wxALIGN_CENTER_VERTICAL));
 
-	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(L"ART_DROPDOWN", wxART_OTHER, CThemeProvider::GetIconSize(iconSizeTiny));
+	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(L"ART_DROPDOWN", wxART_OTHER, IconSize::tiny);
 	auto flags = wxSizerFlags().Expand();
 #if defined(__WXMSW__)
 	wxSize dropdownSize = ConvertDialogToPixels(wxSize(12, -1));

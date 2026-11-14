@@ -149,13 +149,14 @@ protected:
 	CServerPath m_path;
 };
 
+class AsyncRequestHandle;
 class FZC_PUBLIC_SYMBOL CAsyncRequestNotification : public CNotificationHelper<nId_asyncrequest>
 {
 public:
 	RequestId GetRequestID() const { return req_id_; }
 	bool IsPending() const;
 
-	std::weak_ptr<unsigned int> requestNumber_;
+	std::weak_ptr<AsyncRequestHandle> requestHandle_;
 
 protected:
 

@@ -92,8 +92,12 @@ bool PathExpand(std::wstring& cmd)
 }
 #endif
 
-std::vector<std::wstring> GetSystemAssociation(std::wstring const& file)
+std::vector<std::wstring> GetSystemAssociation(std::wstring const& file, bool* forbidden)
 {
+	if (forbidden) {
+		*forbidden = false;
+	}
+
 	std::vector<std::wstring> ret;
 
 	auto const ext = GetExtension(file);
@@ -134,7 +138,7 @@ std::vector<std::wstring> GetSystemAssociation(std::wstring const& file)
 
 	// Process placeholders.
 
-	// Phase 1: Look for %1
+	// Phase 1: Look for %0 or %1
 	bool got_first{};
 	for (size_t i = 1; i < raw.size(); ++i) {
 		auto const& arg = raw[i];
@@ -145,7 +149,7 @@ std::vector<std::wstring> GetSystemAssociation(std::wstring const& file)
 		for (auto const& c : arg) {
 			if (percent) {
 				if (!got_first) {
-					if (c == '1') {
+					if (c == '0' || c == '1') {
 						out += L"%f";
 						got_first = true;
 					}
@@ -252,8 +256,16 @@ std::vector<std::wstring> GetSystemAssociation(std::wstring const& file)
 
 #endif
 
-	if (!ret.empty() && !ProgramExists(ret[0])) {
-		ret.clear();
+	if (!ret.empty()) {
+		if (IsForbiddenAssociationProgram(ret[0])) {
+			if (forbidden) {
+				*forbidden = true;
+			}
+			ret.clear();
+		}
+		else if (!ProgramExists(ret[0])) {
+			ret.clear();
+		}
 	}
 
 	return ret;
@@ -262,11 +274,13 @@ std::vector<std::wstring> GetSystemAssociation(std::wstring const& file)
 std::vector<fz::native_string> AssociationToCommand(std::vector<std::wstring> const& association, std::wstring_view const& file)
 {
 	std::vector<fz::native_string> ret;
+	if (association.empty() || IsForbiddenAssociationProgram(association.front())) {
+		return ret;
+	}
+
 	ret.reserve(association.size());
 
-	if (!association.empty()) {
-		ret.push_back(fz::to_native(association.front()));
-	}
+	ret.push_back(fz::to_native(association.front()));
 
 	bool replaced{};
 
@@ -302,6 +316,29 @@ std::vector<fz::native_string> AssociationToCommand(std::vector<std::wstring> co
 	}
 
 	return ret;
+}
+
+bool IsForbiddenAssociationProgram(std::wstring_view program)
+{
+#if FZ_WINDOWS
+	auto const end = program.find_last_not_of(L" .");
+	if (end == std::wstring_view::npos) {
+		return false;
+	}
+	program = program.substr(0, end + 1);
+
+	auto const pos = program.find_last_of(L"/\\");
+	if (pos != std::wstring_view::npos) {
+		program.remove_prefix(pos + 1);
+	}
+
+	return fz::equal_insensitive_ascii(program, std::wstring_view(L"cmd.exe")) ||
+		fz::equal_insensitive_ascii(program, std::wstring_view(L"powershell.exe")) ||
+		fz::equal_insensitive_ascii(program, std::wstring_view(L"pwsh.exe"));
+#else
+	(void)program;
+	return false;
+#endif
 }
 
 bool ProgramExists(std::wstring const& editor)

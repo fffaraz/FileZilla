@@ -175,7 +175,7 @@ bool CWindowStateManager::Restore(interfaceOptions const optionId, wxSize const&
 		if (size.IsFullySpecified()) {
 			// The slight off-size is needed to ensure the client sizes gets changed at least once.
 			// Otherwise all the splitters would have default size still.
-			m_pWindow->SetClientSize(size.x + 1, size.x);
+			m_pWindow->SetClientSize(size.x + 1, size.y);
 
 			// A 2nd call is neccessary, for some reason the first call
 			// doesn't fully set the height properly at least under wxMSW

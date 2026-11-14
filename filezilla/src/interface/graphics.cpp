@@ -133,3 +133,33 @@ void Overlay(wxBitmap& bg, wxBitmap const& fg)
 #endif
 }
 
+
+#ifdef __WXMAC__
+namespace {
+wxColour GetMacChromeBackground()
+{
+	auto const bg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOW);
+	auto const fg = wxSystemSettings::GetColour(wxSYS_COLOUR_WINDOWTEXT);
+
+	// 20/255 of foreground produces a satisfactory result
+	return AlphaComposite_Over(bg, wxColour(fg.Red(), fg.Green(), fg.Blue(), 10));
+}
+}
+
+void SetMacChromeBackground(wxWindow& window)
+{
+	auto update = [&window]() {
+		window.SetBackgroundColour(GetMacChromeBackground());
+		window.Refresh();
+	};
+
+	update();
+
+	window.Bind(wxEVT_SYS_COLOUR_CHANGED,
+		[update](wxSysColourChangedEvent& event) {
+			update();
+			event.Skip();
+		}
+	);
+}
+#endif

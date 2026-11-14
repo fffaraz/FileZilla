@@ -10,7 +10,9 @@
 
 #include <libfilezilla/time.hpp>
 
-std::wstring FZCUI_PUBLIC_SYMBOL StripVMSRevision(std::wstring const& name);
+#include <optional>
+
+std::optional<std::wstring> FZCUI_PUBLIC_SYMBOL StripVMSRevision(std::wstring const& name);
 
 class COptionsBase;
 transfer_flags FZCUI_PUBLIC_SYMBOL GetTransferFlags(bool download, CServer const& server, COptionsBase& options, std::wstring const& sourceFile, CServerPath const& remotePath);

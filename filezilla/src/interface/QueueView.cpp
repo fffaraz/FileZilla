@@ -350,7 +350,11 @@ bool CQueueView::QueueFiles(const bool queueOnly, const CLocalPath& localPath, c
 
 		std::wstring localFile = ReplaceInvalidCharacters(options_, fileInfo.name);
 		if (dataObject.GetServerPath().GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
-			localFile = StripVMSRevision(localFile);
+			auto stripped = StripVMSRevision(localFile);
+			if (!stripped) {
+				continue;
+			}
+			localFile = std::move(*stripped);
 		}
 
 		transfer_flags flags = transfer_flags::download;
@@ -1435,7 +1439,7 @@ bool CQueueView::Quit(bool force)
 		m_quit = 2;
 	}
 
-	SaveColumnSettings(options_, OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
+	SaveColumnSettings(OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
 
 	m_resize_timer.Stop();
 
@@ -3097,7 +3101,7 @@ void CQueueView::OnStateChange(CState*, t_statechange_notifications notification
 	else if (notification == STATECHANGE_QUITNOW) {
 		if (m_quit != 2) {
 			SaveQueue(false);
-			SaveColumnSettings(options_, OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
+			SaveColumnSettings(OPTION_QUEUE_COLUMN_WIDTHS, OPTIONS_NUM, OPTIONS_NUM);
 		}
 	}
 }

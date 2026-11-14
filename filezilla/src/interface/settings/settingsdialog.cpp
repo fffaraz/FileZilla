@@ -4,7 +4,6 @@
 #include "optionspage_connection.h"
 #include "optionspage_connection_ftp.h"
 #include "optionspage_connection_active.h"
-#include "optionspage_connection_passive.h"
 #include "optionspage_ftpproxy.h"
 #include "optionspage_connection_sftp.h"
 #include "optionspage_filetype.h"
@@ -123,7 +122,6 @@ bool CSettingsDialog::LoadPages()
 #if ENABLE_FTP
 	AddPage(_("FTP"), new COptionsPageConnectionFTP, 1);
 	AddPage(_("Active mode"), new COptionsPageConnectionActive, 2);
-	AddPage(_("Passive mode"), new COptionsPageConnectionPassive, 2);
 	AddPage(_("FTP Proxy"), new COptionsPageFtpProxy, 2);
 #endif
 #if ENABLE_SFTP

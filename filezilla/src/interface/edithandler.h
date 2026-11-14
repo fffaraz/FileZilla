@@ -12,7 +12,11 @@
 
 // Handles all aspects about remote file viewing/editing
 
+#if FZ_WINDOWS
+typedef std::map<std::wstring, std::vector<std::wstring>, fz::less_insensitive_ascii> Associations;
+#else
 typedef std::map<std::wstring, std::vector<std::wstring>, std::less<>> Associations;
+#endif
 
 Associations LoadAssociations();
 void SaveAssociations(Associations const& assocs);

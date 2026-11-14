@@ -294,6 +294,11 @@ int CFtpLogonOpData::ParseResponse()
 		else {
 			CServerCapabilities::SetCapability(currentServer_, (opState == LOGON_AUTH_TLS) ? auth_tls_command : auth_ssl_command, yes);
 
+			if (!controlSocket_.receiveBuffer_.empty()) {
+				log(logmsg::error, _("Input buffer not empty"));
+				return FZ_REPLY_ERROR | FZ_REPLY_DISCONNECTED;
+			}
+
 			log(logmsg::status, _("Initializing TLS..."));
 
 			controlSocket_.tls_layer_ = std::make_unique<fz::tls_layer>(controlSocket_.event_loop_, &controlSocket_, *controlSocket_.active_layer_, &engine_.GetContext().GetTlsSystemTrustStore(), controlSocket_.logger_);
@@ -422,6 +427,15 @@ int CFtpLogonOpData::ParseResponse()
 	else if (opState == LOGON_PROT) {
 		if (code == 2 || code == 3) {
 			controlSocket_.m_protectDataChannel = true;
+		}
+		else {
+			if (currentServer_.GetExtraParameter("allow_insecure_plain_dataconnection") == L"1"sv) {
+				log(logmsg::status, _("PROT P not supported. Using insecure plain data connection."));
+			}
+			else {
+				log(logmsg::error, _("PROT P is required when using FTP over TLS, otherwise your data would remain unprotected."));
+				return FZ_REPLY_CRITICALERROR;
+			}
 		}
 	}
 	else if (opState == LOGON_CUSTOMCOMMANDS) {

@@ -57,7 +57,7 @@ std::wstring GetKnownFolder(KNOWNFOLDERID const& id)
 
 	std::wstring ret;
 	wchar_t* out{};
-	if (SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, 0, &out) == S_OK) {
+	if (SHGetKnownFolderPath(id, 0, 0, &out) == S_OK) {
 		ret = out;
 		CoTaskMemFree(out);
 	}
@@ -512,12 +512,14 @@ std::string ShellUnescape(std::string const& path)
 {
 	std::string ret;
 
-	wordexp_t p;
+	wordexp_t p{};
 	int res = wordexp(path.c_str(), &p, WRDE_NOCMD);
 	if (!res && p.we_wordc == 1 && p.we_wordv) {
 		ret = p.we_wordv[0];
 	}
-	wordfree(&p);
+	if (!res || res == WRDE_NOSPACE) {
+		wordfree(&p);
+	}
 
 	return ret;
 }

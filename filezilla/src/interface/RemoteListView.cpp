@@ -342,7 +342,7 @@ CRemoteListView::CRemoteListView(CView* pParent, CState& state, CQueueView* pQue
 	AddColumn(_("Last modified"), wxLIST_FORMAT_LEFT, widths[3]);
 	AddColumn(_("Permissions"), wxLIST_FORMAT_LEFT, widths[4]);
 	AddColumn(_("Owner/Group"), wxLIST_FORMAT_LEFT, widths[5]);
-	LoadColumnSettings(options_, OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
+	LoadColumnSettings(OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
 
 	m_dirIcon = GetIconIndex(iconType::dir);
 	SetImageList(GetSystemImageList(), wxIMAGE_LIST_SMALL);
@@ -973,7 +973,12 @@ void CRemoteListView::OnItemActivated(wxListEvent &event)
 
 			std::wstring localFile = CQueueView::ReplaceInvalidCharacters(options_, name);
 			if (m_pDirectoryListing->path.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
-				localFile = StripVMSRevision(localFile);
+				auto stripped = StripVMSRevision(localFile);
+				if (!stripped) {
+					wxBell();
+					return;
+				}
+				localFile = std::move(*stripped);
 			}
 			m_pQueue->QueueFile(queue_only, true, name,
 				(name == localFile) ? std::wstring() : localFile,
@@ -1275,7 +1280,11 @@ void CRemoteListView::TransferSelectedFiles(const CLocalPath& local_parent, bool
 		else {
 			std::wstring localFile = CQueueView::ReplaceInvalidCharacters(options_, name);
 			if (m_pDirectoryListing->path.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
-				localFile = StripVMSRevision(localFile);
+				auto stripped = StripVMSRevision(localFile);
+				if (!stripped) {
+					continue;
+				}
+				localFile = std::move(*stripped);
 			}
 			m_pQueue->QueueFile(queue_only, true,
 				name, (name == localFile) ? std::wstring() : localFile,
@@ -2526,7 +2535,8 @@ wxString CRemoteListView::GetItemText(int item, unsigned int column)
 		if (data.fileType.empty()) {
 			const CDirentry& entry = (*m_pDirectoryListing)[index];
 			if (m_pDirectoryListing->path.GetType() == VMS) {
-				data.fileType = GetType(StripVMSRevision(entry.name), entry.is_dir());
+				auto stripped = StripVMSRevision(entry.name);
+				data.fileType = GetType(stripped ? *stripped : entry.name, entry.is_dir());
 			}
 			else {
 				data.fileType = GetType(entry.name, entry.is_dir());
@@ -2624,7 +2634,11 @@ void CRemoteListView::LinkIsNotDir(CServerPath const& path, std::wstring const& 
 	if (m_pLinkResolveState && m_pLinkResolveState->remote_path == path && m_pLinkResolveState->link == link) {
 		std::wstring localFile = CQueueView::ReplaceInvalidCharacters(options_, link);
 		if (m_pDirectoryListing->path.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
-			localFile = StripVMSRevision(localFile);
+			auto stripped = StripVMSRevision(localFile);
+			if (!stripped) {
+				return;
+			}
+			localFile = std::move(*stripped);
 		}
 		m_pQueue->QueueFile(false, true,
 			link, (link != localFile) ? localFile : std::wstring(),

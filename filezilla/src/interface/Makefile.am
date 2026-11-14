@@ -261,14 +261,12 @@ if ENABLE_FTP
 filezilla_SOURCES += \
 		settings/optionspage_connection_active.cpp \
 		settings/optionspage_connection_ftp.cpp \
-		settings/optionspage_connection_passive.cpp \
 		settings/optionspage_ftpproxy.cpp \
 		settings/optionspage_filetype.cpp
 
 noinst_HEADERS += \
 		settings/optionspage_connection_active.h \
 		settings/optionspage_connection_ftp.h \
-		settings/optionspage_connection_passive.h \
 		settings/optionspage_ftpproxy.h \
 		settings/optionspage_filetype.h
 endif

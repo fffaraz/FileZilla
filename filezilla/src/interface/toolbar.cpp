@@ -28,11 +28,11 @@ CToolBar::CToolBar(CMainFrame& mainFrame, COptions& options)
 	// These days, OS X only knows one hardcoded toolbar size
 	iconSize_ = wxSize(32, 32);
 	if (wxGetApp().GetTopWindow()) {
-                double scale = wxGetApp().GetTopWindow()->GetContentScaleFactor();
-                iconSize_.Scale(scale, scale);
+		double scale = wxGetApp().GetTopWindow()->GetContentScaleFactor();
+		iconSize_.Scale(scale, scale);
 	}
 #else
-	iconSize_ = CThemeProvider::GetIconSize(iconSizeSmall, true);
+	iconSize_ = CThemeProvider::GetUserScaledIconSize(options_, IconSize::small);
 	SetToolBitmapSize(iconSize_);
 #endif
 
@@ -82,8 +82,20 @@ void CToolBar::MakeTool(char const* id, std::wstring const& art, wxString const&
 		return;
 	}
 
+#if FZ_MAC
+	size_t border = 2;
+	wxSize scaled = iconSize_;
+	scaled.DecBy(border * 2);
+	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(art, wxART_TOOLBAR, scaled, true);
+	wxImage canvas(iconSize_);
+	canvas.InitAlpha();
+	memset(canvas.GetAlpha(), 0, iconSize_.x * iconSize_.y);
+	canvas.Paste(bmp.ConvertToImage(), border, border);
+	wxToolBar::AddTool(XRCID(id), wxString(), canvas, wxBitmap(), type, tooltip, help);
+#else
 	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(art, wxART_TOOLBAR, iconSize_, true);
 	wxToolBar::AddTool(XRCID(id), wxString(), bmp, wxBitmap(), type, tooltip, help);
+#endif
 }
 
 void CToolBar::MakeTools()

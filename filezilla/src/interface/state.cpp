@@ -249,6 +249,11 @@ CState::~CState()
 	}
 }
 
+COptionsBase & CState::GetOptions()
+{
+	return m_mainFrame.GetOptions();
+}
+
 CLocalPath CState::GetLocalDir() const
 {
 	return m_localDir;

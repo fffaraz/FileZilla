@@ -178,7 +178,7 @@ void CNewBookmarkDialog::OnOK()
 			}
 		}
 
-		CSiteManager::AddBookmark(m_site_path, name, local_path, remote_path, sync, comparison);
+		CSiteManager::AddBookmark(options_, m_site_path, name, local_path, remote_path, sync, comparison);
 
 		EndModal(wxID_OK);
 	}
@@ -346,11 +346,11 @@ int CBookmarksDialog::Run()
 
 	buttons->Realize();
 
-	wxSize s = CThemeProvider::GetIconSize(iconSizeSmall);
+	wxSize s = CThemeProvider::GetIconSize(IconSize::small);
 	wxImageList* pImageList = new wxImageList(s.x, s.y);
 
-	pImageList->Add(wxArtProvider::GetBitmap(_T("ART_FOLDER"), wxART_OTHER, CThemeProvider::GetIconSize(iconSizeSmall)));
-	pImageList->Add(wxArtProvider::GetBitmap(_T("ART_BOOKMARK"), wxART_OTHER, CThemeProvider::GetIconSize(iconSizeSmall)));
+	pImageList->Add(wxArtProvider::GetBitmap(_T("ART_FOLDER"), wxART_OTHER, CThemeProvider::GetIconSize(IconSize::small)));
+	pImageList->Add(wxArtProvider::GetBitmap(_T("ART_BOOKMARK"), wxART_OTHER, CThemeProvider::GetIconSize(IconSize::small)));
 
 	tree_->AssignImageList(pImageList);
 
@@ -444,7 +444,7 @@ void CBookmarksDialog::SaveSiteSpecificBookmarks()
 		return;
 	}
 
-	if (!CSiteManager::ClearBookmarks(m_site_path)) {
+	if (!CSiteManager::ClearBookmarks(options_, m_site_path)) {
 		return;
 	}
 
@@ -453,7 +453,7 @@ void CBookmarksDialog::SaveSiteSpecificBookmarks()
 		CBookmarkItemData *data = (CBookmarkItemData *)tree_->GetItemData(child);
 		wxASSERT(data);
 
-		if (!CSiteManager::AddBookmark(m_site_path, tree_->GetItemText(child), data->m_local_dir, data->m_remote_dir, data->m_sync, data->m_comparison)) {
+		if (!CSiteManager::AddBookmark(options_, m_site_path, tree_->GetItemText(child), data->m_local_dir, data->m_remote_dir, data->m_sync, data->m_comparison)) {
 			return;
 		}
 	}

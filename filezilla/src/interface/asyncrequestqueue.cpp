@@ -41,6 +41,10 @@ CAsyncRequestQueue::~CAsyncRequestQueue()
 
 bool CAsyncRequestQueue::ProcessDefaults(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> & pNotification)
 {
+	if (!pNotification->IsPending()) {
+		return true;
+	}
+
 	// Process notifications, see if we have defaults not requirering user interaction.
 	switch (pNotification->GetRequestID())
 	{
@@ -171,12 +175,10 @@ bool CAsyncRequestQueue::ProcessDefaults(CFileZillaEngine *pEngine, std::unique_
 	return false;
 }
 
-bool CAsyncRequestQueue::AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> && pNotification)
+void CAsyncRequestQueue::AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> && pNotification)
 {
-	ClearPending(pEngine);
-
 	if (ProcessDefaults(pEngine, pNotification)) {
-		return false;
+		return;
 	}
 
 	m_requestList.emplace_back(pEngine, std::move(pNotification));
@@ -184,8 +186,6 @@ bool CAsyncRequestQueue::AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<C
 	if (m_requestList.size() == 1) {
 		QueueEvent(new wxCommandEvent(fzEVT_PROCESSASYNCREQUESTQUEUE));
 	}
-
-	return true;
 }
 
 bool CAsyncRequestQueue::ProcessNextRequest()

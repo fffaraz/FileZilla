@@ -91,6 +91,18 @@ int CSftpFileTransferOpData::Send()
 			logstr += localFile;
 
 			flags = fz::ssh::sftp::file_flags::SSH_FXF_READ;
+
+			if (!controlSocket_.can_use_socket_rtt_) {
+				measure_rtt_ = true;
+				if (!controlSocket_.awaiting_pong_) {
+					if (fz::monotonic_clock::now() - controlSocket_.last_rtt_update_ > fz::duration::from_seconds(1)) {
+						controlSocket_.ping();
+					}
+					else {
+						ping_timer_ = add_timer(controlSocket_.last_rtt_update_ + fz::duration::from_seconds(1));
+					}
+				}
+			}
 		}
 		else {
 			engine_.transfer_status_.Init(localFileSize_, resume_ ? remoteFileSize_ : 0, false);
@@ -338,7 +350,6 @@ CSftpOpData::continuation CSftpFileTransferOpData::process_handle(std::string_vi
 		else {
 			request_offset_ = 0;
 		}
-		response_offset_ = request_offset_;
 
 		writer_ = controlSocket_.OpenWriter(writer_factory_, request_offset_, true);
 		if (!writer_) {
@@ -357,7 +368,7 @@ CSftpOpData::continuation CSftpFileTransferOpData::process_handle(std::string_vi
 	else {
 #ifdef FZ_WINDOWS
 		// For send buffer tuning
-		add_timer(fz::duration::from_seconds(1), false);
+		sendbuf_timer_ = add_timer(fz::duration::from_seconds(1), false);
 #endif
 
 		send_event<fz::ssh::sftp::outbuf_empty_event>(nullptr);
@@ -368,44 +379,12 @@ CSftpOpData::continuation CSftpFileTransferOpData::process_handle(std::string_vi
 
 void CSftpFileTransferOpData::request_data()
 {
-	if (rtt_.requested_ && response_offset_ == rtt_.offset_) {
-		// We've got the RTT
-		auto ms = (fz::monotonic_clock::now() - rtt_.requested_).get_milliseconds();
-		rtt_.requested_ = fz::monotonic_clock();
-
-		if (ms < 1) {
-			ms = 1;
-		}
-
-		// Aim for 500ms between queuing the request and the reply
-		size_t ideal_pending = max_pending_ * 500 / ms;
-
-		if (ideal_pending > max_pending_) {
-			size_t divisor = (ideal_pending > max_pending_ * 2) ? 2 : 8;
-			max_pending_ += max_pending_ / divisor;
-			if (max_pending_ > 1024*16) {
-				max_pending_ = 1024*16;
-			}
-		}
-		else if (ideal_pending < max_pending_) {
-			size_t divisor = (ideal_pending * 2 < max_pending_) ? 2 : 8;
-			max_pending_ -= max_pending_ / divisor;
-			if (max_pending_ < initial_max_pending_) {
-				max_pending_ = initial_max_pending_;
-			}
-		}
-	}
+	update_max_pending();
 
 	size_t i{};
-	for (i = 0; i < 2 && sftp_->pending_requests() < max_pending_ && sftp_->can_send_packets(); ++i) {
+	for (i = 0; i < 2 && sftp_->pending_requests() < queue_size_ && sftp_->can_send_packets(); ++i) {
 		sftp_->read(this, handle_, request_offset_, blocksize_);
 		request_offset_ += blocksize_;
-	}
-
-	if (i && sftp_->pending_requests() == max_pending_ && !rtt_.requested_) {
-		// Begin RTT measurement at full capacity
-		rtt_.requested_ = fz::monotonic_clock::now();
-		rtt_.offset_ = request_offset_;
 	}
 }
 
@@ -429,8 +408,7 @@ CSftpOpData::continuation CSftpFileTransferOpData::process_data(std::string_view
 	}
 
 	buffer_->append(data);
-
-	response_offset_ += data.size();
+	goodput_.amount_ += data.size();
 
 	if (buffer_->capacity() - buffer_->size() < blocksize_) {
 		auto r = get_next_download_buffer();
@@ -572,15 +550,111 @@ void CSftpFileTransferOpData::on_can_send(fz::ssh::sftp::sftp_client*)
 	resend_current_event();
 }
 
-void CSftpFileTransferOpData::OnTimer(fz::timer_id)
+void CSftpFileTransferOpData::OnTimer(fz::timer_id id)
 {
+	if (id == ping_timer_) {
+		ping_timer_ = 0;
+		controlSocket_.ping();
+	}
 #if FZ_WINDOWS
-	auto *socket = controlSocket_.socket_.get();
-	if (socket && socket->is_connected()) {
-		int const ideal_send_buffer = socket->ideal_send_buffer_size();
-		if (ideal_send_buffer != -1) {
-			socket->set_buffer_sizes(-1, ideal_send_buffer);
+	else if (id == sendbuf_timer_) {
+		auto *socket = controlSocket_.socket_.get();
+		if (socket && socket->is_connected()) {
+			int const ideal_send_buffer = socket->ideal_send_buffer_size();
+			if (ideal_send_buffer != -1) {
+				socket->set_buffer_sizes(-1, ideal_send_buffer);
+			}
 		}
 	}
 #endif
 }
+
+void CSftpFileTransferOpData::update_max_pending()
+{
+	auto const now = fz::monotonic_clock::now();
+	if (!goodput_.since_) {
+		goodput_.since_ = now;
+		return;
+	}
+	auto elapsed = now - goodput_.since_;
+	if (elapsed < fz::duration::from_seconds(1)) {
+		return;
+	}
+
+	size_t constexpr max_queue_size = 1024 * 16;
+
+	// Get bytes/s
+	size_t goodput = goodput_.amount_ * 1000 / elapsed.get_milliseconds();
+
+	static auto const abnormal_srtt_threshold = fz::duration::from_milliseconds(500);
+
+	auto const probe_increment = [&]{
+		best_goodput_ = goodput;
+		previous_best_queue_size_ = queue_size_;
+		queue_size_ += std::min(max_queue_size - queue_size_, std::max(queue_size_ / 8, size_t(8)));
+	};
+
+	if (controlSocket_.can_use_socket_rtt_) {
+		auto rtt = controlSocket_.socket_->srtt();
+		if (rtt) {
+			controlSocket_.srtt_ = std::max(fz::duration::from_milliseconds(1), *rtt);
+		}
+	}
+
+	size_t ideal_queue_size{};
+	if (mode_ != mode::steady) {
+		auto const enter_steadystate = [&]{
+			failed_probes_ = 0;
+			queue_size_ = previous_best_queue_size_;
+			mode_ = mode::steady;
+			last_probe_ = fz::monotonic_clock::now();
+		};
+
+		if (controlSocket_.srtt_ >= abnormal_srtt_threshold) {
+			enter_steadystate();
+		}
+		else {
+			unsigned const max_failures = ((mode_ == mode::startup) ? 1 : 0);
+
+			if (goodput >= best_goodput_ + best_goodput_ / 16) {
+				failed_probes_ = 0;
+				mode_ = mode::startup;
+				probe_increment();
+			}
+			else if (++failed_probes_ > max_failures) {
+				enter_steadystate();
+			}
+		}
+	}
+	else {
+		bool const should_probe =
+			controlSocket_.srtt_ < abnormal_srtt_threshold &&
+			(now - last_probe_) >= fz::duration::from_seconds(30);
+
+		if (should_probe) {
+			mode_ = mode::probe;
+			probe_increment();
+		}
+		else {
+			ideal_queue_size = goodput_.amount_ * controlSocket_.srtt_.get_milliseconds() / elapsed.get_milliseconds() / blocksize_;
+
+			// Always add a bit extra to account for the various buffers at each layer of the processing pipeline on either side of the connection
+			size_t target_queue_size = std::min(ideal_queue_size + 8, max_queue_size);
+
+			queue_size_ = (queue_size_ * 7 + target_queue_size) / 8;
+		}
+	}
+
+	log(fz::logmsg::debug_info, "Updated queue size to %u pending requests. Ideal: %u, Mode: %u, srtt: %ums, goodput: %uKiB/s"sv, queue_size_, ideal_queue_size, mode_, controlSocket_.srtt_.get_milliseconds(), goodput / 1024);
+
+	goodput_.amount_ = 0;
+	goodput_.since_ = now;
+}
+
+void CSftpFileTransferOpData::on_pong()
+{
+	if (measure_rtt_ && !ping_timer_) {
+		ping_timer_ = add_timer(fz::monotonic_clock::now() + fz::duration::from_seconds(1));
+	}
+}
+

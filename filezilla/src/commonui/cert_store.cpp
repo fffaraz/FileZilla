@@ -8,10 +8,14 @@ bool cert_store::IsTrusted(fz::tls_session_info const& info)
 		// These certs are never trusted.
 		return false;
 	}
+	auto const& certs = info.get_certificates();
+	if (certs.empty()) {
+		return false;
+	}
 
 	LoadTrustedCerts();
 
-	fz::x509_certificate cert = info.get_certificates()[0];
+	fz::x509_certificate const& cert = certs.front();
 
 	return IsTrusted(info.get_host(), info.get_port(), cert.get_raw_data(), false, !info.mismatched_hostname());
 }
@@ -141,7 +145,11 @@ bool cert_store::DoSetSessionResumptionSupport(std::string const& host, unsigned
 
 void cert_store::SetTrusted(fz::tls_session_info const& info, bool permanent, bool trustAllHostnames)
 {
-	fz::x509_certificate const& certificate = info.get_certificates()[0];
+	auto const& certs = info.get_certificates();
+	if (certs.empty()) {
+		return;
+	}
+	fz::x509_certificate const& certificate = certs.front();
 
 	t_certData cert;
 	cert.host = info.get_host();

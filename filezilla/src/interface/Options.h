@@ -102,8 +102,6 @@ public:
 	COptions(COptions const&) = delete;
 	COptions& operator=(COptions const&) = delete;
 
-	static COptions* Get();
-
 	CLocalPath GetCacheDirectory();
 
 	void Save(bool processChanged = true);
@@ -111,7 +109,6 @@ public:
 protected:
 	virtual void notify_changed() override;
 	virtual void on_dirty() override;
-	static COptions* m_theOptions;
 
 	wxTimer m_save_timer;
 

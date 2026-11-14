@@ -19,7 +19,7 @@ CAsyncRequestNotification::CAsyncRequestNotification(RequestId id)
 
 bool CAsyncRequestNotification::IsPending() const
 {
-	return requestNumber_.lock().operator bool();
+	return !requestHandle_.expired();
 }
 
 CInteractiveLoginNotification::CInteractiveLoginNotification(CServer const& server, ServerHandle const& handle)

@@ -74,7 +74,7 @@ void CPowerManagement::DoSetBusy()
 		return;
 	}
 
-	if (!COptions::Get()->get_int(OPTION_PREVENT_IDLESLEEP)) {
+	if (!m_pMainFrame->GetOptions().get_int(OPTION_PREVENT_IDLESLEEP)) {
 		return;
 	}
 

@@ -29,23 +29,23 @@ public:
 	// .. or does not exceed the given maximum length.
 	int WrapRecursive(wxWindow* wnd, wxSizer* sizer, int max);
 
-	// Find all wxStaticText controls in the window and unwrap them
-	bool UnwrapRecursive(wxWindow* wnd, wxSizer* sizer);
-
 	// Wrap the given text so its length in pixels does not exceed maxLength
 	bool WrapText(wxWindow* parent, wxString &text, unsigned long maxLength);
 	bool WrapTextChinese(wxWindow* parent, wxString &text, unsigned long maxLength);
 	bool WrapText(wxWindow* parent, int id, unsigned long maxLength);
-	wxString UnwrapText(const wxString& text);
 
-	int GetWidthFromCache(const char* name);
+	int GetWidthFromCache(wxWindow* w, const char* name);
 
 	void CheckLanguage();
 
-protected:
+private:
+	// Find all wxStaticText controls in the window and unwrap them
+	bool UnwrapRecursive(wxWindow* wnd, wxSizer* sizer);
+	wxString UnwrapText(const wxString& text);
+
 	void UnwrapRecursive_Wrapped(std::vector<int> const& wrapped, std::vector<wxWindow*> &windows, bool remove_fitting = false);
 
-	void SetWidthToCache(const char* name, int width);
+	void SetWidthToCache(wxWindow* w, const char* name, int width);
 
 	std::map<wxChar, unsigned int> m_charWidths;
 

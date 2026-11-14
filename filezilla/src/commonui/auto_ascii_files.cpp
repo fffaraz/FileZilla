@@ -61,7 +61,11 @@ bool CAutoAsciiFiles::TransferRemoteAsAscii(COptionsBase& options, std::wstring 
 	}
 
 	if (server_type == VMS) {
-		return TransferRemoteAsAscii(options, StripVMSRevision(remote_file), UNIX);
+		auto stripped = StripVMSRevision(remote_file);
+		if (!stripped) {
+			return false;
+		}
+		return TransferRemoteAsAscii(options, *stripped, UNIX);
 	}
 
 	if (!remote_file.empty() && remote_file[0] == '.') {

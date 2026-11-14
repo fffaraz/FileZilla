@@ -49,7 +49,6 @@ namespace server_table_column_names
 		type,
 		logontype,
 		timezone_offset,
-		transfer_mode,
 		max_connections,
 		encoding,
 		bypass_proxy,
@@ -72,7 +71,6 @@ _column server_table_columns[] = {
 	{ "type", Column_type::integer, 0 },
 	{ "logontype", Column_type::integer, 0 },
 	{ "timezone_offset", Column_type::integer, 0 },
-	{ "transfer_mode", Column_type::text, 0 },
 	{ "max_connections", Column_type::integer, 0 },
 	{ "encoding", Column_type::text, 0 },
 	{ "bypass_proxy", Column_type::integer, 0 },
@@ -308,10 +306,11 @@ bool CQueueStorage::Impl::MigrateSchema()
 	}
 
 	int version = 0;
+	int constexpr current_ver = 9;
 	bool ret = sqlite3_exec(db_, "PRAGMA user_version", int_callback, &version, 0) == SQLITE_OK;
 
 	if (ret) {
-		if (version > 8) {
+		if (version > current_ver) {
 			ret = false;
 		}
 		else if (version > 0) {
@@ -354,9 +353,24 @@ bool CQueueStorage::Impl::MigrateSchema()
 			if (ret && version < 8) {
 				ret = sqlite3_exec(db_, "ALTER TABLE files ADD COLUMN persistent_state BLOB DEFAULT NULL", 0, 0, 0) == SQLITE_OK;
 			}
+			if (ret && version < 9) {
+				ret = sqlite3_exec(
+					db_,
+					"UPDATE servers "
+					"SET parameters = CASE "
+					"  WHEN parameters IS NULL OR parameters = '' "
+					"    THEN 'data_mode_override=' || transfer_mode "
+					"  ELSE parameters || '&data_mode_override=' || transfer_mode "
+					"END "
+					"WHERE transfer_mode IN ('active', 'passive')",
+					nullptr, nullptr, nullptr
+				) == SQLITE_OK;
+				ret &= sqlite3_exec(db_, "ALTER TABLE servers DROP COLUMN transfer_mode", 0, 0, 0) == SQLITE_OK;
+			}
+
 		}
-		if (ret && version != 8) {
-			ret = sqlite3_exec(db_, "PRAGMA user_version = 8", 0, 0, 0) == SQLITE_OK;
+		if (ret && version != current_ver) {
+			ret = sqlite3_exec(db_, fz::sprintf("PRAGMA user_version = %u", current_ver).c_str(), 0, 0, 0) == SQLITE_OK;
 		}
 	}
 
@@ -740,19 +754,6 @@ bool CQueueStorage::Impl::SaveServer(CServerItem const& item)
 	}
 
 	Bind(insertServerQuery_, server_table_column_names::timezone_offset, site.server.GetTimezoneOffset());
-
-	switch (site.server.GetPasvMode())
-	{
-	case MODE_PASSIVE:
-		Bind(insertServerQuery_, server_table_column_names::transfer_mode, _T("passive"));
-		break;
-	case MODE_ACTIVE:
-		Bind(insertServerQuery_, server_table_column_names::transfer_mode, _T("active"));
-		break;
-	default:
-		Bind(insertServerQuery_, server_table_column_names::transfer_mode, _T("default"));
-		break;
-	}
 	Bind(insertServerQuery_, server_table_column_names::max_connections, site.connection_limit_);
 
 	switch (site.server.GetEncodingType())
@@ -1100,17 +1101,6 @@ int64_t CQueueStorage::Impl::ParseServerFromRow(Site & site)
 	int timezoneOffset = GetColumnInt(selectServersQuery_, server_table_column_names::timezone_offset);
 	if (!site.server.SetTimezoneOffset(timezoneOffset)) {
 		return INVALID_DATA;
-	}
-
-	std::wstring pasvMode = GetColumnText(selectServersQuery_, server_table_column_names::transfer_mode);
-	if (pasvMode == _T("passive")) {
-		site.server.SetPasvMode(MODE_PASSIVE);
-	}
-	else if (pasvMode == _T("active")) {
-		site.server.SetPasvMode(MODE_ACTIVE);
-	}
-	else {
-		site.server.SetPasvMode(MODE_DEFAULT);
 	}
 
 	int64_t maximumMultipleConnections = GetColumnInt64(selectServersQuery_, server_table_column_names::max_connections);

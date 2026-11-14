@@ -4,12 +4,14 @@
 #include "xmlfunctions.h"
 #include "buildinfo.h"
 #include "Options.h"
+#include "themeprovider.h"
 
 #include "../commonui/ipcmutex.h"
 
 #include <libfilezilla/file.hpp>
 #include <libfilezilla/local_filesys.hpp>
 
+#include <wx/display.h>
 #include <wx/statbox.h>
 #include <wx/wizard.h>
 
@@ -195,7 +197,7 @@ bool CWrapEngine::WrapText(wxWindow* parent, wxString& text, unsigned long maxLe
 	This function wraps the given string so that it's width in pixels does
 	not exceed maxLength.
 	In the general case, wrapping is done on word boundaries. Thus we scan the
-	string for spaces, measuer the length of the words and wrap if line becomes
+	string for spaces, measure the length of the words and wrap if line becomes
 	too long.
 	It has to be done wordwise, as with some languages/fonts, the width in
 	pixels of a line is smaller than the sum of the widths of every character.
@@ -548,6 +550,10 @@ void CWrapEngine::UnwrapRecursive_Wrapped(std::vector<int> const& wrapped, std::
 
 bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, const char* name, wxSize canvas, wxSize const& minRequestedSize)
 {
+	if (windows.empty()) {
+		return false;
+	}
+
 #ifdef __WXMAC__
 	const int offset = 6;
 #elif defined(__WXGTK__)
@@ -556,12 +562,13 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 	const int offset = 0;
 #endif
 
-	int maxWidth = GetWidthFromCache(name);
+	int maxWidth = GetWidthFromCache(windows.front(), name);
 	if (maxWidth) {
 		for (auto iter = windows.begin(); iter != windows.end(); ++iter) {
 			wxSizer* pSizer = (*iter)->GetSizer();
-			if (!pSizer)
+			if (!pSizer) {
 				continue;
+			}
 
 			pSizer->Layout();
 
@@ -603,10 +610,12 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 
 	int max = size.GetWidth();
 	int min = wxMin(size.GetWidth(), size.GetHeight());
-	if (ratio < 0)
+	if (ratio < 0) {
 		min = (int)(min * ratio);
-	if (min > canvas.x)
+	}
+	if (min > canvas.x) {
 		min -= canvas.x;
+	}
 	int desiredWidth = (min + max) / 2;
 	int actualWidth = size.GetWidth();
 
@@ -627,15 +636,18 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 		for (auto const& window : windows) {
 			wxSizer* pSizer = window->GetSizer();
 			res = WrapRecursive(window, pSizer, desiredWidth - offset);
-			if (res & wrap_didwrap)
+			if (res & wrap_didwrap) {
 				pSizer->Layout();
+			}
 			didwrap.push_back(res);
 			wxSize minSize = pSizer->GetMinSize();
-			if (minSize.x > desiredWidth)
+			if (minSize.x > desiredWidth) {
 				res |= wrap_failed;
+			}
 			size.IncTo(minSize);
-			if (res & wrap_failed)
+			if (res & wrap_failed) {
 				break;
+			}
 		}
 
 #if WRAPDEBUG > 0
@@ -647,8 +659,9 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 			UnwrapRecursive_Wrapped(didwrap, windows, true);
 
 			min = desiredWidth;
-			if (max - min < 5)
+			if (max - min < 5) {
 				break;
+			}
 
 			desiredWidth = (min + max) / 2;
 
@@ -672,10 +685,12 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 				bestWidth = std::max(desiredWidth, actualWidth);
 			}
 
-			if (min >= actualWidth)
+			if (min >= actualWidth) {
 				min = desiredWidth;
-			else
+			}
+			else {
 				min = actualWidth;
+			}
 		}
 		else if (newRatio > ratio) {
 			UnwrapRecursive_Wrapped(didwrap, windows);
@@ -684,8 +699,9 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 				bestWidth = std::max(desiredWidth, actualWidth);
 			}
 
-			if (max == actualWidth)
+			if (max == actualWidth) {
 				break;
+			}
 			max = std::max(desiredWidth, actualWidth);
 		}
 		else {
@@ -696,8 +712,9 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 			break;
 		}
 
-		if (max - min < 2)
+		if (max - min < 2) {
 			break;
+		}
 		desiredWidth = (min + max) / 2;
 	}
 #if WRAPDEBUG > 0
@@ -719,7 +736,7 @@ bool CWrapEngine::WrapRecursive(std::vector<wxWindow*>& windows, double ratio, c
 #endif
 	}
 
-	SetWidthToCache(name, bestWidth);
+	SetWidthToCache(all_windows.front(), name, bestWidth);
 
 	return true;
 }
@@ -830,7 +847,41 @@ bool CWrapEngine::UnwrapRecursive(wxWindow* wnd, wxSizer* sizer)
 	return true;
 }
 
-int CWrapEngine::GetWidthFromCache(const char* name)
+namespace {
+pugi::xml_node GetScreenElement(pugi::xml_node parent, wxWindow* w)
+{
+	int d = wxDisplay::GetFromWindow(w);
+	if (d == wxNOT_FOUND) {
+		return {};
+	}
+
+	wxDisplay display(d);
+	wxRect r = display.GetClientArea();
+
+	auto scale = static_cast<int>(CThemeProvider::GetUIScaleFactor() * 100);
+
+	for (auto s = parent.child("Screen"); s; s = s.next_sibling("Screen")) {
+		if (s.attribute("width").as_int() != r.width) {
+			continue;
+		}
+		if (s.attribute("height").as_int() != r.height) {
+			continue;
+		}
+		if (s.attribute("scale").as_int() != scale) {
+			continue;
+		}
+		return s;
+	}
+
+	auto s = parent.append_child("Screen");
+	s.append_attribute("width").set_value(r.width);
+	s.append_attribute("height").set_value(r.height);
+	s.append_attribute("scale").set_value(scale);
+	return s;
+}
+}
+
+int CWrapEngine::GetWidthFromCache(wxWindow* w, const char* name)
 {
 	if (!m_use_cache)
 		return 0;
@@ -844,7 +895,7 @@ int CWrapEngine::GetWidthFromCache(const char* name)
 
 	CXmlFile xml(wxGetApp().GetSettingsFile(_T("layout")));
 	auto root = xml.Load(true);
-	auto  element = root.child("Layout");
+	auto element = root.child("Layout");
 	if (!element) {
 		return 0;
 	}
@@ -859,7 +910,12 @@ int CWrapEngine::GetWidthFromCache(const char* name)
 		return 0;
 	}
 
-	auto dialog = FindElementWithAttribute(xLanguage, "Dialog", "name", name);
+	auto screen = GetScreenElement(xLanguage, w);
+	if (!screen) {
+		return 0;
+	}
+
+	auto dialog = FindElementWithAttribute(screen, "Dialog", "name", name);
 	if (!dialog) {
 		return 0;
 	}
@@ -869,7 +925,7 @@ int CWrapEngine::GetWidthFromCache(const char* name)
 	return value;
 }
 
-void CWrapEngine::SetWidthToCache(const char* name, int width)
+void CWrapEngine::SetWidthToCache(wxWindow* w, const char* name, int width)
 {
 	if (!m_use_cache) {
 		return;
@@ -900,10 +956,15 @@ void CWrapEngine::SetWidthToCache(const char* name, int width)
 		return;
 	}
 
-	auto dialog = FindElementWithAttribute(xLanguage, "Dialog", "name", name);
+	auto screen = GetScreenElement(xLanguage, w);
+	if (!screen) {
+		return;
+	}
+
+	auto dialog = FindElementWithAttribute(screen, "Dialog", "name", name);
 	if (!dialog) {
-		dialog = xLanguage.append_child("Dialog");
-		SetTextAttribute(dialog, "name", name);
+		dialog = screen.append_child("Dialog");
+		ensure_attribute(dialog, "name").set_value(name);
 	}
 
 	SetAttributeInt(dialog, "width", width);
@@ -977,74 +1038,21 @@ void CWrapEngine::LoadCache(COptionsBase & options)
 		layoutElement = document.append_child("Layout");
 	}
 
-	std::wstring const buildDate = CBuildInfo::GetBuildDateString();
-	if (GetTextAttribute(layoutElement, "Builddate") != buildDate) {
+	std::string const buildDate = fz::to_utf8(CBuildInfo::GetBuildDateString());
+	if (auto attr = ensure_attribute(layoutElement, "Builddate"); attr.value() != buildDate) {
 		cacheValid = false;
-		SetTextAttribute(layoutElement, "Builddate", buildDate);
+		attr.set_value(buildDate.c_str());
 	}
 
-	std::wstring const buildTime = CBuildInfo::GetBuildTimeString();
-	if (GetTextAttribute(layoutElement, "Buildtime") != buildTime) {
+	std::string const buildTime = fz::to_utf8(CBuildInfo::GetBuildTimeString());
+	if (auto attr = ensure_attribute(layoutElement, "Buildtime"); attr.value() != buildTime) {
 		cacheValid = false;
-		SetTextAttribute(layoutElement, "Buildtime", buildTime);
-	}
-
-	// Enumerate resource file names
-	// -----------------------------
-
-	auto resources = layoutElement.child("Resources");
-	if (!resources) {
-		resources = layoutElement.append_child("Resources");
-	}
-
-	CLocalPath resourceDir = wxGetApp().GetResourceDir();
-
-	if (resourceDir.empty()) {
-		cacheValid = false;
-		while (resources.remove_child("xrc")) {
-		}
-	}
-	else {
-		resourceDir.AddSegment(_T("xrc"));
-
-
-		fz::local_filesys dir;
-		if (dir.begin_find_files(fz::to_native(resourceDir.GetPath()))) {
-			fz::native_string name;
-			bool link{};
-			fz::local_filesys::type type{};
-			fz::datetime date;
-
-			fz::native_string const extension = fzS(fz::native_string::value_type, ".xrc");
-			while (dir.get_next_file(name, link, type, nullptr, &date, nullptr)) {
-				if (type != fz::local_filesys::file) {
-					continue;
-				}
-				if (!fz::ends_with(name, extension)) {
-					continue;
-				}
-
-				std::wstring const ticks = std::to_wstring(date.get_time_t());
-				auto resourceElement = FindElementWithAttribute(resources, "xrc", "file", fz::to_utf8(name).c_str());
-				if (!resourceElement) {
-					resourceElement = resources.append_child("xrc");
-					SetTextAttribute(resourceElement, "file", name);
-					SetTextAttribute(resourceElement, "date", ticks);
-					cacheValid = false;
-				}
-				else {
-					std::wstring xrcNodeDate = GetTextAttribute(resourceElement, "date");
-					if (xrcNodeDate.empty() || xrcNodeDate != ticks) {
-						cacheValid = false;
-						SetTextAttribute(resourceElement, "date", ticks);
-					}
-				}
-			}
-		}
+		attr.set_value(buildTime.c_str());
 	}
 
 	if (!cacheValid) {
-		// Clear all languages
+		// Clear all languages and resources
+		layoutElement.remove_child("Resources");
 		auto language = layoutElement.child("Language");
 		while (language) {
 			layoutElement.remove_child(language);
@@ -1057,11 +1065,12 @@ void CWrapEngine::LoadCache(COptionsBase & options)
 	if (language.empty()) {
 		language = L"default";
 	}
+	auto u8language = fz::to_utf8(language);
 
-	auto languageElement = FindElementWithAttribute(layoutElement, "Language", "id", fz::to_utf8(language).c_str());
+	auto languageElement = FindElementWithAttribute(layoutElement, "Language", "id", u8language.c_str());
 	if (!languageElement) {
 		languageElement = layoutElement.append_child("Language");
-		SetTextAttribute(languageElement, "id", language);
+		languageElement.append_attribute("id").set_value(u8language.c_str());
 	}
 
 	// Get static text font and measure sample text
@@ -1070,20 +1079,20 @@ void CWrapEngine::LoadCache(COptionsBase & options)
 	wxStaticText* pText = new wxStaticText(pFrame, -1, _T("foo"));
 
 	wxFont font = pText->GetFont();
-	std::wstring fontDesc = font.GetNativeFontInfoDesc().ToStdWstring();
+	std::string fontDesc = fz::to_utf8(font.GetNativeFontInfoDesc());
 
 	auto fontElement = languageElement.child("Font");
 	if (!fontElement) {
 		fontElement = languageElement.append_child("Font");
 	}
 
-	if (GetTextAttribute(fontElement, "font") != fontDesc) {
-		SetTextAttribute(fontElement, "font", fontDesc);
+	if (auto attr = ensure_attribute(fontElement, "font"); attr.value() != fontDesc) {
+		attr.set_value(fontDesc.c_str());
 		cacheValid = false;
 	}
 
 	int width, height;
-	pText->GetTextExtent(_T("Just some test string we are measuring. If width or heigh differ from the recorded values, invalidate cache. 1234567890MMWWII"), &width, &height);
+	pText->GetTextExtent(_T("Just some test string we are measuring. If width or height differ from the recorded values, invalidate cache. 1234567890MMWWII"), &width, &height);
 
 	if (GetAttributeInt(fontElement, "width") != width ||
 		GetAttributeInt(fontElement, "height") != height)
@@ -1114,9 +1123,9 @@ void CWrapEngine::LoadCache(COptionsBase & options)
 		}
 	}
 	if (!cacheValid) {
-		pugi::xml_node dialog;
-		while ((dialog = languageElement.child("Dialog"))) {
-			languageElement.remove_child(dialog);
+		pugi::xml_node screen;
+		while ((screen = languageElement.child("Screen"))) {
+			languageElement.remove_child(screen);
 		}
 	}
 

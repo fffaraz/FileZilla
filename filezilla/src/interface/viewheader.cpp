@@ -95,6 +95,10 @@ CViewHeader::CViewHeader(wxWindow* pParent, const wxString& label)
 	m_pComboBox->SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 	m_pLabel->SetBackgroundStyle(wxBG_STYLE_SYSTEM);
 
+#ifdef __WXMAC__
+	SetMacChromeBackground(*this);
+#endif
+
 	m_windowTinter = std::make_unique<CWindowTinter>(*m_pComboBox);
 }
 

@@ -2,11 +2,13 @@
 #include "options.h"
 #include "auto_ascii_files.h"
 
+using namespace std::literals;
+
 // Filenames on VMS systems have a revision suffix, e.g.
 // foo.bar;1
 // foo.bar;2
 // foo.bar;3
-std::wstring StripVMSRevision(std::wstring const& name)
+std::optional<std::wstring> StripVMSRevision(std::wstring const& name)
 {
 	size_t pos = name.rfind(';');
 	if (pos == std::wstring::npos || !pos) {
@@ -25,7 +27,13 @@ std::wstring StripVMSRevision(std::wstring const& name)
 		}
 	}
 
-	return name.substr(0, pos);
+	auto stripped = name.substr(0, pos);
+	if (stripped == L"."s || stripped == L".."s) {
+		return {};
+	}
+
+	return std::move(stripped);
+
 }
 
 transfer_flags GetTransferFlags(bool download, CServer const& server, COptionsBase& options, std::wstring const& sourceFile, CServerPath const& remotePath)

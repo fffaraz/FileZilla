@@ -4,6 +4,7 @@
 #include <wx/event.h>
 #include <wx/timer.h>
 
+class COptionsBase;
 class CLed final : public wxWindow
 {
 public:

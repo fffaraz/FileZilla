@@ -352,8 +352,8 @@ bool CEditHandler::AddFile(CEditHandler::fileType type, std::wstring const& loca
 	data.remoteFile = remoteFile;
 	data.remotePath = remotePath;
 	data.site = site;
-	
-	
+
+
 	if (type == local) {
 		bool const launched = LaunchEditor(local, data);
 
@@ -626,7 +626,7 @@ void CEditHandler::FinishTransfer(bool successful, std::wstring const& fileName,
 		}
 		break;
 	case download:
-		if (wxFileName::FileExists(iter->localFile)) {
+		if (successful && wxFileName::FileExists(iter->localFile)) {
 			iter->state = edit;
 			if (LaunchEditor(remote, *iter)) {
 				break;
@@ -677,10 +677,10 @@ bool CEditHandler::LaunchEditor(CEditHandler::fileType type, t_fileData& data)
 	}
 
 	auto cmd_with_args = GetAssociation((type == local) ? data.localFile : data.remoteFile);
-	if (cmd_with_args.empty() || !ProgramExists(cmd_with_args.front())) {
+	if (cmd_with_args.empty() || IsForbiddenAssociationProgram(cmd_with_args.front()) || !ProgramExists(cmd_with_args.front())) {
 		return false;
 	}
-	
+
 	return fz::spawn_detached_process(AssociationToCommand(cmd_with_args, data.localFile));
 }
 
@@ -809,7 +809,7 @@ int CEditHandler::DisplayChangeNotification(CEditHandler::fileType type, CEditHa
 
 	inner->Add(new wxStaticText(&dlg, -1, _("Server:")));
 	inner->Add(new wxStaticText(&dlg, -1, LabelEscape(data.site.Format(ServerFormat::with_user_and_optional_port))));
-	
+
 	inner->Add(new wxStaticText(&dlg, -1, _("Remote path:")));
 	inner->Add(new wxStaticText(&dlg, -1, LabelEscape(data.remotePath.GetPath())));
 
@@ -948,6 +948,9 @@ std::vector<std::wstring> CEditHandler::GetAssociation(std::wstring const& file)
 				ret = UnquoteCommand(std::wstring_view(command).substr(1));
 			}
 		}
+	}
+	if (!ret.empty() && IsForbiddenAssociationProgram(ret.front())) {
+		ret.clear();
 	}
 
 	return ret;
@@ -1382,7 +1385,7 @@ int CEditHandlerStatusDialog::ShowModal()
 
 	main->Add(new wxStaticText(this, -1, _("The &following files are currently being edited:")));
 
-	impl_->listCtrl_ = new wxListCtrlEx(this, -1, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
+	impl_->listCtrl_ = new wxListCtrlEx(impl_->options_, this, -1, wxDefaultPosition, wxDefaultSize, wxLC_REPORT);
 	impl_->listCtrl_->SetFocus();
 	main->Add(impl_->listCtrl_, lay.grow);
 	main->AddGrowableCol(0);
@@ -1469,7 +1472,7 @@ int CEditHandlerStatusDialog::ShowModal()
 
 	auto inner = lay.createGrid(2, 2);
 	main->Add(inner, lay.halign);
-	
+
 	impl_->unedit_ = new wxButton(this, -1, _("&Unedit"));
 	impl_->unedit_->Bind(wxEVT_BUTTON, [this](wxCommandEvent const&) { OnUnedit(); });
 	inner->Add(impl_->unedit_, lay.valigng);
@@ -1781,7 +1784,7 @@ bool CNewAssociationDialog::Run(std::wstring const& file)
 	auto row = lay.createFlex(2);
 	row->AddGrowableCol(0);
 	main->Add(row, 0, wxLEFT|wxGROW, lay.indent);
-	
+
 	auto rules = new wxHyperlinkCtrl(this, -1, _("Quoting rules"), wxString());
 	main->Add(rules, 0, wxLEFT, lay.indent);
 	rules->Bind(wxEVT_HYPERLINK, [this](wxHyperlinkEvent const&) { ShowQuotingRules(this); });
@@ -1844,6 +1847,11 @@ void CNewAssociationDialog::OnOK()
 		if (cmd_with_args.empty()) {
 			impl_->custom_->SetFocus();
 			wxMessageBoxEx(_("You need to enter a properly quoted command."), _("Cannot set file association"), wxICON_EXCLAMATION);
+			return;
+		}
+		if (IsForbiddenAssociationProgram(cmd_with_args.front())) {
+			impl_->custom_->SetFocus();
+			wxMessageBoxEx(_("cmd.exe and powershell.exe cannot be used as editors."), _("Cannot set file association"), wxICON_EXCLAMATION, this);
 			return;
 		}
 		if (!ProgramExists(cmd_with_args.front())) {

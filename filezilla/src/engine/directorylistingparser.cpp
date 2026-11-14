@@ -632,17 +632,17 @@ done2:
 	m_fileList.clear();
 	m_fileListOnly = false;
 
-	// Don't add . or ..
-	if (entry.name == L"." || entry.name == L"..") {
-		return true;
-	}
-
 	if (serverType == VMS && entry.is_dir()) {
 		// Trim version information from directories
 		auto pos = entry.name.rfind(';');
 		if (pos != std::wstring::npos && pos > 0) {
 			entry.name = entry.name.substr(0, pos);
 		}
+	}
+
+	// Don't add . or ..
+	if (entry.name == L"." || entry.name == L"..") {
+		return true;
 	}
 
 	{

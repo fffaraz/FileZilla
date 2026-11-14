@@ -50,14 +50,14 @@ CListSearchPanel::CListSearchPanel(wxWindow* parent, wxWindow* pListView, CState
 	int const editHeight = m_textCtrl->GetSize().GetHeight();
 
 	// options button
-	wxBitmap dropdownBmp = CThemeProvider::Get()->CreateBitmap(L"ART_DROPDOWN", wxART_OTHER, CThemeProvider::GetIconSize(iconSizeTiny));
+	wxBitmap dropdownBmp = CThemeProvider::Get()->CreateBitmap(L"ART_DROPDOWN", wxART_OTHER, IconSize::tiny);
 	wxSize bs(editHeight, editHeight);
 	m_optionsButton = new wxBitmapButton(this, ID_OPTIONS_MENU_BUTTON, dropdownBmp, wxDefaultPosition, bs);
 	m_optionsButton->SetToolTip(_("Options"));
 	sizer->Add(m_optionsButton, 0, wxTOP | wxBOTTOM | wxRIGHT, 5);
 
 	// close button
-	wxBitmap closeBmp = CThemeProvider::Get()->CreateBitmap(L"ART_CLOSE", wxART_OTHER, CThemeProvider::GetIconSize(iconSizeTiny));
+	wxBitmap closeBmp = CThemeProvider::Get()->CreateBitmap(L"ART_CLOSE", wxART_OTHER, IconSize::tiny);
 	auto closeButton = new wxBitmapButton(this, ID_CLOSE_BUTTON, closeBmp, wxDefaultPosition, bs);
 	closeButton->SetToolTip(_("Close"));
 	sizer->Add(closeButton, 0, wxTOP | wxBOTTOM | wxRIGHT, 5);
@@ -107,14 +107,14 @@ void CListSearchPanel::ApplyFilter()
 	else {
 		filterManager.SetRemoteFilter(filter);
 	}
-	
+
 	m_pState->NotifyHandlers(STATECHANGE_APPLYFILTER);
 }
 
 void CListSearchPanel::ResetFilter()
 {
 	CStateFilterManager& filterManager = m_pState->GetStateFilterManager();
-	
+
 	if (m_local) {
 		filterManager.SetLocalFilter(CFilter());
 	}

@@ -15,6 +15,7 @@ struct COptionsPageProxy::impl final
 	wxRadioButton* http_{};
 	wxRadioButton* socks4_{};
 	wxRadioButton* socks5_{};
+	wxRadioButton* ssh_{};
 
 	wxTextCtrlEx* host_{};
 	wxTextCtrlEx* port_{};
@@ -53,6 +54,8 @@ bool COptionsPageProxy::CreateControls(wxWindow* parent)
 		inner->Add(impl_->socks4_);
 		impl_->socks5_ = new wxRadioButton(box, nullID, L"&SOCKS 5");
 		inner->Add(impl_->socks5_);
+		impl_->ssh_ = new wxRadioButton(box, nullID, L"SS&H");
+		inner->Add(impl_->ssh_);
 
 		auto rows = lay.createFlex(2);
 		rows->AddGrowableCol(1);
@@ -79,6 +82,7 @@ bool COptionsPageProxy::CreateControls(wxWindow* parent)
 	impl_->http_->Bind(wxEVT_RADIOBUTTON, &COptionsPageProxy::OnProxyTypeChanged, this);
 	impl_->socks4_->Bind(wxEVT_RADIOBUTTON, &COptionsPageProxy::OnProxyTypeChanged, this);
 	impl_->socks5_->Bind(wxEVT_RADIOBUTTON, &COptionsPageProxy::OnProxyTypeChanged, this);
+	impl_->ssh_->Bind(wxEVT_RADIOBUTTON, &COptionsPageProxy::OnProxyTypeChanged, this);
 
 	return true;
 }
@@ -106,6 +110,9 @@ bool COptionsPageProxy::LoadPage()
 	case 3:
 		impl_->socks4_->SetValue(true);
 		break;
+	case 4:
+		impl_->ssh_->SetValue(true);
+		break;
 	}
 
 	SetCtrlState();
@@ -128,6 +135,9 @@ bool COptionsPageProxy::SavePage()
 	}
 	else if (impl_->socks4_->GetValue()) {
 		type = 3;
+	}
+	else if (impl_->ssh_->GetValue()) {
+		type = 4;
 	}
 	else {
 		type = 0;
@@ -155,6 +165,12 @@ bool COptionsPageProxy::Validate()
 	int port = fz::to_integral<int>(impl_->port_->GetValue().ToStdWstring());
 	if (port < 1 || port > 65535) {
 		return DisplayError(impl_->port_, _("You need to enter a proxy port in the range from 1 to 65535"));
+	}
+
+	if (impl_->ssh_->GetValue()) {
+		if (impl_->user_->GetValue().empty()) {
+			return DisplayError(impl_->user_, _("You need to enter a user name"));
+		}
 	}
 
 	return true;

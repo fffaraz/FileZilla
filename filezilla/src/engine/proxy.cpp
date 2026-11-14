@@ -2,19 +2,13 @@
 #include "engineprivate.h"
 #include "proxy.h"
 #include "controlsocket.h"
+#include "ssh/ssh_proxy.h"
 
 #include <libfilezilla/iputils.hpp>
 
-#include <fzssh/client.hpp>
-
 #include <algorithm>
 
-#include <assert.h>
 #include <string.h>
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
 
 enum handshake_state
 {
@@ -311,6 +305,15 @@ void SimpleProxy::OnReceive()
 				buf = receiveBuffer_.get();
 				size_t i = 0;
 				for (i = 0; i + 4 <= receiveBuffer_.size(); ++i) {
+					if (!buf[i]) {
+						state_ = fz::socket_state::failed;
+						m_pOwner->log(logmsg::debug_warning, L"Bad HTTP response");
+						if (event_handler_) {
+							event_handler_->send_event<fz::socket_event>(this, fz::socket_event_flag::connection, ECONNRESET);
+						}
+						return;
+					}
+
 					if (buf[i] == '\r' && buf[i + 1] == '\n' && buf[i + 2] == '\r' && buf[i + 3] == '\n') {
 						break;
 					}
@@ -558,8 +561,12 @@ void SimpleProxy::OnReceive()
 				set_event_passthrough();
 				return;
 			default:
-				assert(false);
-				break;
+				state_ = fz::socket_state::failed;
+				m_pOwner->log(logmsg::debug_warning, L"Unhandled handshake state %d", m_handshakeState);
+				if (event_handler_) {
+					event_handler_->send_event<fz::socket_event>(this, fz::socket_event_flag::connection, ECONNABORTED);
+				}
+				return;
 			}
 
 			switch (m_handshakeState)
@@ -630,8 +637,12 @@ void SimpleProxy::OnReceive()
 				}
 				break;
 			default:
-				assert(false);
-				break;
+				state_ = fz::socket_state::failed;
+				m_pOwner->log(logmsg::debug_warning, L"Unhandled handshake state %d", m_handshakeState);
+				if (event_handler_) {
+					event_handler_->send_event<fz::socket_event>(this, fz::socket_event_flag::connection, ECONNABORTED);
+				}
+				return;
 			}
 			if (sendBuffer_ && m_can_write) {
 				OnSend();
@@ -721,139 +732,26 @@ int SimpleProxy::shutdown()
 	return res;
 }
 
-SSHProxy::~SSHProxy()
-{
-	remove_handler();
-	channel_.reset();
-	ssh_.reset();
-}
-
-int SSHProxy::connect(fz::native_string const& host, unsigned int port, fz::address_type family)
-{
-	if (next_layer_.get_state() == fz::socket_state::none) {
-		int ret = next_layer_.connect(proxy_host_, proxy_port_);
-		if (ret) {
-			state_ = fz::socket_state::failed;
-			return ret;
-		}
-	}
-
-	state_ = fz::socket_state::connecting;
-
-	host_ = host;
-	port_ = port;
-	family_ = family;
-
-	fz::ssh::client_parameters params;
-	params.single_channel_ = true;
-	params.softwareversion_ = "FileZilla"sv;
-	params.softwareversion_ += ' ';
-	params.softwareversion_ += PACKAGE_VERSION;
-	for (auto & c : params.softwareversion_) {
-		if (c == ' ' || c == '-') {
-			c = '_';
-		}
-	}
-
-	ssh_ = std::make_unique<fz::ssh::client>(params, user_, next_layer_, *this, m_pOwner->logger());
-
-	channel_ = ssh_->open_channel(fz::ssh::channel_type::direct_tcpip, fz::sprintf("%s,%u"sv, host, port));
-	channel_->set_event_handler(event_handler_);
-	return 0;
-}
-
-int SSHProxy::read(void *buffer, unsigned int size, int& error)
-{
-	if (!channel_) {
-		error = EINVAL;
-		return -1;
-	}
-
-	return channel_->read(buffer, size, error);
-}
-
-int SSHProxy::write(void const* buffer, unsigned int size, int& error)
-{
-	if (!channel_) {
-		error = EINVAL;
-		return -1;
-	}
-
-	return channel_->write(buffer, size, error);
-}
-
-int SSHProxy::shutdown()
-{
-	return -1;
-}
-
-void SSHProxy::operator()(fz::event_base const& ev)
-{
-	fz::dispatch<fz::socket_event,
-		fz::ssh::hostkey_verification_event,
-		fz::ssh::auth_requested_event,
-		fz::ssh::auth_done_event,
-		fz::ssh::auth_public_key_okay_event,
-		fz::ssh::auth_signature_failure_event
-	>(
-		ev, this,
-		&SSHProxy::OnSocketEvent,
-		&SSHProxy::on_hostkey_verification,
-		&SSHProxy::on_auth_requested,
-		&SSHProxy::on_auth_done,
-		&SSHProxy::on_auth_pubkey_ok,
-		&SSHProxy::on_auth_signature_failed
-	);
-}
-
-void SSHProxy::OnSocketEvent(socket_event_source* s, fz::socket_event_flag t, int error)
-{
-	forward_socket_event(s, t, error);
-}
-
-void SSHProxy::on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> & key, fz::ssh::algorithm_info & algs)
-{
-	if (ssh_) {
-		ssh_->hostkey_decision(true); // FIXME
-	}
-}
-
-void SSHProxy::on_auth_requested(fz::ssh::session* ssh, std::string const& methods, bool is_continuation)
-{
-	if (ssh != ssh_.get()) {
-		return;
-	}
-	ssh_->auth_with_password(pass_);
-}
-
-void SSHProxy::on_auth_done(fz::ssh::session*)
-{
-	state_ = fz::socket_state::connected;
-}
-
-void SSHProxy::on_auth_pubkey_ok(fz::ssh::session*)
-{
-}
-
-void SSHProxy::on_auth_signature_failed(fz::ssh::session*)
-{
-}
-
 std::unique_ptr<ProxyBase> CreateProxy(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner,
-	ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass)
+									   ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass,
+									   ProxyBase* parent_proxy)
 {
 	if (t == ProxyType::SSH) {
-		return std::make_unique<SSHProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass);
+		return std::make_unique<SSHProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass, dynamic_cast<SSHProxy*>(parent_proxy), false);
 	}
 	else {
 		return std::make_unique<SimpleProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass);
 	}
 }
 
-void SSHProxy::set_event_handler(event_handler* handler, fz::socket_event_flag retrigger_block)
+std::unique_ptr<ProxyBase> CreateProxy(fz::event_handler* pEvtHandler, fz::socket_interface & next_layer, CControlSocket* pOwner,
+									   ProxyType t, fz::native_string const& proxy_host, unsigned int proxy_port, std::wstring const& user, std::wstring const& pass,
+									   bool used_by_multi_connection_protocol)
 {
-	event_handler_ = handler;
-	if (channel_) {
-		channel_->set_event_handler(handler, retrigger_block);
+	if (t == ProxyType::SSH) {
+		return std::make_unique<SSHProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass, nullptr, used_by_multi_connection_protocol);
+	}
+	else {
+		return std::make_unique<SimpleProxy>(pEvtHandler, next_layer, pOwner, t, proxy_host, proxy_port, user, pass);
 	}
 }

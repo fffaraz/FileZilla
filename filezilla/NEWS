@@ -10,6 +10,24 @@ Legend:
     *nix: Unix (e.g BSD) and Unix-like systems (e.g. Linux)
     macOS/OS X: Apple macOS
 
+3.72.0 (2026-11-13)
+
+! Updated to libfilezilla 0.59.0 and fzssh 1.5.2
+! Fixed various crashes
+! FTP over TLS: Add strict PROT P requirement, disconnect if input buffer is non-empty after AUTH
+! MSW: File editing now disallows setting direct associations to cmd.exe and powershell.exe
+! FTP: If the experimental "Strip VMS revisions" is set in filezilla.xml, filenames were not correctly sanitized when connecting to FTP servers configured with server type VMS in the Site Manager
+! FTP: Passive mode data connections are now always established to the same IP address as the control connection, this can be reverted to previous behavior in the Site Manager on a per-site basis
+
+3.72.0-rc1 (2026-11-03)
+
++ Added support for SSH proxies
++ SFTP: Added dynamic request pipeline depth calculation to improve download performance with some servers
++ SFTP: Added option to disable use of SSH agent to settings dialog
+- Fixed layout issues in the Site Manager
+- macOS: Improved UI layout on macOS 27
+- macOS: Fixed a regression in number formatting
+
 3.71.1 (2026-08-26)
 
 - macOS: Work around a bug in macOS 27 where setting the locale to non-English triggers crashes in AppKit

@@ -66,6 +66,10 @@ bool COptionsPageEditAssociations::Validate()
 			return DisplayError(assocs_, _("Improperly quoted association."));
 		}
 
+		if (IsForbiddenAssociationProgram(cmd_with_args[0])) {
+			return DisplayError(assocs_, _("cmd.exe and powershell.exe cannot be used as editors."));
+		}
+
 		if (!ProgramExists(cmd_with_args[0])) {
 			wxString error = _("Associated program not found:");
 			error += '\n';

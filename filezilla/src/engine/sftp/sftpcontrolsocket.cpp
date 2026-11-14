@@ -11,6 +11,7 @@
 #include "sftpcontrolsocket.h"
 
 #include "../../include/engine_options.h"
+#include "../ssh/ssh_auth.h"
 
 #include <fzssh/client.hpp>
 
@@ -79,7 +80,8 @@ int CSftpControlSocket::DoClose(int nErrorCode)
 {
 	sftp_.reset();
 	ssh_.reset();
-	pending_global_async_request_.reset();
+	awaiting_pong_ = false;
+	pending_hostkey_request_.reset();
 	return CRealControlSocket::DoClose(nErrorCode);
 }
 
@@ -110,74 +112,6 @@ bool CSftpControlSocket::SetAsyncRequestReply(CAsyncRequestNotification *pNotifi
 			ssh_->hostkey_decision(req.trust_);
 		}
 		break;
-	case reqId_interactiveLogin:
-		{
-			if (operations_.empty() || operations_.back()->opId != Command::connect) {
-				log(logmsg::debug_info, L"No or invalid operation in progress, ignoring request reply %d", pNotification->GetRequestID());
-				return false;
-			}
-
-			auto & req = static_cast<CInteractiveLoginNotification&>(*pNotification);
-			if (!req.responses_) {
-				DoClose(FZ_REPLY_CANCELED);
-				return false;
-			}
-
-			ssh_->auth_keyboard_interactive_response(*req.responses_);
-		}
-		break;
-	case reqId_password:
-		{
-			if (operations_.empty() || operations_.back()->opId != Command::connect) {
-				log(logmsg::debug_info, L"No or invalid operation in progress, ignoring request reply %d", pNotification->GetRequestID());
-				return false;
-			}
-
-			auto & req = static_cast<PasswordRequest&>(*pNotification);
-			if (!req.password_) {
-				DoClose(FZ_REPLY_CANCELED);
-				return false;
-			}
-
-			CSftpConnectOpData& op = static_cast<CSftpConnectOpData&>(*operations_.back().get());
-			op.set_password(fz::to_utf8(*req.password_));
-		}
-		break;
-	case reqId_otp:
-		{
-			if (operations_.empty() || operations_.back()->opId != Command::connect) {
-				log(logmsg::debug_info, L"No or invalid operation in progress, ignoring request reply %d", pNotification->GetRequestID());
-				return false;
-			}
-
-			auto & req = static_cast<OtpRequest&>(*pNotification);
-			if (req.otp_.empty()) {
-				DoClose(FZ_REPLY_CANCELED);
-				return false;
-			}
-
-			std::vector<std::string> responses;
-			responses.emplace_back(req.otp_);
-			ssh_->auth_keyboard_interactive_response(responses);
-		}
-		break;
-	case reqId_keyfile_password:
-		{
-			if (operations_.empty() || operations_.back()->opId != Command::connect) {
-				log(logmsg::debug_info, L"No or invalid operation in progress, ignoring request reply %d", pNotification->GetRequestID());
-				return false;
-			}
-
-			auto & req = static_cast<KeyfilePasswordRequest&>(*pNotification);
-			if (!req.password_) {
-				DoClose(FZ_REPLY_CANCELED);
-				return false;
-			}
-
-			CSftpConnectOpData& op = static_cast<CSftpConnectOpData&>(*operations_.back().get());
-			op.set_keyfile_password(*req.password_);
-		}
-		break;
 	default:
 		log(logmsg::debug_warning, L"Unknown async request reply id: %d", requestId);
 		return false;
@@ -202,31 +136,18 @@ void CSftpControlSocket::operator()(fz::event_base const& ev)
 {
 	if (!operations_.empty() && operations_.back()->opId == Command::connect) {
 		CSftpConnectOpData* op = static_cast<CSftpConnectOpData*>(operations_.back().get());
-		fz::dispatch<
-				fz::ssh::auth_requested_event,
-				fz::ssh::auth_done_event,
-				fz::ssh::auth_public_key_okay_event,
-				fz::ssh::auth_signature_failure_event,
-				fz::ssh::auth_keyboard_interactive_prompt_event,
-				fz::ssh::auth_password_change_request_event,
-				fz::ssh::sftp::sftp_client::ready_event
-			>(
-				ev, op,
-				&CSftpConnectOpData::on_auth_requested,
-				&CSftpConnectOpData::on_auth_done,
-				&CSftpConnectOpData::on_auth_pubkey_ok,
-				&CSftpConnectOpData::on_auth_signature_failed,
-				&CSftpConnectOpData::on_auth_keyboard_interactive_prompt,
-				&CSftpConnectOpData::on_auth_password_change_requested,
-				&CSftpConnectOpData::on_sftp_ready
-			);
+		if (auto* auth = op->auth()) {
+			(*auth)(ev);
+		}
+		fz::dispatch<fz::ssh::sftp::sftp_client::ready_event>(ev, op, &CSftpConnectOpData::on_sftp_ready);
 	}
 
-	fz::dispatch<fz::ssh::hostkey_verification_event, fz::ssh::session_done_event, fz::ssh::sftp::sftp_client::done_event>(
+	fz::dispatch<fz::ssh::hostkey_verification_event, fz::ssh::session_done_event, fz::ssh::sftp::sftp_client::done_event, fz::ssh::pong_event>(
 		ev, this,
 		&CSftpControlSocket::on_hostkey_verification,
 		&CSftpControlSocket::on_session_done,
-		&CSftpControlSocket::on_sftp_done
+		&CSftpControlSocket::on_sftp_done,
+		&CSftpControlSocket::on_pong
 	);
 
 
@@ -248,7 +169,12 @@ void CSftpControlSocket::Push(std::unique_ptr<COpData> && pNewOpData)
 void CSftpControlSocket::on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> & key, fz::ssh::algorithm_info & algs)
 {
 	engine_.AddNotification(std::make_unique<CSftpEncryptionNotification>(algs, key->fingerprint(fz::hash_algorithm::sha256, true)));
-	SendAsyncRequest(std::make_unique<CHostKeyNotification>(currentServer_, handle_, std::move(key), std::move(algs)), async_request_type::global);
+
+	auto reply = [&](CAsyncRequestNotification* req) {
+		pending_hostkey_request_.reset();
+		SetAsyncRequestReply(req);
+	};
+	pending_hostkey_request_ = SendAsyncRequest(std::make_unique<CHostKeyNotification>(currentServer_, handle_, std::move(key), std::move(algs)), async_request_type::parallel, reply);
 }
 
 void CSftpControlSocket::on_session_done(fz::ssh::session*)
@@ -277,6 +203,32 @@ void CSftpControlSocket::SetSocketBufferSizes()
 		const int size_read = engine_.GetOptions().get_int(OPTION_SOCKET_BUFFERSIZE_RECV);
 		socket_->set_buffer_sizes(size_read, -1);
 		return;
+	}
+}
+
+void CSftpControlSocket::ping()
+{
+	if (ssh_ && !awaiting_pong_) {
+		ssh_->ping();
+		awaiting_pong_ = true;
+	}
+}
+
+void CSftpControlSocket::on_pong(fz::ssh::client*, std::optional<fz::duration> const& rtt)
+{
+	awaiting_pong_ = false;
+	if (rtt) {
+		auto v = 7 * srtt_.get_milliseconds() + rtt->get_milliseconds() + srtt_remainder_;
+		srtt_ = fz::duration::from_milliseconds(std::max(v / 8, int64_t(1)));
+		srtt_remainder_ = v % 8;
+	}
+
+	last_rtt_update_ = fz::monotonic_clock::now();
+	if (!operations_.empty()) {
+		auto op = dynamic_cast<CSftpOpData*>(operations_.back().get());
+		if (op) {
+			op->on_pong();
+		}
 	}
 }
 

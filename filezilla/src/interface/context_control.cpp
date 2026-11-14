@@ -183,10 +183,10 @@ void CContextControl::CreateContextControls(CState& state)
 
 		splitterPositions = currentControls.GetSplitterPositions();
 		if (currentControls.pLocalListView) {
-			currentControls.pLocalListView->SaveColumnSettings(m_mainFrame.GetOptions(), OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
+			currentControls.pLocalListView->SaveColumnSettings(OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
 		}
 		if (currentControls.pRemoteListView) {
-			currentControls.pRemoteListView->SaveColumnSettings(m_mainFrame.GetOptions(), OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
+			currentControls.pRemoteListView->SaveColumnSettings(OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
 		}
 
 		if (!m_tabs) {

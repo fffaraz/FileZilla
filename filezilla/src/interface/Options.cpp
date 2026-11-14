@@ -10,8 +10,6 @@
 	#include <shlobj.h>
 #endif
 
-COptions* COptions::m_theOptions = 0;
-
 #ifdef FZ_WINDOWS
 //case insensitive
 #define DEFAULT_FILENAME_SORT   0
@@ -143,10 +141,6 @@ END_EVENT_TABLE()
 COptions::COptions()
 	: XmlOptions("")
 {
-	if (!m_theOptions) {
-		m_theOptions = this;
-	}
-
 	m_save_timer.SetOwner(this);
 
 	std::wstring error;
@@ -158,14 +152,6 @@ COptions::COptions()
 
 COptions::~COptions()
 {
-	if (m_theOptions == this) {
-		m_theOptions = nullptr;
-	}
-}
-
-COptions* COptions::Get()
-{
-	return m_theOptions;
 }
 
 void COptions::OnTimer(wxTimerEvent&)

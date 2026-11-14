@@ -173,7 +173,7 @@ bool COptionsPageThemes::CreateControls(wxWindow* parent)
 
 	GetSizer()->Layout();
 	GetSizer()->Fit(this);
-	
+
 	impl_->theme_->Bind(wxEVT_CHOICE, &COptionsPageThemes::OnThemeChange, this);
 
 	return true;
@@ -226,7 +226,7 @@ bool COptionsPageThemes::DisplayTheme(std::wstring const& theme)
 	impl_->email_->SetLabel(LabelEscape(mail));
 
 	auto scale_factor = impl_->scale_->GetValue();
-	wxSize size = CThemeProvider::Get()->GetIconSize(iconSizeSmall);
+	wxSize size = CThemeProvider::Get()->GetIconSize(IconSize::small);
 	size.Scale(scale_factor, scale_factor);
 
 	impl_->preview_->LoadIcons(theme, size);
@@ -251,7 +251,7 @@ bool COptionsPageThemes::OnDisplayedFirstTime()
 	}
 
 	impl_->scale_->SetValue(static_cast<double>(m_pOptions->get_int(OPTION_ICONS_SCALE)) / 100.f);
-	
+
 	std::wstring activeTheme = m_pOptions->get_string(OPTION_ICONS_THEME);
 	std::wstring firstName;
 	for (auto const& theme : themes) {

@@ -160,7 +160,7 @@ void CFilterDialog::OnCancel(wxCommandEvent&)
 void CFilterDialog::OnEdit(wxCommandEvent&)
 {
 	CFilterEditDialog dlg;
-	if (!dlg.Create(this, m_filters, m_filterSets)) {
+	if (!dlg.Create(this, m_pMainFrame->GetOptions(), m_filters, m_filterSets)) {
 		return;
 	}
 

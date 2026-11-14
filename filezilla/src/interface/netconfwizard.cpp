@@ -40,9 +40,6 @@ struct CNetConfWizard::impl
 	wxRadioButton* use_active_{};
 	wxCheckBox* fallback_{};
 
-	wxRadioButton* passive_use_external_{};
-	wxRadioButton* passive_fallback_{};
-
 	wxRadioButton* active_ip_os_{};
 	wxRadioButton* active_ip_provided_{};
 	wxRadioButton* active_ip_resolved_{};
@@ -127,12 +124,6 @@ bool CNetConfWizard::CreatePages()
 		main->Add(new wxStaticText(page, nullID, _("Please configure any firewalls and routers so that FileZilla can establish outgoing connection to arbitrary ports.")));
 		main->Add(new wxStaticText(page, nullID, _("Please note that FileZilla has no influence on the port the server chooses. So the server might choose a port which your firewall thinks is only used by trojans or other malware. This might raise a false alarm you can safely discard.")));
 		main->Add(new wxStaticText(page, nullID, _("If the automatic test at the end of this wizard succeeds, but you cannot transfer files to a particular server, the server might be misconfigured and you should try active mode. You can set the transfer mode on a per-server basis in the Site Manager.")));
-		main->Add(new wxStaticText(page, nullID, _("Some misconfigured remote servers which are behind a router, may reply with their local IP address.")));
-
-		impl_->passive_use_external_ = new wxRadioButton(page, nullID, _("Use the server's external IP address instead"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
-		main->Add(impl_->passive_use_external_);
-		impl_->passive_fallback_ = new wxRadioButton(page, nullID, _("Fall back to active mode"));
-		main->Add(impl_->passive_fallback_);
 
 		m_pages.emplace_back(page);
 	}
@@ -274,16 +265,6 @@ bool CNetConfWizard::Load()
 
 	impl_->fallback_->SetValue(engine_context_.GetOptions().get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK) != 0);
 
-	switch (engine_context_.GetOptions().get_int(OPTION_PASVREPLYFALLBACKMODE))
-	{
-	default:
-	case 0:
-		impl_->passive_use_external_->SetValue(true);
-		break;
-	case 1:
-		impl_->passive_fallback_->SetValue(true);
-		break;
-	}
 	switch (engine_context_.GetOptions().get_int(OPTION_EXTERNALIPMODE))
 	{
 	default:
@@ -812,7 +793,7 @@ void CNetConfWizard::CloseSocket()
 	}
 	m_pages[6]->GetSizer()->Layout();
 	m_pages[6]->GetSizer()->Fit(m_pages[6]);
-	wxGetApp().GetWrapEngine()->WrapRecursive(m_pages[6], m_pages[6]->GetSizer(), wxGetApp().GetWrapEngine()->GetWidthFromCache("Netconf"));
+	wxGetApp().GetWrapEngine()->WrapRecursive(m_pages[6], m_pages[6]->GetSizer(), wxGetApp().GetWrapEngine()->GetWidthFromCache(this, "Netconf"));
 
 	// Focus one so enter key hits finish and not the restart button by default
 	impl_->summary_[0]->SetFocus();
@@ -1016,8 +997,6 @@ void CNetConfWizard::OnFinish(wxWizardEvent&)
 
 	engine_context_.GetOptions().set(OPTION_USEPASV, impl_->use_passive_->GetValue());
 	engine_context_.GetOptions().set(OPTION_ALLOW_TRANSFERMODEFALLBACK, impl_->fallback_->GetValue());
-
-	engine_context_.GetOptions().set(OPTION_PASVREPLYFALLBACKMODE, impl_->passive_use_external_->GetValue() ? 0 : 1);
 
 	if (impl_->active_ip_os_->GetValue()) {
 		engine_context_.GetOptions().set(OPTION_EXTERNALIPMODE, 0);

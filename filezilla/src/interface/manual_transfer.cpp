@@ -187,6 +187,14 @@ void CManualTransfer::Run(wxWindow* parent, CState* pState)
 	buttons->Realize();
 
 	site_ = state_->GetSite();
+	if (site_) {
+		impl_->controls_->SetControlVisibility(site_.server.GetProtocol(), site_.credentials.logonType_);
+	}
+	else {
+		bool const kiosk_mode = options_.get_int(OPTION_DEFAULT_KIOSKMODE) != 0;
+		auto const logonType = kiosk_mode ? LogonType::ask : LogonType::normal;
+		impl_->controls_->SetControlVisibility(FTP, logonType);
+	}
 	impl_->controls_->SetSite(site_, false);
 	auto p = site_.server.GetProtocol();
 	onChange(p == UNKNOWN ? FTP : p, site_.credentials.logonType_);
@@ -231,9 +239,15 @@ void CManualTransfer::Run(wxWindow* parent, CState* pState)
 
 void CManualTransfer::DisplayServer()
 {
+	if (site_) {
+		impl_->controls_->SetControlVisibility(site_.server.GetProtocol(), site_.credentials.logonType_);
+	}
+	else {
+		bool const kiosk_mode = options_.get_int(OPTION_DEFAULT_KIOSKMODE) != 0;
+		auto const logonType = kiosk_mode ? LogonType::ask : LogonType::normal;
+		impl_->controls_->SetControlVisibility(FTP, logonType);
+	}
 	impl_->controls_->SetSite(site_, false);
-	auto p = site_.server.GetProtocol();
-	impl_->controls_->SetControlVisibility(p == UNKNOWN ? FTP : p, site_.credentials.logonType_);
 	impl_->controls_->SetControlState(false);
 	Layout();
 	if (GetSizer()->GetMinSize().y > GetClientSize().y) {
@@ -265,7 +279,7 @@ void CManualTransfer::SetAutoAsciiState()
 		impl_->type_label_->Hide();
 	}
 	else {
-		if (impl_->download_->GetValue() ? CAutoAsciiFiles::TransferRemoteAsAscii(*COptions::Get(), file, s.server.GetType()) : CAutoAsciiFiles::TransferLocalAsAscii(*COptions::Get(), file, s.server.GetType())) {
+		if (impl_->download_->GetValue() ? CAutoAsciiFiles::TransferRemoteAsAscii(options_, file, s.server.GetType()) : CAutoAsciiFiles::TransferLocalAsAscii(options_, file, s.server.GetType())) {
 			impl_->type_label_->SetLabel(_("Entered file would transfer as ASCII"));
 		}
 		else {
@@ -449,7 +463,7 @@ void CManualTransfer::OnSelectedSite(wxCommandEvent& event)
 
 	impl_->site_name_->SetLabel(LabelEscape(site_.GetName()));
 
-	impl_->controls_->SetSite(site_, false);
 	impl_->controls_->SetControlVisibility(site_.server.GetProtocol(), site_.credentials.logonType_);
+	impl_->controls_->SetSite(site_, false);
 	impl_->controls_->SetControlState(false);
 }

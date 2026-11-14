@@ -284,6 +284,10 @@ bool XmlOptions::Cleanup()
 		}
 	}
 
+	if (!xmlFile_) {
+		return false;
+	}
+
 	auto element = xmlFile_->GetElement();
 	auto settings = element.child("Settings");
 

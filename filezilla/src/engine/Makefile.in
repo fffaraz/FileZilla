@@ -166,6 +166,7 @@ host_triplet = @host@
 
 @HAVE_LIBPUGIXML_FALSE@am__append_7 = ../pugixml/pugixml.cpp
 @FZ_MAC_TRUE@am__append_8 = -framework CoreServices
+@MACAPPBUNDLE_TRUE@am__append_9 = libfzclient-private-mac.la
 subdir = src/engine
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_flag.m4 \
@@ -223,8 +224,22 @@ am__uninstall_files_from_dir = { \
        $(am__cd) "$$dir" && echo $$files | $(am__xargs_n) 40 $(am__rm_f); }; \
   }
 am__installdirs = "$(DESTDIR)$(libdir)"
-LTLIBRARIES = $(lib_LTLIBRARIES)
-libfzclient_private_la_LIBADD =
+LTLIBRARIES = $(lib_LTLIBRARIES) $(noinst_LTLIBRARIES)
+libfzclient_private_mac_la_LIBADD =
+am__libfzclient_private_mac_la_SOURCES_DIST = sizeformatting_mac.mm
+@MACAPPBUNDLE_TRUE@am_libfzclient_private_mac_la_OBJECTS = libfzclient_private_mac_la-sizeformatting_mac.lo
+libfzclient_private_mac_la_OBJECTS =  \
+	$(am_libfzclient_private_mac_la_OBJECTS)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
+libfzclient_private_mac_la_LINK = $(LIBTOOL) $(AM_V_lt) \
+	$(libfzclient_private_mac_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(OBJCXXLD) \
+	$(libfzclient_private_mac_la_OBJCXXFLAGS) $(OBJCXXFLAGS) \
+	$(libfzclient_private_mac_la_LDFLAGS) $(LDFLAGS) -o $@
+@MACAPPBUNDLE_TRUE@am_libfzclient_private_mac_la_rpath =
 am__libfzclient_private_la_SOURCES_DIST = activity_logger.cpp \
 	activity_logger_layer.cpp commands.cpp controlsocket.cpp \
 	directorycache.cpp directorylisting.cpp \
@@ -236,9 +251,10 @@ am__libfzclient_private_la_SOURCES_DIST = activity_logger.cpp \
 	notification.cpp oplock_manager.cpp optionsbase.cpp \
 	pathcache.cpp posix_chmod.cpp proxy.cpp rtt.cpp server.cpp \
 	servercapabilities.cpp serverpath.cpp sizeformatting.cpp \
-	tls.cpp version.cpp xmlutils.cpp ftp/chmod.cpp ftp/cwd.cpp \
-	ftp/delete.cpp ftp/filetransfer.cpp ftp/ftpcontrolsocket.cpp \
-	ftp/list.cpp ftp/logon.cpp ftp/mkd.cpp ftp/rawcommand.cpp \
+	ssh/ssh_auth.cpp ssh/ssh_proxy.cpp tls.cpp version.cpp \
+	xmlutils.cpp ftp/chmod.cpp ftp/cwd.cpp ftp/delete.cpp \
+	ftp/filetransfer.cpp ftp/ftpcontrolsocket.cpp ftp/list.cpp \
+	ftp/logon.cpp ftp/mkd.cpp ftp/rawcommand.cpp \
 	ftp/rawtransfer.cpp ftp/rename.cpp ftp/rmd.cpp \
 	ftp/transfersocket.cpp sftp/chmod.cpp sftp/connect.cpp \
 	sftp/delete.cpp sftp/filetransfer.cpp sftp/list.cpp \
@@ -312,15 +328,13 @@ am_libfzclient_private_la_OBJECTS =  \
 	libfzclient_private_la-servercapabilities.lo \
 	libfzclient_private_la-serverpath.lo \
 	libfzclient_private_la-sizeformatting.lo \
+	ssh/libfzclient_private_la-ssh_auth.lo \
+	ssh/libfzclient_private_la-ssh_proxy.lo \
 	libfzclient_private_la-tls.lo \
 	libfzclient_private_la-version.lo \
 	libfzclient_private_la-xmlutils.lo $(am__objects_1) \
 	$(am__objects_2) $(am__objects_3) $(am__objects_4)
 libfzclient_private_la_OBJECTS = $(am_libfzclient_private_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
 libfzclient_private_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) \
@@ -373,6 +387,7 @@ am__depfiles_remade =  \
 	./$(DEPDIR)/libfzclient_private_la-tls.Plo \
 	./$(DEPDIR)/libfzclient_private_la-version.Plo \
 	./$(DEPDIR)/libfzclient_private_la-xmlutils.Plo \
+	./$(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Plo \
 	ftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo \
 	ftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo \
 	ftp/$(DEPDIR)/libfzclient_private_la-delete.Plo \
@@ -398,6 +413,8 @@ am__depfiles_remade =  \
 	sftp/$(DEPDIR)/libfzclient_private_la-rename.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-rmd.Plo \
 	sftp/$(DEPDIR)/libfzclient_private_la-sftpcontrolsocket.Plo \
+	ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Plo \
+	ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Plo \
 	storj/$(DEPDIR)/libfzclient_private_la-connect.Plo \
 	storj/$(DEPDIR)/libfzclient_private_la-delete.Plo \
 	storj/$(DEPDIR)/libfzclient_private_la-file_transfer.Plo \
@@ -425,8 +442,46 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libfzclient_private_la_SOURCES)
-DIST_SOURCES = $(am__libfzclient_private_la_SOURCES_DIST)
+OBJCXXCOMPILE = $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) \
+	$(AM_CPPFLAGS) $(CPPFLAGS) $(AM_OBJCXXFLAGS) $(OBJCXXFLAGS)
+LTOBJCXXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(OBJCXX) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_OBJCXXFLAGS) $(OBJCXXFLAGS)
+AM_V_OBJCXX = $(am__v_OBJCXX_@AM_V@)
+am__v_OBJCXX_ = $(am__v_OBJCXX_@AM_DEFAULT_V@)
+am__v_OBJCXX_0 = @echo "  OBJCXX  " $@;
+am__v_OBJCXX_1 = 
+OBJCXXLD = $(OBJCXX)
+OBJCXXLINK = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
+	--mode=link $(OBJCXXLD) $(AM_OBJCXXFLAGS) $(OBJCXXFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_OBJCXXLD = $(am__v_OBJCXXLD_@AM_V@)
+am__v_OBJCXXLD_ = $(am__v_OBJCXXLD_@AM_DEFAULT_V@)
+am__v_OBJCXXLD_0 = @echo "  OBJCXXLD" $@;
+am__v_OBJCXXLD_1 = 
+COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
+	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
+LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
+	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS)
+AM_V_CC = $(am__v_CC_@AM_V@)
+am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
+am__v_CC_0 = @echo "  CC      " $@;
+am__v_CC_1 = 
+CCLD = $(CC)
+LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
+	$(AM_LDFLAGS) $(LDFLAGS) -o $@
+AM_V_CCLD = $(am__v_CCLD_@AM_V@)
+am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
+am__v_CCLD_0 = @echo "  CCLD    " $@;
+am__v_CCLD_1 = 
+SOURCES = $(libfzclient_private_mac_la_SOURCES) \
+	$(libfzclient_private_la_SOURCES)
+DIST_SOURCES = $(am__libfzclient_private_mac_la_SOURCES_DIST) \
+	$(am__libfzclient_private_la_SOURCES_DIST)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -436,16 +491,16 @@ am__noinst_HEADERS_DIST = activity_logger_layer.h controlsocket.h \
 	directorycache.h directorylistingparser.h engineprivate.h \
 	filezilla.h http/filetransfer.h http/httpcontrolsocket.h \
 	http/request.h logging_private.h lookup.h oplock_manager.h \
-	pathcache.h proxy.h rtt.h servercapabilities.h tls.h \
-	ftp/chmod.h ftp/cwd.h ftp/delete.h ftp/filetransfer.h \
-	ftp/ftpcontrolsocket.h ftp/list.h ftp/logon.h ftp/mkd.h \
-	ftp/rename.h ftp/rawcommand.h ftp/rawtransfer.h ftp/rmd.h \
-	ftp/transfersocket.h sftp/chmod.h sftp/connect.h sftp/delete.h \
-	sftp/filetransfer.h sftp/list.h sftp/mkd.h sftp/rename.h \
-	sftp/rmd.h sftp/sftpcontrolsocket.h storj/connect.h \
-	storj/delete.h storj/event.h storj/file_transfer.h \
-	storj/input_thread.h storj/list.h storj/mkd.h storj/rmd.h \
-	storj/storjcontrolsocket.h
+	pathcache.h proxy.h rtt.h servercapabilities.h ssh/ssh_auth.h \
+	ssh/ssh_proxy.h tls.h ftp/chmod.h ftp/cwd.h ftp/delete.h \
+	ftp/filetransfer.h ftp/ftpcontrolsocket.h ftp/list.h \
+	ftp/logon.h ftp/mkd.h ftp/rename.h ftp/rawcommand.h \
+	ftp/rawtransfer.h ftp/rmd.h ftp/transfersocket.h sftp/chmod.h \
+	sftp/connect.h sftp/delete.h sftp/filetransfer.h sftp/list.h \
+	sftp/mkd.h sftp/rename.h sftp/rmd.h sftp/sftpcontrolsocket.h \
+	storj/connect.h storj/delete.h storj/event.h \
+	storj/file_transfer.h storj/input_thread.h storj/list.h \
+	storj/mkd.h storj/rmd.h storj/storjcontrolsocket.h
 HEADERS = $(noinst_HEADERS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 # Read a list of newline-separated strings from the standard input,
@@ -655,6 +710,7 @@ xdgopen = @xdgopen@
 xgettext = @xgettext@
 AUTOMAKE_OPTIONS = subdir-objects
 lib_LTLIBRARIES = libfzclient-private.la
+libfzclient_private_la_DEPENDENCIES = $(am__append_9)
 libfzclient_private_la_CPPFLAGS = -I$(top_builddir)/config \
 	$(LIBFILEZILLA_CFLAGS) $(LIBFZSSH_CFLAGS) -DBUILDING_FILEZILLA
 libfzclient_private_la_SOURCES = activity_logger.cpp \
@@ -668,19 +724,32 @@ libfzclient_private_la_SOURCES = activity_logger.cpp \
 	notification.cpp oplock_manager.cpp optionsbase.cpp \
 	pathcache.cpp posix_chmod.cpp proxy.cpp rtt.cpp server.cpp \
 	servercapabilities.cpp serverpath.cpp sizeformatting.cpp \
-	tls.cpp version.cpp xmlutils.cpp $(am__append_1) \
-	$(am__append_3) $(am__append_5) $(am__append_7)
+	ssh/ssh_auth.cpp ssh/ssh_proxy.cpp tls.cpp version.cpp \
+	xmlutils.cpp $(am__append_1) $(am__append_3) $(am__append_5) \
+	$(am__append_7)
 noinst_HEADERS = activity_logger_layer.h controlsocket.h \
 	directorycache.h directorylistingparser.h engineprivate.h \
 	filezilla.h http/filetransfer.h http/httpcontrolsocket.h \
 	http/request.h logging_private.h lookup.h oplock_manager.h \
-	pathcache.h proxy.h rtt.h servercapabilities.h tls.h \
-	$(am__append_2) $(am__append_4) $(am__append_6)
+	pathcache.h proxy.h rtt.h servercapabilities.h ssh/ssh_auth.h \
+	ssh/ssh_proxy.h tls.h $(am__append_2) $(am__append_4) \
+	$(am__append_6)
 libfzclient_private_la_CXXFLAGS = -fvisibility=hidden
 libfzclient_private_la_LDFLAGS = -no-undefined -release \
 	$(ENGINE_VERSION_MAJOR).$(ENGINE_VERSION_MINOR).$(ENGINE_VERSION_MICRO) \
 	$(LIBFZSSH_LIBS) $(LIBFILEZILLA_LIBS) $(IDN_LIB) \
 	$(am__append_8)
+@MACAPPBUNDLE_TRUE@noinst_LTLIBRARIES = libfzclient-private-mac.la
+@MACAPPBUNDLE_TRUE@libfzclient_private_mac_la_CPPFLAGS =  \
+@MACAPPBUNDLE_TRUE@	-I$(top_builddir)/config \
+@MACAPPBUNDLE_TRUE@	$(LIBFILEZILLA_CFLAGS) -DBUILDING_FILEZILLA
+@MACAPPBUNDLE_TRUE@libfzclient_private_mac_la_LIBTOOLFLAGS = --tag=CXX
+@MACAPPBUNDLE_TRUE@libfzclient_private_mac_la_OBJCXXFLAGS = -fvisibility=hidden
+@MACAPPBUNDLE_TRUE@libfzclient_private_mac_la_SOURCES = \
+@MACAPPBUNDLE_TRUE@	sizeformatting_mac.mm
+
+@MACAPPBUNDLE_TRUE@libfzclient_private_mac_la_LDFLAGS = -framework Cocoa
+@MACAPPBUNDLE_TRUE@libfzclient_private_la_LIBADD = libfzclient-private-mac.la
 CLEANFILES = filezilla.h.gch
 DISTCLEANFILES = ./$(DEPDIR)/filezilla.Po
 @ENABLE_PRECOMP_TRUE@BUILT_SOURCES = filezilla.h.gch
@@ -688,7 +757,7 @@ all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .lo .o .obj
+.SUFFIXES: .cpp .lo .mm .o .obj
 $(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -751,6 +820,18 @@ clean-libLTLIBRARIES:
 	      sort -u`; \
 	echo rm -f $${locs}; \
 	$(am__rm_f) $${locs}
+
+clean-noinstLTLIBRARIES:
+	-$(am__rm_f) $(noinst_LTLIBRARIES)
+	@list='$(noinst_LTLIBRARIES)'; \
+	locs=`for p in $$list; do echo $$p; done | \
+	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
+	      sort -u`; \
+	echo rm -f $${locs}; \
+	$(am__rm_f) $${locs}
+
+libfzclient-private-mac.la: $(libfzclient_private_mac_la_OBJECTS) $(libfzclient_private_mac_la_DEPENDENCIES) $(EXTRA_libfzclient_private_mac_la_DEPENDENCIES) 
+	$(AM_V_OBJCXXLD)$(libfzclient_private_mac_la_LINK) $(am_libfzclient_private_mac_la_rpath) $(libfzclient_private_mac_la_OBJECTS) $(libfzclient_private_mac_la_LIBADD) $(LIBS)
 http/$(am__dirstamp):
 	@$(MKDIR_P) http
 	@: >>http/$(am__dirstamp)
@@ -763,6 +844,16 @@ http/libfzclient_private_la-httpcontrolsocket.lo:  \
 	http/$(am__dirstamp) http/$(DEPDIR)/$(am__dirstamp)
 http/libfzclient_private_la-request.lo: http/$(am__dirstamp) \
 	http/$(DEPDIR)/$(am__dirstamp)
+ssh/$(am__dirstamp):
+	@$(MKDIR_P) ssh
+	@: >>ssh/$(am__dirstamp)
+ssh/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) ssh/$(DEPDIR)
+	@: >>ssh/$(DEPDIR)/$(am__dirstamp)
+ssh/libfzclient_private_la-ssh_auth.lo: ssh/$(am__dirstamp) \
+	ssh/$(DEPDIR)/$(am__dirstamp)
+ssh/libfzclient_private_la-ssh_proxy.lo: ssh/$(am__dirstamp) \
+	ssh/$(DEPDIR)/$(am__dirstamp)
 ftp/$(am__dirstamp):
 	@$(MKDIR_P) ftp
 	@: >>ftp/$(am__dirstamp)
@@ -864,6 +955,8 @@ mostlyclean-compile:
 	-rm -f http/*.lo
 	-rm -f sftp/*.$(OBJEXT)
 	-rm -f sftp/*.lo
+	-rm -f ssh/*.$(OBJEXT)
+	-rm -f ssh/*.lo
 	-rm -f storj/*.$(OBJEXT)
 	-rm -f storj/*.lo
 
@@ -902,6 +995,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_private_la-tls.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_private_la-version.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_private_la-xmlutils.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@ftp/$(DEPDIR)/libfzclient_private_la-delete.Plo@am__quote@ # am--include-marker
@@ -927,6 +1021,8 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-rename.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-rmd.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@sftp/$(DEPDIR)/libfzclient_private_la-sftpcontrolsocket.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@storj/$(DEPDIR)/libfzclient_private_la-connect.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@storj/$(DEPDIR)/libfzclient_private_la-delete.Plo@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@storj/$(DEPDIR)/libfzclient_private_la-file_transfer.Plo@am__quote@ # am--include-marker
@@ -1183,6 +1279,20 @@ libfzclient_private_la-sizeformatting.lo: sizeformatting.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o libfzclient_private_la-sizeformatting.lo `test -f 'sizeformatting.cpp' || echo '$(srcdir)/'`sizeformatting.cpp
 
+ssh/libfzclient_private_la-ssh_auth.lo: ssh/ssh_auth.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -MT ssh/libfzclient_private_la-ssh_auth.lo -MD -MP -MF ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Tpo -c -o ssh/libfzclient_private_la-ssh_auth.lo `test -f 'ssh/ssh_auth.cpp' || echo '$(srcdir)/'`ssh/ssh_auth.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Tpo ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssh/ssh_auth.cpp' object='ssh/libfzclient_private_la-ssh_auth.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o ssh/libfzclient_private_la-ssh_auth.lo `test -f 'ssh/ssh_auth.cpp' || echo '$(srcdir)/'`ssh/ssh_auth.cpp
+
+ssh/libfzclient_private_la-ssh_proxy.lo: ssh/ssh_proxy.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -MT ssh/libfzclient_private_la-ssh_proxy.lo -MD -MP -MF ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Tpo -c -o ssh/libfzclient_private_la-ssh_proxy.lo `test -f 'ssh/ssh_proxy.cpp' || echo '$(srcdir)/'`ssh/ssh_proxy.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Tpo ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='ssh/ssh_proxy.cpp' object='ssh/libfzclient_private_la-ssh_proxy.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o ssh/libfzclient_private_la-ssh_proxy.lo `test -f 'ssh/ssh_proxy.cpp' || echo '$(srcdir)/'`ssh/ssh_proxy.cpp
+
 libfzclient_private_la-tls.lo: tls.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -MT libfzclient_private_la-tls.lo -MD -MP -MF $(DEPDIR)/libfzclient_private_la-tls.Tpo -c -o libfzclient_private_la-tls.lo `test -f 'tls.cpp' || echo '$(srcdir)/'`tls.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzclient_private_la-tls.Tpo $(DEPDIR)/libfzclient_private_la-tls.Plo
@@ -1421,6 +1531,37 @@ storj/libfzclient_private_la-storjcontrolsocket.lo: storj/storjcontrolsocket.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_la_CXXFLAGS) $(CXXFLAGS) -c -o ../pugixml/libfzclient_private_la-pugixml.lo `test -f '../pugixml/pugixml.cpp' || echo '$(srcdir)/'`../pugixml/pugixml.cpp
 
+.mm.o:
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
+@am__fastdepOBJCXX_TRUE@	$(OBJCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepOBJCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXXCOMPILE) -c -o $@ $<
+
+.mm.obj:
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
+@am__fastdepOBJCXX_TRUE@	$(OBJCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
+@am__fastdepOBJCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(OBJCXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+
+.mm.lo:
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
+@am__fastdepOBJCXX_TRUE@	$(LTOBJCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
+@am__fastdepOBJCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(LTOBJCXXCOMPILE) -c -o $@ $<
+
+libfzclient_private_mac_la-sizeformatting_mac.lo: sizeformatting_mac.mm
+@am__fastdepOBJCXX_TRUE@	$(AM_V_OBJCXX)$(LIBTOOL) $(AM_V_lt) $(libfzclient_private_mac_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_mac_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_mac_la_OBJCXXFLAGS) $(OBJCXXFLAGS) -MT libfzclient_private_mac_la-sizeformatting_mac.lo -MD -MP -MF $(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Tpo -c -o libfzclient_private_mac_la-sizeformatting_mac.lo `test -f 'sizeformatting_mac.mm' || echo '$(srcdir)/'`sizeformatting_mac.mm
+@am__fastdepOBJCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Tpo $(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Plo
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX)source='sizeformatting_mac.mm' object='libfzclient_private_mac_la-sizeformatting_mac.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepOBJCXX_FALSE@	DEPDIR=$(DEPDIR) $(OBJCXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepOBJCXX_FALSE@	$(AM_V_OBJCXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) $(libfzclient_private_mac_la_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(OBJCXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libfzclient_private_mac_la_CPPFLAGS) $(CPPFLAGS) $(libfzclient_private_mac_la_OBJCXXFLAGS) $(OBJCXXFLAGS) -c -o libfzclient_private_mac_la-sizeformatting_mac.lo `test -f 'sizeformatting_mac.mm' || echo '$(srcdir)/'`sizeformatting_mac.mm
+
 mostlyclean-libtool:
 	-rm -f *.lo
 
@@ -1430,6 +1571,7 @@ clean-libtool:
 	-rm -rf ftp/.libs ftp/_libs
 	-rm -rf http/.libs http/_libs
 	-rm -rf sftp/.libs sftp/_libs
+	-rm -rf ssh/.libs ssh/_libs
 	-rm -rf storj/.libs storj/_libs
 
 ID: $(am__tagged_files)
@@ -1562,6 +1704,8 @@ distclean-generic:
 	-$(am__rm_f) http/$(am__dirstamp)
 	-$(am__rm_f) sftp/$(DEPDIR)/$(am__dirstamp)
 	-$(am__rm_f) sftp/$(am__dirstamp)
+	-$(am__rm_f) ssh/$(DEPDIR)/$(am__dirstamp)
+	-$(am__rm_f) ssh/$(am__dirstamp)
 	-$(am__rm_f) storj/$(DEPDIR)/$(am__dirstamp)
 	-$(am__rm_f) storj/$(am__dirstamp)
 
@@ -1572,7 +1716,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
-	mostlyclean-am
+	clean-noinstLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
 	-rm -f ../pugixml/$(DEPDIR)/libfzclient_private_la-pugixml.Plo
@@ -1607,6 +1751,7 @@ distclean: distclean-am
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-tls.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-version.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-xmlutils.Plo
+	-rm -f ./$(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-delete.Plo
@@ -1632,6 +1777,8 @@ distclean: distclean-am
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-rename.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-rmd.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-sftpcontrolsocket.Plo
+	-rm -f ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Plo
+	-rm -f ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-connect.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-delete.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-file_transfer.Plo
@@ -1717,6 +1864,7 @@ maintainer-clean: maintainer-clean-am
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-tls.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-version.Plo
 	-rm -f ./$(DEPDIR)/libfzclient_private_la-xmlutils.Plo
+	-rm -f ./$(DEPDIR)/libfzclient_private_mac_la-sizeformatting_mac.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-chmod.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-cwd.Plo
 	-rm -f ftp/$(DEPDIR)/libfzclient_private_la-delete.Plo
@@ -1742,6 +1890,8 @@ maintainer-clean: maintainer-clean-am
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-rename.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-rmd.Plo
 	-rm -f sftp/$(DEPDIR)/libfzclient_private_la-sftpcontrolsocket.Plo
+	-rm -f ssh/$(DEPDIR)/libfzclient_private_la-ssh_auth.Plo
+	-rm -f ssh/$(DEPDIR)/libfzclient_private_la-ssh_proxy.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-connect.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-delete.Plo
 	-rm -f storj/$(DEPDIR)/libfzclient_private_la-file_transfer.Plo
@@ -1771,15 +1921,16 @@ uninstall-am: uninstall-libLTLIBRARIES
 .MAKE: all check install install-am install-exec install-strip
 
 .PHONY: CTAGS GTAGS TAGS all all-am am--depfiles check check-am clean \
-	clean-generic clean-libLTLIBRARIES clean-libtool cscopelist-am \
-	ctags ctags-am distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-libLTLIBRARIES install-man install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	clean-generic clean-libLTLIBRARIES clean-libtool \
+	clean-noinstLTLIBRARIES cscopelist-am ctags ctags-am distclean \
+	distclean-compile distclean-generic distclean-libtool \
+	distclean-tags distdir dvi dvi-am html html-am info info-am \
+	install install-am install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-compile \
 	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
 	tags tags-am uninstall uninstall-am uninstall-libLTLIBRARIES

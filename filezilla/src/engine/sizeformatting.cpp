@@ -15,12 +15,18 @@
 
 using namespace std::literals;
 
+#if FZ_MAC
+std::wstring_view GetThousandsSeparator();
+std::wstring_view GetRadixSeparator();
+#endif
+
 namespace {
 wchar_t const prefixes[] = { ' ', 'K', 'M', 'G', 'T', 'P', 'E' };
 size_t constexpr prefix_count = sizeof(prefixes) / sizeof(*prefixes);
 
 static_assert(prefix_count == static_cast<unsigned>(UnitPrefix::count));
 
+#ifndef FZ_MAC
 std::wstring_view GetThousandsSeparator()
 {
 	static std::wstring const sep = [](){
@@ -44,6 +50,37 @@ std::wstring_view GetThousandsSeparator()
 	}();
 	return sep;
 }
+
+std::wstring_view GetRadixSeparator()
+{
+	static std::wstring const sep = []() {
+		std::wstring sep;
+#ifdef FZ_WINDOWS
+		wchar_t tmp[5];
+		int count = ::GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, tmp, 5);
+		if (!count) {
+			sep = L".";
+		}
+		else {
+			tmp[4] = 0;
+			sep = tmp;
+		}
+#else
+		char* chr = nl_langinfo(RADIXCHAR);
+		if (!chr || !*chr) {
+			sep = L".";
+		}
+		else {
+			sep = fz::to_wstring(chr);
+		}
+#endif
+
+		return sep;
+	}();
+
+	return sep;
+}
+#endif
 
 std::wstring ToString(int64_t n, bool thousands_separator)
 {
@@ -83,37 +120,6 @@ std::wstring ToString(int64_t n, bool thousands_separator)
 		ret.assign(p, end - p);
 	}
 	return ret;
-}
-
-
-std::wstring const& GetRadixSeparator()
-{
-	static std::wstring const sep = []() {
-		std::wstring sep;
-#ifdef FZ_WINDOWS
-		wchar_t tmp[5];
-		int count = ::GetLocaleInfo(LOCALE_USER_DEFAULT, LOCALE_SDECIMAL, tmp, 5);
-		if (!count) {
-			sep = L".";
-		}
-		else {
-			tmp[4] = 0;
-			sep = tmp;
-		}
-#else
-		char* chr = nl_langinfo(RADIXCHAR);
-		if (!chr || !*chr) {
-			sep = L".";
-		}
-		else {
-			sep = fz::to_wstring(chr);
-		}
-#endif
-
-		return sep;
-	}();
-
-	return sep;
 }
 }
 
@@ -240,9 +246,7 @@ std::wstring SizeFormatter::Format(int64_t size, bool add_bytes_suffix, SizeForm
 
 	std::wstring result = ToString(r, thousands_separator);
 	if (!places.empty()) {
-		std::wstring const& sep = GetRadixSeparator();
-
-		result += sep;
+		result += GetRadixSeparator();
 		result += places;
 	}
 	result += ' ';

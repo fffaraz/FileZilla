@@ -76,7 +76,7 @@ bool CWelcomeDialog::Run(bool force)
 
 	header->AddSpacer(lay.dlgUnits(5));
 
-	header->Add(CThemeProvider::Get()->createStaticBitmap(this, L"ART_FILEZILLA", iconSizeLarge));
+	header->Add(CThemeProvider::Get()->createStaticBitmap(this, L"ART_FILEZILLA", IconSize::large));
 
 	main->Add(new wxStaticLine(this), lay.grow);
 

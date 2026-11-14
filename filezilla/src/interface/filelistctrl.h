@@ -261,16 +261,7 @@ public:
 
 	inline int CmpSize(const value_type &data1, const value_type &data2) const
 	{
-		int64_t const diff = data1.size - data2.size;
-		if (diff < 0) {
-			return -1;
-		}
-		else if (diff > 0) {
-			return 1;
-		}
-		else {
-			return 0;
-		}
+		return (data1.size > data2.size) - (data1.size < data2.size);
 	}
 
 	inline int CmpStringNoCase(std::wstring_view const& data1, std::wstring_view const& data2) const
@@ -631,7 +622,6 @@ private:
 	void OnKeyDown(wxKeyEvent& event);
 	void OnColorChange(wxSysColourChangedEvent & ev);
 
-	COptionsBase& options_;
 	TimeFormatter & time_formatter_;
 
 	std::unique_ptr<CFileListCtrlSortBase> sortComparisonObject_;

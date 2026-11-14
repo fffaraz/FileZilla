@@ -10,14 +10,16 @@
 #include <wx/animate.h>
 #include <wx/artprov.h>
 
-enum iconSize
+class COptionsBase;
+
+enum class IconSize
 {
-	iconSizeTiny,
-	iconSizeSmall,
-	iconSize24,
-	iconSizeNormal,
-	iconSizeLarge,
-	iconSizeHuge
+	tiny,
+	small,
+	subnormal,
+	normal,
+	large,
+	huge
 };
 
 struct wxSize_cmp final
@@ -80,6 +82,7 @@ private:
 };
 
 class COptions;
+class COptionsBase;
 class CThemeProvider final : public wxArtProvider, public wxEvtHandler, public COptionChangeEventHandler
 {
 public:
@@ -91,7 +94,8 @@ public:
 	bool GetThemeData(std::wstring const& theme, std::wstring& name, std::wstring& author, std::wstring& email);
 	static wxIconBundle GetIconBundle(const wxArtID& id, const wxArtClient& client = wxART_OTHER);
 
-	static wxSize GetIconSize(iconSize size, bool userScaled = false);
+	static wxSize GetIconSize(IconSize size);
+	static wxSize GetUserScaledIconSize(COptionsBase& options, IconSize size);
 
 	// Note: Always 1 on OS X
 	static double GetUIScaleFactor();
@@ -103,16 +107,17 @@ public:
 	virtual wxBitmap CreateBitmap(wxArtID const& id, wxArtClient const& client, wxSize const& size) override {
 		return CreateBitmap(id, client, size, false);
 	}
+	wxBitmap CreateBitmap(wxArtID const& id, wxArtClient const& client, IconSize const& size, bool allowDummy = false);
 	wxBitmap CreateBitmap(wxArtID const& id, wxArtClient const& client, wxSize const& size, bool allowDummy);
 
-	wxStaticBitmap* createStaticBitmap(wxWindow* parent, std::wstring const& name, iconSize s);
+	wxStaticBitmap* createStaticBitmap(wxWindow* parent, std::wstring const& name, IconSize s);
 
 private:
 	wxBitmap const& GetEmpty(wxSize const& size);
 
 	virtual void OnOptionsChanged(watched_options const& options) override;
 
-	COptions& options_;
+	COptionsBase& options_;
 	CLocalPath cacheDir_;
 	std::map<std::wstring, CTheme> themes_;
 	std::map<wxSize, wxBitmap, wxSize_cmp> emptyBitmaps_;

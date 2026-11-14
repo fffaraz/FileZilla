@@ -48,7 +48,7 @@ void CSpeedLimitsDialog::Run(wxWindow* parent)
 	auto split = lay.createFlex(2);
 	main->Add(split);
 
-	split->Add(CThemeProvider::Get()->createStaticBitmap(this, L"ART_SPEEDLIMITS", iconSizeLarge));
+	split->Add(CThemeProvider::Get()->createStaticBitmap(this, L"ART_SPEEDLIMITS", IconSize::large));
 
 	auto right = lay.createFlex(1);
 	split->Add(right);

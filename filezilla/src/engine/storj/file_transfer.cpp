@@ -248,6 +248,10 @@ void CStorjFileTransferOpData::OnNextBufferRequested(uint64_t processed)
 
 void CStorjFileTransferOpData::OnFinalizeRequested(uint64_t lastWrite)
 {
+	if (!writer_) {
+		return;
+	}
+
 	finalizing_ = true;
 	buffer_->resize(lastWrite);
 	auto r = writer_->add_buffer(std::move(buffer_), *this);

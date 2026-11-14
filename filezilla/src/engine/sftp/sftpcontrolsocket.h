@@ -43,9 +43,20 @@ protected:
 	void on_hostkey_verification(fz::ssh::session*, std::unique_ptr<fz::ssh::public_key> &, fz::ssh::algorithm_info &);
 	void on_session_done(fz::ssh::session*);
 	void on_sftp_done(fz::ssh::sftp::sftp_client*);
+	void on_pong(fz::ssh::client*, std::optional<fz::duration> const&);
+
+	std::shared_ptr<AsyncRequestHandle> pending_hostkey_request_;
 
 	std::unique_ptr<fz::ssh::client> ssh_;
 	std::unique_ptr<fz::ssh::sftp::sftp_client> sftp_;
+
+	void ping();
+
+	fz::duration srtt_;
+	int64_t srtt_remainder_{};
+	fz::monotonic_clock last_rtt_update_;
+	bool can_use_socket_rtt_{};
+	bool awaiting_pong_{};
 
 	friend class CSftpOpData;
 	friend class CProtocolOpData<CSftpControlSocket>;
@@ -80,6 +91,8 @@ public:
 
 	virtual continuation process_status(fz::ssh::sftp::status_code, std::string_view) override final;
 	virtual continuation do_process_status(fz::ssh::sftp::status_code, std::wstring_view /*formatted_error*/) { return continuation::next; }
+
+	virtual void on_pong() {}
 
 protected:
 	void trigger_next();

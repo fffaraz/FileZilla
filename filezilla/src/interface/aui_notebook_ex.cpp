@@ -188,7 +188,7 @@ protected:
 
 	void PrepareIcons()
 	{
-		wxSize canvas(CThemeProvider::Get()->GetIconSize(iconSizeSmall));
+		wxSize canvas(CThemeProvider::Get()->GetIconSize(IconSize::small));
 		wxSize size = canvas;
 		size.Scale(0.75, 0.75);
 

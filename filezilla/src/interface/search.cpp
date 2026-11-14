@@ -168,7 +168,7 @@ CSearchDialogFileList::CSearchDialogFileList(CSearchDialog* pParent, CQueueView*
 	AddColumn(_("Last modified"), wxLIST_FORMAT_LEFT, widths[4]);
 	AddColumn(_("Permissions"), wxLIST_FORMAT_LEFT, widths[5]);
 	AddColumn(_("Owner/Group"), wxLIST_FORMAT_LEFT, widths[6]);
-	LoadColumnSettings(options_, OPTION_SEARCH_COLUMN_WIDTHS, OPTION_SEARCH_COLUMN_SHOWN, OPTION_SEARCH_COLUMN_ORDER);
+	LoadColumnSettings(OPTION_SEARCH_COLUMN_WIDTHS, OPTION_SEARCH_COLUMN_SHOWN, OPTION_SEARCH_COLUMN_ORDER);
 
 	InitSort(OPTION_SEARCH_SORTORDER);
 }
@@ -370,7 +370,8 @@ wxString CSearchDialogFileList::GetItemText(int item, unsigned int column)
 
 			if (data.fileType.empty()) {
 				if (entry.path.GetType() == VMS) {
-					data.fileType = GetType(StripVMSRevision(entry.name), entry.is_dir());
+					auto stripped = StripVMSRevision(entry.name);
+					data.fileType = GetType(stripped ? *stripped : entry.name, entry.is_dir());
 				}
 				else {
 					data.fileType = GetType(entry.name, entry.is_dir());
@@ -1546,8 +1547,13 @@ void CSearchDialog::OnDownload(wxCommandEvent&)
 
 		CServerPath remote_path = entry.path;
 		std::wstring localName = CQueueView::ReplaceInvalidCharacters(options_, entry.name);
-		if (!entry.is_dir() && remote_path.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION))
-			localName = StripVMSRevision(localName);
+		if (!entry.is_dir() && remote_path.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
+			auto stripped = StripVMSRevision(localName);
+			if (!stripped) {
+				continue;
+			}
+			localName = std::move(*stripped);
+		}
 
 		m_pQueue->QueueFile(dlg.Queue(), true,
 			entry.name, (localName != entry.name) ? localName : std::wstring(),

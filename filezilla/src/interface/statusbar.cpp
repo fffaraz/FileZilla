@@ -95,7 +95,7 @@ void wxStatusBarEx::SetStatusWidths(int n, const int *widths)
 	for (int i = 0; i < n; ++i) {
 		m_columnWidths[i] = widths[i];
 	}
-	m_columnWidths[n - 1] += CThemeProvider::GetIconSize(iconSizeSmall).GetWidth();
+	m_columnWidths[n - 1] += CThemeProvider::GetIconSize(IconSize::small).GetWidth();
 #ifdef __WXMSW__
 	m_columnWidths[n - 1] -= 18; // Internal magic constant of wx, it doesn't UI scale :(
 #endif
@@ -155,10 +155,10 @@ void wxStatusBarEx::OnSize(wxSizeEvent&)
 			m_parentWasMaximized = isMaximized;
 
 			if (isMaximized) {
-				m_columnWidths[count - 1] -= CThemeProvider::GetIconSize(iconSizeSmall).GetWidth();
+				m_columnWidths[count - 1] -= CThemeProvider::GetIconSize(IconSize::small).GetWidth();
 			}
 			else {
-				m_columnWidths[count - 1] += CThemeProvider::GetIconSize(iconSizeSmall).GetWidth();
+				m_columnWidths[count - 1] += CThemeProvider::GetIconSize(IconSize::small).GetWidth();
 			}
 
 			wxStatusBar::SetStatusWidths(count, m_columnWidths);
@@ -441,7 +441,7 @@ void CStatusBar::DisplayDataType()
 			desc = _("Current transfer type is set to automatic detection.");
 		}
 
-		wxSize const s = CThemeProvider::GetIconSize(iconSizeSmall);
+		wxSize const s = CThemeProvider::GetIconSize(IconSize::small);
 		wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(name, wxART_OTHER, s);
 		SetFieldBitmap(widget_datatype, m_pDataTypeIndicator, bmp, s);
 		m_pDataTypeIndicator->SetToolTip(desc);
@@ -498,7 +498,7 @@ void CStatusBar::DisplayEncrypted()
 		}
 	}
 	else {
-		wxSize const s = CThemeProvider::GetIconSize(iconSizeSmall);
+		wxSize const s = CThemeProvider::GetIconSize(IconSize::small);
 		wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(L"ART_LOCK", wxART_OTHER, s);
 		SetFieldBitmap(widget_encryption, m_pEncryptionIndicator, bmp, s);
 		m_pEncryptionIndicator->SetToolTip(_("The connection is encrypted. Click icon for details."));
@@ -600,7 +600,7 @@ void CStatusBar::UpdateSpeedLimitsIcon()
 {
 	bool enable = options_.get_int(OPTION_SPEEDLIMIT_ENABLE) != 0;
 
-	auto const s = CThemeProvider::GetIconSize(iconSizeSmall);
+	auto const s = CThemeProvider::GetIconSize(IconSize::small);
 	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(L"ART_SPEEDLIMITS", wxART_OTHER, s);
 	if (!bmp.Ok()) {
 		return;

@@ -40,17 +40,15 @@ int CFtpRawTransferOpData::Send()
 			bTriedActive = true;
 		}
 		else {
-			switch (currentServer_.GetPasvMode())
-			{
-			case MODE_PASSIVE:
-				bPasv = true;
-				break;
-			case MODE_ACTIVE:
+			auto mode = currentServer_.GetExtraParameter("data_mode_override");
+			if (mode == L"active") {
 				bPasv = false;
-				break;
-			default:
+			}
+			else if (mode == L"passive") {
+				bPasv = true;
+			}
+			else {
 				bPasv = options_.get_int(OPTION_USEPASV) != 0;
-				break;
 			}
 		}
 
@@ -89,7 +87,7 @@ int CFtpRawTransferOpData::Send()
 				}
 			}
 
-			if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK) || bTriedPasv) {
+			if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK) || bTriedPasv || !currentServer_.GetExtraParameter("data_mode_override").empty()) {
 				log(logmsg::error, _("Failed to create listening socket for active mode transfer"));
 				return FZ_REPLY_ERROR;
 			}
@@ -158,7 +156,7 @@ int CFtpRawTransferOpData::ParseResponse()
 		break;
 	case rawtransfer_port_pasv:
 		if (code != 2 && code != 3) {
-			if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK)) {
+			if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK) || !currentServer_.GetExtraParameter("data_mode_override").empty()) {
 				error = true;
 				break;
 			}
@@ -185,7 +183,7 @@ int CFtpRawTransferOpData::ParseResponse()
 				parsed = ParsePasvResponse();
 			}
 			if (!parsed) {
-				if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK)) {
+				if (!options_.get_int(OPTION_ALLOW_TRANSFERMODEFALLBACK) || !currentServer_.GetExtraParameter("data_mode_override").empty()) {
 					error = true;
 					break;
 				}
@@ -388,32 +386,48 @@ bool CFtpRawTransferOpData::ParsePasvResponse()
 			continue;
 		}
 
+		uint16_t port = nums[4] * 256 + nums[5];
+		if (!port) {
+			return false;
+		}
+
 		host_ = fz::sprintf(L"%d.%d.%d.%d", nums[0], nums[1], nums[2], nums[3]);
-		port_ = nums[4] * 256 + nums[5];
+		port_ = port;
 		break;
 	}
 
+	std::wstring const peerIP = fz::to_wstring(controlSocket_.socket_->peer_ip());
+
+	bool relaxedPasvIp = currentServer_.GetExtraParameter("relaxed_dataconnection_ip") == L"1";
+
 	if (controlSocket_.proxy_layer_) {
-		// We do not have any information about the proxy's inner workings
+
+		if (!relaxedPasvIp) {
+			// Always use server address
+			host_ = peerIP;
+		}
+
+		// We do not have any information about the proxy's inner workings to check anything else here.
 		return true;
 	}
 
-	std::wstring const peerIP = fz::to_wstring(controlSocket_.socket_->peer_ip());
-	if (!fz::is_routable_address(host_) && fz::is_routable_address(peerIP)) {
-		if (options_.get_int(OPTION_PASVREPLYFALLBACKMODE) != 1 || bTriedActive) {
-			log(logmsg::status, _("Server sent passive reply with unroutable address. Using server address instead."));
-			log(logmsg::debug_info, L"  Reply: %s, peer: %s", host_, peerIP);
+	if (host_ != peerIP) {
+		if (!relaxedPasvIp) {
+			log(logmsg::status, _("Server sent passive reply with an IP not matching the server's IP. Using server IP instead."));
 			host_ = peerIP;
 		}
-		else {
-			log(logmsg::status, _("Server sent passive reply with unroutable address. Passive mode failed."));
+		else if (!fz::is_routable_address(host_) && fz::is_routable_address(peerIP)) {
+			log(logmsg::status, _("Server sent passive reply with unroutable IP."));
 			log(logmsg::debug_info, L"  Reply: %s, peer: %s", host_, peerIP);
-			return false;
 		}
-	}
-	else if (options_.get_int(OPTION_PASVREPLYFALLBACKMODE) == 2) {
-		// Always use server address
-		host_ = peerIP;
+		else if (fz::is_routable_address(host_) && !fz::is_routable_address(peerIP)) {
+			log(logmsg::status, _("Server addressed through private IP sent passive reply with a public IP address."));
+			log(logmsg::debug_info, L"  Reply: %s, peer: %s", host_, peerIP);
+		}
+		else {
+			log(logmsg::status, _("Server sent passive reply with an IP not matching the server's IP."));
+			log(logmsg::debug_info, L"  Reply: %s, peer: %s", host_, peerIP);
+		}
 	}
 
 	return true;

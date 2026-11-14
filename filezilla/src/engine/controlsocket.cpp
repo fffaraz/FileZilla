@@ -482,7 +482,7 @@ void CControlSocket::OnTimer(fz::timer_id)
 	if (timeout > 0) {
 		fz::duration elapsed = fz::monotonic_clock::now() - m_lastActivity;
 
-		if (!pending_global_async_request_ && (operations_.empty() || !operations_.back()->pending_async_request_) && !opLockManager_.Waiting(this)) {
+		if (!HasPendingAsyncRequest() && !opLockManager_.Waiting(this)) {
 			if (elapsed > fz::duration::from_seconds(timeout)) {
 				log(logmsg::error, fztranslate("Connection timed out after %d second of inactivity", "Connection timed out after %d seconds of inactivity", timeout), timeout);
 				DoClose(FZ_REPLY_TIMEOUT);
@@ -535,7 +535,7 @@ int CControlSocket::SendNextCommand()
 
 	while (!operations_.empty()) {
 		auto & data = *operations_.back();
-		if (data.pending_async_request_ && data.pending_async_request_->second == async_request_type::waiting) {
+		if (data.pending_async_request_ && data.pending_async_request_->type_ == async_request_type::waiting) {
 			log(logmsg::debug_info, L"Waiting for async request, ignoring SendNextCommand...");
 			return FZ_REPLY_WOULDBLOCK;
 		}
@@ -620,23 +620,54 @@ fz::duration CControlSocket::GetInferredTimezoneOffset() const
 	return ret;
 }
 
+std::shared_ptr<AsyncRequestHandle> CControlSocket::SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type, AsyncRequestHandle::Reply && reply)
+{
+	auto req = std::make_shared<AsyncRequestHandle>(type, std::move(reply));
+
+	[&] {
+		for (size_t i = 0; i < pending_async_requests_.size(); ++i) {
+			auto l = pending_async_requests_[i].lock();
+			if (!l || !l->reply_) {
+				pending_async_requests_[i] = req;
+				return;
+			}
+		}
+		pending_async_requests_.push_back(req);
+	}();
+
+	notification->requestHandle_ = req;
+	engine_.AddNotification(std::move(notification));
+
+	return req;
+}
+
 void CControlSocket::SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type)
 {
-	if (!notification || (operations_.empty() && type != async_request_type::global)) {
+	if (!notification || operations_.empty()) {
 		return;
 	}
 
-	auto requestNumber = std::make_shared<unsigned int>(engine_.GetNextAsyncRequestNumber());
+	auto reply = [&](CAsyncRequestNotification* req) {
+		if (!operations_.empty()) {
+			operations_.back()->pending_async_request_.reset();
+			SetAsyncRequestReply(req);
+		}
+	};
 
-	notification->requestNumber_ = requestNumber;
+	operations_.back()->pending_async_request_ = SendAsyncRequest(std::move(notification), type, reply);
+}
 
-	if (type == async_request_type::global) {
-		pending_global_async_request_ = std::move(requestNumber);
+bool CControlSocket::HasPendingAsyncRequest()
+{
+	for (auto & req : pending_async_requests_) {
+		auto l = req.lock();
+		if (l && l->reply_) {
+			return true;
+		}
 	}
-	else {
-		operations_.back()->pending_async_request_ = std::make_pair(std::move(requestNumber), (type == async_request_type::waiting) ? async_request_type::waiting : async_request_type::parallel);
-	}
-	engine_.AddNotification(std::move(notification));
+	pending_async_requests_.clear();
+
+	return false;
 }
 
 // ------------------
@@ -798,6 +829,13 @@ void CRealControlSocket::OnSocketError(int error)
 	DoClose();
 }
 
+namespace {
+bool IsFtp(ServerProtocol p)
+{
+	return p == FTP || p == FTPS || p == FTPES || p == INSECURE_FTP;
+}
+}
+
 void CRealControlSocket::CreateSocket(std::wstring const& host)
 {
 	ResetSocket();
@@ -814,7 +852,7 @@ void CRealControlSocket::CreateSocket(std::wstring const& host)
 		proxy_layer_ = CreateProxy(nullptr, *active_layer_, this, static_cast<ProxyType>(proxy_type),
 			proxy_host, engine_.GetOptions().get_int(OPTION_PROXY_PORT),
 			engine_.GetOptions().get_string(OPTION_PROXY_USER),
-			engine_.GetOptions().get_string(OPTION_PROXY_PASS));
+			engine_.GetOptions().get_string(OPTION_PROXY_PASS), IsFtp(currentServer_.GetProtocol()));
 		active_layer_ = proxy_layer_.get();
 
 		if (fz::get_address_type(proxy_host) == fz::address_type::unknown) {
@@ -1112,27 +1150,16 @@ void CControlSocket::CallSetAsyncRequestReply(CAsyncRequestNotification *pNotifi
 	if (!pNotification) {
 		return;
 	}
-	auto sReqNr = pNotification->requestNumber_.lock();
-	if (!sReqNr) {
-		log(logmsg::debug_info, L"Ignoring request reply with request id %d that isn't pending.", pNotification->GetRequestID());
-		return;
-	}
 
-	if (pending_global_async_request_ && *pending_global_async_request_ == *sReqNr) {
-		log(logmsg::debug_info, L"Got reply to pending global async request %u with request id %d", *sReqNr, pNotification->GetRequestID());
-		pending_global_async_request_.reset();
-	}
-	else if (!operations_.empty() && operations_.back()->pending_async_request_) {
-		log(logmsg::debug_info, L"Got reply to pending operation async request %u with request id %d", *sReqNr, pNotification->GetRequestID());
-		operations_.back()->pending_async_request_.reset();
-	}
-	else {
-		log(logmsg::debug_info, L"Not waiting for request reply, ignoring request reply %u with request id %d", *sReqNr, pNotification->GetRequestID());
+	std::shared_ptr<AsyncRequestHandle> handle = pNotification->requestHandle_.lock();
+	if (!handle || !handle->reply_) {
+		log(logmsg::debug_info, L"Ignoring request reply for a request that is no longer pending");
 		return;
 	}
 
 	SetAlive();
-	SetAsyncRequestReply(pNotification);
+	handle->reply_(pNotification);
+	handle->reply_ = nullptr;
 }
 
 void CControlSocket::Sleep(fz::duration const& delay)

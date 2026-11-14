@@ -57,7 +57,7 @@ void CFilterEditDialog::OnCancel(wxCommandEvent&)
 	EndModal(wxID_CANCEL);
 }
 
-bool CFilterEditDialog::Create(wxWindow* parent, const std::vector<CFilter>& filters, const std::vector<CFilterSet>& filterSets)
+bool CFilterEditDialog::Create(wxWindow* parent, COptionsBase & options, const std::vector<CFilter>& filters, const std::vector<CFilterSet>& filterSets)
 {
 	bool has_foreign_type = false;
 	for (std::vector<CFilter>::const_iterator iter = filters.begin(); iter != filters.end(); ++iter) {
@@ -162,7 +162,7 @@ bool CFilterEditDialog::Create(wxWindow* parent, const std::vector<CFilter>& fil
 		filterList_->Append(filter.name);
 	}
 
-	m_pWindowStateManager = new CWindowStateManager(this, *COptions::Get());
+	m_pWindowStateManager = new CWindowStateManager(this, options);
 	m_pWindowStateManager->Restore(OPTION_FILTEREDIT_SIZE, wxSize(750, 500));
 
 	Layout();

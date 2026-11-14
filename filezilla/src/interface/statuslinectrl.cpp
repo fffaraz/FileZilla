@@ -426,7 +426,7 @@ wxFileOffset CStatusLineCtrl::GetMomentarySpeed()
 	if (m_monentary_speed_data.last_offset < 0) {
 		m_monentary_speed_data.last_offset = status_.currentOffset;
 	}
-	
+
 	if (!m_monentary_speed_data.last_update) {
 		m_monentary_speed_data.last_update = fz::monotonic_clock::now();
 		return -1;
@@ -439,7 +439,7 @@ wxFileOffset CStatusLineCtrl::GetMomentarySpeed()
 	else if (m_monentary_speed_data.last_speed >= 0 || !time_diff) {
 		return m_monentary_speed_data.last_speed;
 	}
-	
+
 	wxFileOffset const fileOffsetDiff = status_.currentOffset - m_monentary_speed_data.last_offset;
 	m_monentary_speed_data.last_offset = status_.currentOffset;
 	if (fileOffsetDiff >= 0) {

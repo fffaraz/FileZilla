@@ -59,20 +59,6 @@ void SetServer(pugi::xml_node node, Site const& site, login_manager& lim, COptio
 		AddTextElement(node, "TimezoneOffset", site.server.GetTimezoneOffset());
 	}
 
-	if (CServer::ProtocolHasFeature(site.server.GetProtocol(), ProtocolFeature::TransferMode)) {
-		switch (site.server.GetPasvMode())
-		{
-		case MODE_PASSIVE:
-			AddTextElementUtf8(node, "PasvMode", "MODE_PASSIVE");
-			break;
-		case MODE_ACTIVE:
-			AddTextElementUtf8(node, "PasvMode", "MODE_ACTIVE");
-			break;
-		default:
-			AddTextElementUtf8(node, "PasvMode", "MODE_DEFAULT");
-			break;
-		}
-	}
 	if (site.connection_limit_) {
 		AddTextElement(node, "MaximumMultipleConnections", site.connection_limit_);
 	}

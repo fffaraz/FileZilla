@@ -157,12 +157,23 @@ bool COptionsPageEdit::Validate()
 			return DisplayError(impl_->custom_, _("Default editor not properly quoted."));
 		}
 
+		if (IsForbiddenAssociationProgram(cmd_with_args[0])) {
+			return DisplayError(impl_->custom_, _("cmd.exe and powershell.exe cannot be used as editors."));
+		}
+
 		if (!ProgramExists(cmd_with_args[0])) {
 			return DisplayError(impl_->custom_, _("The file selected as default editor does not exist."));
 		}
 
 		editor = QuoteCommand(cmd_with_args);
 		impl_->custom_->ChangeValue(editor);
+	}
+	else if (impl_->default_system_->GetValue()) {
+		bool forbidden{};
+		GetSystemAssociation(L"foo.txt", &forbidden);
+		if (forbidden) {
+			return DisplayError(impl_->default_system_, _("cmd.exe and powershell.exe cannot be used as editors."));
+		}
 	}
 
 	return true;

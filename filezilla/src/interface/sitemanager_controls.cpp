@@ -1295,10 +1295,12 @@ bool AdvancedSiteControls::UpdateSite(Site & site, bool silent)
 
 struct TransferSettingsSiteControls::impl final
 {
-	wxStaticText* transfermode_desc_{};
 	wxRadioButton* transfermode_default_{};
 	wxRadioButton* transfermode_active_{};
 	wxRadioButton* transfermode_passive_{};
+	wxRadioButton* dataconnection_ipcheck_strict_{};
+	wxRadioButton* dataconnection_ipcheck_relaxed_{};
+
 	wxCheckBox* limit_max_conns_{};
 	wxSpinCtrlEx* max_conns_{};
 };
@@ -1307,17 +1309,34 @@ TransferSettingsSiteControls::TransferSettingsSiteControls(wxWindow & parent, Di
 	: SiteControls(parent)
 	, impl_(std::make_unique<impl>())
 {
-	impl_->transfermode_desc_ = new wxStaticText(&parent, nullID, _("&Transfer mode:"));
-	sizer.Add(impl_->transfermode_desc_);
+	auto ftpSizer = lay.createFlex(1);
+	sizer.Add(ftpSizer);
+	ftpSizer->Add(new wxStaticText(&parent, nullID, _("FTP data connection settings")));
+	ftpSizer->Add(new wxStaticText(&parent, nullID, _("&Transfer mode:")), 0, wxLEFT, lay.indent);
 	auto * row = lay.createFlex(0, 1);
-	sizer.Add(row);
+	ftpSizer->Add(row, 0, wxLEFT, lay.indent);
 	impl_->transfermode_default_ = new wxRadioButton(&parent, nullID, _("D&efault"), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
 	row->Add(impl_->transfermode_default_, lay.valign);
 	impl_->transfermode_active_ = new wxRadioButton(&parent, nullID, _("&Active"));
 	row->Add(impl_->transfermode_active_, lay.valign);
 	impl_->transfermode_passive_ = new wxRadioButton(&parent, nullID, _("&Passive"));
 	row->Add(impl_->transfermode_passive_, lay.valign);
-	sizer.AddSpacer(0);
+	ftpSizer->AddSpacer(0);
+
+	impl_->dataconnection_ipcheck_strict_ = new wxRadioButton(&parent, nullID, _("Re&quire matching peer IP address on control and data connection."), wxDefaultPosition, wxDefaultSize, wxRB_GROUP);
+	ftpSizer->Add(impl_->dataconnection_ipcheck_strict_, 0, wxLEFT,  lay.indent);
+	impl_->dataconnection_ipcheck_relaxed_ = new wxRadioButton(&parent, nullID, _("Allow peer IP of control and data connection to differ (insecure)"), wxDefaultPosition, wxDefaultSize);
+	ftpSizer->Add(impl_->dataconnection_ipcheck_relaxed_, 0, wxLEFT, lay.indent);
+	ftpSizer->Add(new wxStaticLine(&parent), lay.grow);
+
+	auto onChange = [&](wxCommandEvent const&) {
+		bool enable = impl_->transfermode_active_->GetValue() || impl_->transfermode_passive_->GetValue();
+		impl_->dataconnection_ipcheck_strict_->Enable(enable);
+		impl_->dataconnection_ipcheck_relaxed_->Enable(enable);
+	};
+	impl_->transfermode_default_->Bind(wxEVT_RADIOBUTTON, onChange);
+	impl_->transfermode_active_->Bind(wxEVT_RADIOBUTTON, onChange);
+	impl_->transfermode_passive_->Bind(wxEVT_RADIOBUTTON, onChange);
 
 	impl_->limit_max_conns_ = new wxCheckBox(&parent, nullID, _("&Limit number of simultaneous connections"));
 	sizer.Add(impl_->limit_max_conns_);
@@ -1343,6 +1362,10 @@ void TransferSettingsSiteControls::SetSite(Site const& site, bool predefined)
 	impl_->transfermode_passive_->Enable(!predefined);
 	impl_->limit_max_conns_->Enable(!predefined);
 
+	bool hasExplicitMode = site && !site.server.GetExtraParameter("data_mode_override").empty();
+	impl_->dataconnection_ipcheck_strict_->Enable(!predefined && hasExplicitMode);
+	impl_->dataconnection_ipcheck_relaxed_->Enable(!predefined && hasExplicitMode);
+
 	if (!site) {
 		impl_->transfermode_default_->SetValue(true);
 		impl_->limit_max_conns_->SetValue(false);
@@ -1351,15 +1374,24 @@ void TransferSettingsSiteControls::SetSite(Site const& site, bool predefined)
 	}
 	else {
 		if (CServer::ProtocolHasFeature(site.server.GetProtocol(), ProtocolFeature::TransferMode)) {
-			PasvMode pasvMode = site.server.GetPasvMode();
-			if (pasvMode == MODE_ACTIVE) {
+			auto pasvMode = site.server.GetExtraParameter("data_mode_override");
+			if (pasvMode == L"active") {
 				impl_->transfermode_active_->SetValue(true);
 			}
-			else if (pasvMode == MODE_PASSIVE) {
+			else if (pasvMode == L"passive") {
 				impl_->transfermode_passive_->SetValue(true);
 			}
 			else {
+				pasvMode.clear();
 				impl_->transfermode_default_->SetValue(true);
+			}
+
+			bool relaxed = !pasvMode.empty() && site.server.GetExtraParameter("relaxed_dataconnection_ip") == L"1";
+			if (relaxed) {
+				impl_->dataconnection_ipcheck_relaxed_->SetValue(true);
+			}
+			else {
+				impl_->dataconnection_ipcheck_strict_->SetValue(true);
 			}
 		}
 
@@ -1380,17 +1412,17 @@ bool TransferSettingsSiteControls::UpdateSite(Site & site, bool)
 {
 	if (CServer::ProtocolHasFeature(site.server.GetProtocol(), ProtocolFeature::TransferMode)) {
 		if (impl_->transfermode_active_->GetValue()) {
-			site.server.SetPasvMode(MODE_ACTIVE);
+			site.server.SetExtraParameter("data_mode_override", L"active"s);
+			site.server.SetExtraParameter("relaxed_dataconnection_ip", impl_->dataconnection_ipcheck_relaxed_->GetValue() ? L"1"s : L""s);
 		}
 		else if (impl_->transfermode_passive_->GetValue()) {
-			site.server.SetPasvMode(MODE_PASSIVE);
+			site.server.SetExtraParameter("data_mode_override", L"passive"s);
+			site.server.SetExtraParameter("relaxed_dataconnection_ip", impl_->dataconnection_ipcheck_relaxed_->GetValue() ? L"1"s : L""s);
 		}
 		else {
-			site.server.SetPasvMode(MODE_DEFAULT);
+			site.server.SetExtraParameter("data_mode_override", L""s);
+			site.server.SetExtraParameter("relaxed_dataconnection_ip", L""s);
 		}
-	}
-	else {
-		site.server.SetPasvMode(MODE_DEFAULT);
 	}
 
 	if (impl_->limit_max_conns_->GetValue()) {
@@ -1406,12 +1438,9 @@ bool TransferSettingsSiteControls::UpdateSite(Site & site, bool)
 void TransferSettingsSiteControls::SetControlVisibility(ServerProtocol protocol, LogonType)
 {
 	bool const hasTransferMode = CServer::ProtocolHasFeature(protocol, ProtocolFeature::TransferMode);
-	impl_->transfermode_desc_->Show(hasTransferMode);
-	impl_->transfermode_default_->Show(hasTransferMode);
-	impl_->transfermode_active_->Show(hasTransferMode);
-	impl_->transfermode_passive_->Show(hasTransferMode);
-	impl_->transfermode_desc_->GetContainingSizer()->CalcMin();
-	impl_->transfermode_desc_->GetContainingSizer()->Layout();
+	impl_->dataconnection_ipcheck_strict_->GetContainingSizer()->Show(hasTransferMode);
+	impl_->limit_max_conns_->GetContainingSizer()->CalcMin();
+	impl_->limit_max_conns_->GetContainingSizer()->Layout();
 }
 
 struct CharsetSiteControls::impl final

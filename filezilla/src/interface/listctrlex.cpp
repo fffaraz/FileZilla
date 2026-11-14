@@ -41,13 +41,15 @@ END_EVENT_TABLE()
 
 #define MIN_COLUMN_WIDTH 12
 
-wxListCtrlEx::wxListCtrlEx(wxWindow *parent,
+wxListCtrlEx::wxListCtrlEx(COptionsBase & options,
+						   wxWindow *parent,
 						   wxWindowID id,
 						   const wxPoint& pos,
 						   const wxSize& size,
 						   long style,
 						   const wxValidator& validator,
 						   const wxString& name)
+	: options_(options)
 {
 #if defined(__WXMSW__)
 	// This gets rid of vertical lines between columns
@@ -440,19 +442,21 @@ void wxListCtrlEx::ShowColumn(unsigned int col, bool show)
 	}
 }
 
-void wxListCtrlEx::LoadColumnSettings(COptionsBase & options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
+void wxListCtrlEx::LoadColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
 {
-	wxASSERT(!GetColumnCount());
+	if (GetColumnCount()) {
+		return;
+	}
 
 	if (widthsOptionId != OPTIONS_NUM) {
-		ReadColumnWidths(options, widthsOptionId);
+		ReadColumnWidths(widthsOptionId);
 	}
 
 	delete [] m_pVisibleColumnMapping;
 	m_pVisibleColumnMapping = new unsigned int[m_columnInfo.size()];
 
 	if (visibilityOptionId != OPTIONS_NUM) {
-		wxString visibleColumns = options.get_string(visibilityOptionId);
+		wxString visibleColumns = options_.get_string(visibilityOptionId);
 		if (visibleColumns.Len() >= m_columnInfo.size()) {
 			for (unsigned int i = 0; i < m_columnInfo.size(); ++i) {
 				if (!m_columnInfo[i].fixed) {
@@ -463,7 +467,7 @@ void wxListCtrlEx::LoadColumnSettings(COptionsBase & options, interfaceOptions w
 	}
 
 	if (sortOptionId != OPTIONS_NUM) {
-		auto tokens = fz::strtok(options.get_string(sortOptionId), L",");
+		auto tokens = fz::strtok(options_.get_string(sortOptionId), L",");
 
 		if (tokens.size() >= m_columnInfo.size()) {
 			unsigned int *order = new unsigned int[m_columnInfo.size()];
@@ -510,10 +514,10 @@ void wxListCtrlEx::LoadColumnSettings(COptionsBase & options, interfaceOptions w
 	CreateVisibleColumnMapping();
 }
 
-void wxListCtrlEx::SaveColumnSettings(COptionsBase& options, interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
+void wxListCtrlEx::SaveColumnSettings(interfaceOptions widthsOptionId, interfaceOptions visibilityOptionId, interfaceOptions sortOptionId)
 {
 	if (widthsOptionId != OPTIONS_NUM) {
-		SaveColumnWidths(options, widthsOptionId);
+		SaveColumnWidths(widthsOptionId);
 	}
 
 	if (visibilityOptionId != OPTIONS_NUM) {
@@ -526,7 +530,7 @@ void wxListCtrlEx::SaveColumnSettings(COptionsBase& options, interfaceOptions wi
 				visibleColumns += L"0";
 			}
 		}
-		options.set(visibilityOptionId, visibleColumns);
+		options_.set(visibilityOptionId, visibleColumns);
 	}
 
 	if (sortOptionId != OPTIONS_NUM) {
@@ -537,23 +541,25 @@ void wxListCtrlEx::SaveColumnSettings(COptionsBase& options, interfaceOptions wi
 			}
 			order += fz::to_wstring(m_columnInfo[i].order);
 		}
-		options.set(sortOptionId, order);
+		options_.set(sortOptionId, order);
 	}
 }
 
-bool wxListCtrlEx::ReadColumnWidths(COptionsBase & options, interfaceOptions optionId)
+void wxListCtrlEx::ReadColumnWidths(interfaceOptions optionId)
 {
-	wxASSERT(!GetColumnCount());
+	if (GetColumnCount()) {
+		return;
+	}
 
 	if (wxGetKeyState(WXK_SHIFT) &&
 		wxGetKeyState(WXK_ALT) &&
 		wxGetKeyState(WXK_CONTROL))
 	{
-		return true;
+		return;
 	}
 
 
-	auto tokens = fz::strtok(options.get_string(optionId), L" ");
+	auto tokens = fz::strtok(options_.get_string(optionId), L" ");
 
 	auto const count = std::min(tokens.size(), m_columnInfo.size());
 	for (size_t i = 0; i < count; ++i) {
@@ -562,11 +568,9 @@ bool wxListCtrlEx::ReadColumnWidths(COptionsBase & options, interfaceOptions opt
 			m_columnInfo[i].width = width;
 		}
 	}
-
-	return true;
 }
 
-void wxListCtrlEx::SaveColumnWidths(COptionsBase & options, interfaceOptions optionId)
+void wxListCtrlEx::SaveColumnWidths(interfaceOptions optionId)
 {
 	const unsigned int count = m_columnInfo.size();
 
@@ -590,7 +594,7 @@ void wxListCtrlEx::SaveColumnWidths(COptionsBase & options, interfaceOptions opt
 	}
 	widths.RemoveLast();
 
-	options.set(optionId, widths.ToStdWstring());
+	options_.set(optionId, widths.ToStdWstring());
 }
 
 
@@ -933,9 +937,9 @@ void wxListCtrlEx::InitHeaderSortImageList()
 	if (imageList) {
 		wxBitmap bmp;
 
-		bmp = CThemeProvider::Get()->CreateBitmap(_T("ART_SORT_UP_") + lightness, wxART_OTHER, CThemeProvider::GetIconSize(iconSizeSmall));
+		bmp = CThemeProvider::Get()->CreateBitmap(_T("ART_SORT_UP_") + lightness, wxART_OTHER, IconSize::small);
 		m_header_icon_index.up = imageList->Add(bmp);
-		bmp = CThemeProvider::Get()->CreateBitmap(_T("ART_SORT_DOWN_") + lightness, wxART_OTHER, CThemeProvider::GetIconSize(iconSizeSmall));
+		bmp = CThemeProvider::Get()->CreateBitmap(_T("ART_SORT_DOWN_") + lightness, wxART_OTHER, IconSize::small);
 		m_header_icon_index.down = imageList->Add(bmp);
 	}
 #endif

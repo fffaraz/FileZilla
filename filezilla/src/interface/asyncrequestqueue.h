@@ -20,7 +20,7 @@ public:
 	CAsyncRequestQueue(wxTopLevelWindow * parent, COptionsBase & options, TimeFormatter & time_formatter, login_manager & lim, cert_store & certStore, KeyfilePasswordManager & keyfilePasswordManager, HostkeyStore & hostkeyStore);
 	~CAsyncRequestQueue();
 
-	bool AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> && pNotification);
+	void AddRequest(CFileZillaEngine *pEngine, std::unique_ptr<CAsyncRequestNotification> && pNotification);
 	void ClearPending(CFileZillaEngine const* const pEngine);
 	void RecheckDefaults();
 

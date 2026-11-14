@@ -335,7 +335,7 @@ std::wstring CSiteManager::AddServer(Site site, COptionsBase & options, login_ma
 	return L"0/" + EscapeSegment(name);
 }
 
-bool CSiteManager::AddBookmark(std::wstring sitePath, wxString const& name, wxString const& local_dir, CServerPath const& remote_dir, bool sync, bool comparison)
+bool CSiteManager::AddBookmark(COptionsBase& options, std::wstring sitePath, wxString const& name, wxString const& local_dir, CServerPath const& remote_dir, bool sync, bool comparison)
 {
 	if (local_dir.empty() && remote_dir.empty()) {
 		return false;
@@ -416,7 +416,7 @@ bool CSiteManager::AddBookmark(std::wstring sitePath, wxString const& name, wxSt
 	}
 
 	if (!file.Save()) {
-		if (COptions::Get()->get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
+		if (options.get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
 			return true;
 		}
 
@@ -427,7 +427,7 @@ bool CSiteManager::AddBookmark(std::wstring sitePath, wxString const& name, wxSt
 	return true;
 }
 
-bool CSiteManager::ClearBookmarks(std::wstring sitePath)
+bool CSiteManager::ClearBookmarks(COptionsBase & options, std::wstring sitePath)
 {
 	wxChar const c = sitePath.empty() ? 0 : sitePath[0];
 	if (c != '0') {
@@ -473,7 +473,7 @@ bool CSiteManager::ClearBookmarks(std::wstring sitePath)
 	}
 
 	if (!file.Save()) {
-		if (COptions::Get()->get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
+		if (options.get_int(OPTION_DEFAULT_KIOSKMODE) == 2) {
 			return true;
 		}
 

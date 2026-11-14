@@ -124,7 +124,7 @@ protected:
 
 	void DoDisplayQueueSize();
 
-	COptionsBase& options_;
+	COptionsBase & options_;
 	TimeFormatter & time_formatter_;
 
 	SizeFormat m_sizeFormat;

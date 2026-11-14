@@ -252,13 +252,12 @@ static gboolean gtk_button_release_event(GtkWidget*, void *gdk_event, CGtkEventC
 #endif
 
 template<class CFileData> CFileListCtrl<CFileData>::CFileListCtrl(wxWindow* pParent, CQueueView* pQueue, COptionsBase & options, TimeFormatter & time_formatter, bool border)
-	: wxListCtrlEx(pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxLC_VIRTUAL | wxLC_REPORT | wxLC_EDIT_LABELS | (border ? wxBORDER_SUNKEN : wxNO_BORDER))
+	: wxListCtrlEx(options, pParent, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxTAB_TRAVERSAL | wxLC_VIRTUAL | wxLC_REPORT | wxLC_EDIT_LABELS | (border ? wxBORDER_SUNKEN : wxNO_BORDER))
 	, CComparableListing(this)
 	, m_pQueue(pQueue)
-	, options_(options)
 	, time_formatter_(time_formatter)
 {
-	CreateSystemImageList(CThemeProvider::GetIconSize(iconSizeSmall).x);
+	CreateSystemImageList(CThemeProvider::GetIconSize(IconSize::small).x);
 
 #ifndef __WXMSW__
 	m_dropHighlightAttribute.SetBackgroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_BTNSHADOW));

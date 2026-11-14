@@ -98,14 +98,12 @@ bin_PROGRAMS = filezilla$(EXEEXT)
 @ENABLE_FTP_TRUE@am__append_2 = \
 @ENABLE_FTP_TRUE@		settings/optionspage_connection_active.cpp \
 @ENABLE_FTP_TRUE@		settings/optionspage_connection_ftp.cpp \
-@ENABLE_FTP_TRUE@		settings/optionspage_connection_passive.cpp \
 @ENABLE_FTP_TRUE@		settings/optionspage_ftpproxy.cpp \
 @ENABLE_FTP_TRUE@		settings/optionspage_filetype.cpp
 
 @ENABLE_FTP_TRUE@am__append_3 = \
 @ENABLE_FTP_TRUE@		settings/optionspage_connection_active.h \
 @ENABLE_FTP_TRUE@		settings/optionspage_connection_ftp.h \
-@ENABLE_FTP_TRUE@		settings/optionspage_connection_passive.h \
 @ENABLE_FTP_TRUE@		settings/optionspage_ftpproxy.h \
 @ENABLE_FTP_TRUE@		settings/optionspage_filetype.h
 
@@ -229,7 +227,6 @@ am__filezilla_SOURCES_DIST = aboutdialog.cpp asksavepassworddialog.cpp \
 	xh_text_ex.cpp xmlfunctions.cpp xrc_helper.cpp \
 	settings/optionspage_connection_active.cpp \
 	settings/optionspage_connection_ftp.cpp \
-	settings/optionspage_connection_passive.cpp \
 	settings/optionspage_ftpproxy.cpp \
 	settings/optionspage_filetype.cpp \
 	settings/optionspage_connection_sftp.cpp \
@@ -238,7 +235,6 @@ am__filezilla_SOURCES_DIST = aboutdialog.cpp asksavepassworddialog.cpp \
 am__dirstamp = $(am__leading_dot)dirstamp
 @ENABLE_FTP_TRUE@am__objects_1 = settings/filezilla-optionspage_connection_active.$(OBJEXT) \
 @ENABLE_FTP_TRUE@	settings/filezilla-optionspage_connection_ftp.$(OBJEXT) \
-@ENABLE_FTP_TRUE@	settings/filezilla-optionspage_connection_passive.$(OBJEXT) \
 @ENABLE_FTP_TRUE@	settings/filezilla-optionspage_ftpproxy.$(OBJEXT) \
 @ENABLE_FTP_TRUE@	settings/filezilla-optionspage_filetype.$(OBJEXT)
 @ENABLE_SFTP_TRUE@am__objects_2 = settings/filezilla-optionspage_connection_sftp.$(OBJEXT) \
@@ -473,7 +469,6 @@ am__depfiles_remade = ./$(DEPDIR)/filezilla-FileZilla.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_connection.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_connection_active.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_connection_ftp.Po \
-	settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_connection_sftp.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_dateformatting.Po \
 	settings/$(DEPDIR)/filezilla-optionspage_debug.Po \
@@ -609,7 +604,6 @@ am__noinst_HEADERS_DIST = aboutdialog.h asksavepassworddialog.h \
 	xmlfunctions.h xrc_helper.h \
 	settings/optionspage_connection_active.h \
 	settings/optionspage_connection_ftp.h \
-	settings/optionspage_connection_passive.h \
 	settings/optionspage_ftpproxy.h \
 	settings/optionspage_filetype.h \
 	settings/optionspage_connection_sftp.h sftp_crypt_info_dlg.h \
@@ -1125,8 +1119,6 @@ settings/filezilla-optionspage_connection_active.$(OBJEXT):  \
 	settings/$(am__dirstamp) settings/$(DEPDIR)/$(am__dirstamp)
 settings/filezilla-optionspage_connection_ftp.$(OBJEXT):  \
 	settings/$(am__dirstamp) settings/$(DEPDIR)/$(am__dirstamp)
-settings/filezilla-optionspage_connection_passive.$(OBJEXT):  \
-	settings/$(am__dirstamp) settings/$(DEPDIR)/$(am__dirstamp)
 settings/filezilla-optionspage_ftpproxy.$(OBJEXT):  \
 	settings/$(am__dirstamp) settings/$(DEPDIR)/$(am__dirstamp)
 settings/filezilla-optionspage_filetype.$(OBJEXT):  \
@@ -1251,7 +1243,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_connection.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_connection_active.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_connection_ftp.Po@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_connection_sftp.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_dateformatting.Po@am__quote@ # am--include-marker
 @AMDEP_TRUE@@am__include@ @am__quote@settings/$(DEPDIR)/filezilla-optionspage_debug.Po@am__quote@ # am--include-marker
@@ -2913,20 +2904,6 @@ settings/filezilla-optionspage_connection_ftp.obj: settings/optionspage_connecti
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o settings/filezilla-optionspage_connection_ftp.obj `if test -f 'settings/optionspage_connection_ftp.cpp'; then $(CYGPATH_W) 'settings/optionspage_connection_ftp.cpp'; else $(CYGPATH_W) '$(srcdir)/settings/optionspage_connection_ftp.cpp'; fi`
 
-settings/filezilla-optionspage_connection_passive.o: settings/optionspage_connection_passive.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT settings/filezilla-optionspage_connection_passive.o -MD -MP -MF settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Tpo -c -o settings/filezilla-optionspage_connection_passive.o `test -f 'settings/optionspage_connection_passive.cpp' || echo '$(srcdir)/'`settings/optionspage_connection_passive.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Tpo settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='settings/optionspage_connection_passive.cpp' object='settings/filezilla-optionspage_connection_passive.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o settings/filezilla-optionspage_connection_passive.o `test -f 'settings/optionspage_connection_passive.cpp' || echo '$(srcdir)/'`settings/optionspage_connection_passive.cpp
-
-settings/filezilla-optionspage_connection_passive.obj: settings/optionspage_connection_passive.cpp
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT settings/filezilla-optionspage_connection_passive.obj -MD -MP -MF settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Tpo -c -o settings/filezilla-optionspage_connection_passive.obj `if test -f 'settings/optionspage_connection_passive.cpp'; then $(CYGPATH_W) 'settings/optionspage_connection_passive.cpp'; else $(CYGPATH_W) '$(srcdir)/settings/optionspage_connection_passive.cpp'; fi`
-@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Tpo settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='settings/optionspage_connection_passive.cpp' object='settings/filezilla-optionspage_connection_passive.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -c -o settings/filezilla-optionspage_connection_passive.obj `if test -f 'settings/optionspage_connection_passive.cpp'; then $(CYGPATH_W) 'settings/optionspage_connection_passive.cpp'; else $(CYGPATH_W) '$(srcdir)/settings/optionspage_connection_passive.cpp'; fi`
-
 settings/filezilla-optionspage_ftpproxy.o: settings/optionspage_ftpproxy.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(filezilla_CPPFLAGS) $(CPPFLAGS) $(filezilla_CXXFLAGS) $(CXXFLAGS) -MT settings/filezilla-optionspage_ftpproxy.o -MD -MP -MF settings/$(DEPDIR)/filezilla-optionspage_ftpproxy.Tpo -c -o settings/filezilla-optionspage_ftpproxy.o `test -f 'settings/optionspage_ftpproxy.cpp' || echo '$(srcdir)/'`settings/optionspage_ftpproxy.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) settings/$(DEPDIR)/filezilla-optionspage_ftpproxy.Tpo settings/$(DEPDIR)/filezilla-optionspage_ftpproxy.Po
@@ -3412,7 +3389,6 @@ distclean: distclean-recursive
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_active.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_ftp.Po
-	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_sftp.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_dateformatting.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_debug.Po
@@ -3583,7 +3559,6 @@ maintainer-clean: maintainer-clean-recursive
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_active.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_ftp.Po
-	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_passive.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_connection_sftp.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_dateformatting.Po
 	-rm -f settings/$(DEPDIR)/filezilla-optionspage_debug.Po

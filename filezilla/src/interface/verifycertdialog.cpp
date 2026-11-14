@@ -221,7 +221,7 @@ bool CVerifyCertDialog::CreateVerificationDialog(fz::tls_session_info const& inf
 	outer->AddGrowableCol(1);
 	outer->AddGrowableRow(0);
 
-	auto icon = CThemeProvider::Get()->createStaticBitmap(this, L"ART_LOCK", iconSizeNormal);
+	auto icon = CThemeProvider::Get()->createStaticBitmap(this, L"ART_LOCK", IconSize::normal);
 	outer->Add(icon);
 
 	auto main = lay.createFlex(1);

@@ -23,7 +23,6 @@ enum engineOptions : unsigned int
 	OPTION_LASTRESOLVEDIP,
 	OPTION_NOEXTERNALONLOCAL,	// Don't use external IP address if connection is
 	                                // coming from a local unroutable address
-	OPTION_PASVREPLYFALLBACKMODE,
 	OPTION_TIMEOUT,
 	OPTION_LOGGING_DEBUGLEVEL,
 	OPTION_LOGGING_RAWLISTING,
@@ -58,6 +57,7 @@ enum engineOptions : unsigned int
 
 	OPTION_SFTP_KEYFILES,
 	OPTION_SFTP_COMPRESSION,
+	OPTION_SFTP_USE_AGENT,
 
 	OPTION_PROXY_TYPE,
 	OPTION_PROXY_HOST,

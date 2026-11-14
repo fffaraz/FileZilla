@@ -102,6 +102,15 @@ void SetTextAttribute(pugi::xml_node node, char const* name, std::string const& 
 	SetTextAttributeUtf8(node, name, fz::to_utf8(value));
 }
 
+pugi::xml_attribute ensure_attribute(pugi::xml_node node, char const* name)
+{
+	auto attribute = node.attribute(name);
+	if (!attribute) {
+		attribute = node.append_attribute(name);
+	}
+	return attribute;
+}
+
 void SetTextAttribute(pugi::xml_node node, char const* name, std::wstring const& value)
 {
 	SetTextAttributeUtf8(node, name, fz::to_utf8(value));
@@ -109,11 +118,7 @@ void SetTextAttribute(pugi::xml_node node, char const* name, std::wstring const&
 
 void SetTextAttributeUtf8(pugi::xml_node node, char const* name, std::string const& utf8)
 {
-	assert(node);
-	auto attribute = node.attribute(name);
-	if (!attribute) {
-		attribute = node.append_attribute(name);
-	}
+	auto attribute = ensure_attribute(node, name);
 	attribute.set_value(utf8.c_str());
 }
 
@@ -147,9 +152,6 @@ int GetAttributeInt(pugi::xml_node node, const char* name)
 
 void SetAttributeInt(pugi::xml_node node, const char* name, int value)
 {
-	auto attribute = node.attribute(name);
-	if (!attribute) {
-		attribute = node.append_attribute(name);
-	}
+	auto attribute = ensure_attribute(node, name);
 	attribute.set_value(value);
 }

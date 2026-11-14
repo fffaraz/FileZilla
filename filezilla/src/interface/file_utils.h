@@ -6,9 +6,11 @@
 
 
 // Returns the association for a file based on its extension
-std::vector<std::wstring> GetSystemAssociation(std::wstring const& file);
+std::vector<std::wstring> GetSystemAssociation(std::wstring const& file, bool* forbidden = nullptr);
 
 std::vector<fz::native_string> AssociationToCommand(std::vector<std::wstring> const& association, std::wstring_view const& file);
+
+bool IsForbiddenAssociationProgram(std::wstring_view program);
 
 bool ProgramExists(std::wstring const& editor);
 

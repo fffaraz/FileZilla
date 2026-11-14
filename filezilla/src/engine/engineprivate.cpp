@@ -259,11 +259,6 @@ int CFileZillaEnginePrivate::ResetOperation(int nErrorCode)
 	return nErrorCode;
 }
 
-unsigned int CFileZillaEnginePrivate::GetNextAsyncRequestNumber()
-{
-	return ++asyncRequestCounter_;
-}
-
 // Command handlers
 int CFileZillaEnginePrivate::Connect(CConnectCommand const& command)
 {

@@ -55,7 +55,11 @@ enum ServerProtocol
 
 	CLOUDFLARE_R2,
 
-	MAX_VALUE = CLOUDFLARE_R2
+	AZURE_BLOB_SAS,
+
+	SSH,
+
+	MAX_VALUE = SSH
 };
 
 enum ServerType : unsigned
@@ -72,13 +76,6 @@ enum ServerType : unsigned
 	DOS_FWD_SLASHES, // Forwardslashes as preferred separator
 
 	SERVERTYPE_MAX
-};
-
-enum PasvMode
-{
-	MODE_DEFAULT,
-	MODE_ACTIVE,
-	MODE_PASSIVE
 };
 
 enum class ServerFormat
@@ -156,7 +153,6 @@ public:
 	unsigned int GetPort() const;
 	std::wstring GetUser() const;
 	int GetTimezoneOffset() const;
-	PasvMode GetPasvMode() const;
 	bool GetBypassProxy() const;
 
 	void SetProtocol(ServerProtocol serverProtocol);
@@ -177,7 +173,6 @@ public:
 	bool SameContent(CServer const& other) const;
 
 	bool SetTimezoneOffset(int minutes);
-	void SetPasvMode(PasvMode pasvMode);
 
 	std::wstring Format(ServerFormat formatType) const;
 	std::wstring Format(ServerFormat formatType, Credentials const& credentials) const;
@@ -227,7 +222,6 @@ protected:
 	std::wstring m_user;
 	unsigned int m_port{21};
 	int m_timezoneOffset{};
-	PasvMode m_pasvMode{MODE_DEFAULT};
 	bool m_bypassProxy{};
 	CharsetEncoding m_encodingType{ENCODING_UTF8};
 	std::wstring m_customEncoding;

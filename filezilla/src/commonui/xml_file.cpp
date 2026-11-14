@@ -499,13 +499,10 @@ bool GetServer(pugi::xml_node node, Site & site)
 
 	std::string_view pasvMode = node.child_value("PasvMode");
 	if (pasvMode == "MODE_PASSIVE") {
-		site.server.SetPasvMode(MODE_PASSIVE);
+		site.server.SetExtraParameter("data_mode_override", L"passive");
 	}
 	else if (pasvMode == "MODE_ACTIVE") {
-		site.server.SetPasvMode(MODE_ACTIVE);
-	}
-	else {
-		site.server.SetPasvMode(MODE_DEFAULT);
+		site.server.SetExtraParameter("data_mode_override", L"active");
 	}
 
 	auto maximumMultipleConnections = GetTextElementInt(node, "MaximumMultipleConnections");

@@ -1412,10 +1412,10 @@ void CMainFrame::OnClose(wxCloseEvent &event)
 		CContextControl::_context_controls* controls = m_pContextControl->GetCurrentControls();
 		if (controls) {
 			if (controls->pLocalListView) {
-				controls->pLocalListView->SaveColumnSettings(options_, OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
+				controls->pLocalListView->SaveColumnSettings(OPTION_LOCALFILELIST_COLUMN_WIDTHS, OPTION_LOCALFILELIST_COLUMN_SHOWN, OPTION_LOCALFILELIST_COLUMN_ORDER);
 			}
 			if (controls->pRemoteListView) {
-				controls->pRemoteListView->SaveColumnSettings(options_, OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
+				controls->pRemoteListView->SaveColumnSettings(OPTION_REMOTEFILELIST_COLUMN_WIDTHS, OPTION_REMOTEFILELIST_COLUMN_SHOWN, OPTION_REMOTEFILELIST_COLUMN_ORDER);
 			}
 		}
 
@@ -2696,26 +2696,6 @@ WXLRESULT CMainFrame::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lPara
 			}
 		}
 		return 0;
-	}
-	else if (nMsg == WM_DISPLAYCHANGE) {
-		// wxDisplay caches the display configuration and does not
-		// reset it if the display configuration changes.
-		// wxDisplay uses this strange factory design pattern and uses a wxModule
-		// to delete the factory on program shutdown.
-		//
-		// To reset the factory manually in response to WM_DISPLAYCHANGE,
-		// create another instance of the module and call its Exit() member.
-		// After that, the next call to a wxDisplay will create a new factory and
-		// get the new display layout from Windows.
-		//
-		// Note: Both the factory pattern as well as the dynamic object system
-		//	   are perfect example of bad design.
-		//
-		wxModule* pDisplayModule = (wxModule*)wxCreateDynamicObject(_T("wxDisplayModule"));
-		if (pDisplayModule) {
-			pDisplayModule->Exit();
-			delete pDisplayModule;
-		}
 	}
 	return wxFrame::MSWWindowProc(nMsg, wParam, lParam);
 }

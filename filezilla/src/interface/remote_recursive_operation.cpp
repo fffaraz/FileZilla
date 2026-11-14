@@ -92,7 +92,11 @@ void CRemoteRecursiveOperation::handle_file(std::wstring const& sourceFile, CLoc
 {
 	std::wstring file = sanitize_filename(sourceFile);
 	if (remotePath.GetType() == VMS && options_.get_int(OPTION_STRIP_VMS_REVISION)) {
-		file = StripVMSRevision(file);
+		auto stripped = StripVMSRevision(file);
+		if (!stripped) {
+			return;
+		}
+		file = std::move(*stripped);
 	}
 	m_pQueue->QueueFile(!m_immediate, true, sourceFile, (sourceFile == file) ? std::wstring() : file, localPath, remotePath, m_state.GetSite(), size);
 	added_to_queue_ = true;

@@ -2,6 +2,8 @@ AUTOMAKE_OPTIONS = subdir-objects
 
 lib_LTLIBRARIES = libfzclient-private.la
 
+libfzclient_private_la_DEPENDENCIES =
+
 libfzclient_private_la_CPPFLAGS = -I$(top_builddir)/config
 libfzclient_private_la_CPPFLAGS += $(LIBFILEZILLA_CFLAGS)
 libfzclient_private_la_CPPFLAGS += $(LIBFZSSH_CFLAGS)
@@ -39,6 +41,8 @@ libfzclient_private_la_SOURCES = \
 		servercapabilities.cpp \
 		serverpath.cpp\
 		sizeformatting.cpp \
+		ssh/ssh_auth.cpp \
+		ssh/ssh_proxy.cpp \
 		tls.cpp \
 		version.cpp \
 		xmlutils.cpp
@@ -60,6 +64,8 @@ noinst_HEADERS = \
 		proxy.h \
 		rtt.h \
 		servercapabilities.h \
+		ssh/ssh_auth.h \
+		ssh/ssh_proxy.h \
 		tls.h
 
 if ENABLE_FTP
@@ -153,6 +159,29 @@ libfzclient_private_la_LDFLAGS += $(IDN_LIB)
 if FZ_MAC
 libfzclient_private_la_LDFLAGS += -framework CoreServices
 endif
+
+if MACAPPBUNDLE
+        
+noinst_LTLIBRARIES = libfzclient-private-mac.la
+        
+libfzclient_private_mac_la_CPPFLAGS = -I$(top_builddir)/config
+libfzclient_private_mac_la_CPPFLAGS += $(LIBFILEZILLA_CFLAGS)
+libfzclient_private_mac_la_CPPFLAGS += -DBUILDING_FILEZILLA
+        
+libfzclient_private_mac_la_LIBTOOLFLAGS = --tag=CXX
+        
+libfzclient_private_mac_la_OBJCXXFLAGS = -fvisibility=hidden
+        
+libfzclient_private_mac_la_SOURCES = \
+	sizeformatting_mac.mm
+        
+libfzclient_private_mac_la_LDFLAGS = -framework Cocoa
+        
+libfzclient_private_la_LIBADD = libfzclient-private-mac.la
+libfzclient_private_la_DEPENDENCIES += libfzclient-private-mac.la
+        
+endif
+
 
 CLEANFILES = filezilla.h.gch
 DISTCLEANFILES = ./$(DEPDIR)/filezilla.Po

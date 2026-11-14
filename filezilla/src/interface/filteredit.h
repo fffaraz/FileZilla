@@ -12,7 +12,7 @@ public:
 	CFilterEditDialog();
 	virtual ~CFilterEditDialog();
 
-	bool Create(wxWindow* parent, const std::vector<CFilter>& filters, const std::vector<CFilterSet>& filterSets);
+	bool Create(wxWindow* parent, COptionsBase & options, const std::vector<CFilter>& filters, const std::vector<CFilterSet>& filterSets);
 
 	const std::vector<CFilter>& GetFilters() const;
 	const std::vector<CFilterSet>& GetFilterSets() const;

@@ -23,8 +23,8 @@ public:
 	static std::pair<std::unique_ptr<Site>, Bookmark> GetSiteByPath(COptionsBase & options, std::wstring const& sitePath, bool printErrors = true);
 
 	static std::wstring AddServer(Site site, COptionsBase & options, login_manager& lim);
-	static bool AddBookmark(std::wstring sitePath, wxString const& name, wxString const& local_dir, CServerPath const& remote_dir, bool sync, bool comparison);
-	static bool ClearBookmarks(std::wstring sitePath);
+	static bool AddBookmark(COptionsBase& options, std::wstring sitePath, wxString const& name, wxString const& local_dir, CServerPath const& remote_dir, bool sync, bool comparison);
+	static bool ClearBookmarks(COptionsBase& options, std::wstring sitePath);
 
 	static void Rewrite(CLoginManager & loginManager, COptionsBase& options, bool on_failure_set_to_ask);
 

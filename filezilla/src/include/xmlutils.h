@@ -22,6 +22,9 @@ std::wstring FZC_PUBLIC_SYMBOL GetTextAttribute(pugi::xml_node node, char const*
 int FZC_PUBLIC_SYMBOL GetAttributeInt(pugi::xml_node node, char const* name);
 void FZC_PUBLIC_SYMBOL SetAttributeInt(pugi::xml_node node, char const* name, int value);
 
+// Eventually replace with pugi::xml_node::ensure_attribute once 1.16 is universally available in distributions
+pugi::xml_attribute FZC_PUBLIC_SYMBOL ensure_attribute(pugi::xml_node node, char const* name);
+
 pugi::xml_node FZC_PUBLIC_SYMBOL FindElementWithAttribute(pugi::xml_node node, char const* element, char const* attribute, char const* value);
 
 // Add a new child element with the specified name and value to the xml document

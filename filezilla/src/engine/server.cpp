@@ -43,6 +43,8 @@ static const t_protocolInfo protocolInfos[] = {
 	{ S3_SSO,          L"s3sso",     true,  true,   443, false, "S3 via IAM Identity Center (formerly SSO)",                               L"" },
 	{ GOOGLE_CLOUD_SVC_ACC,  L"googleacc", true,  true,   443, false, fztranslate_mark("Google Cloud Storage with Service Account"),       L"https" },
 	{ CLOUDFLARE_R2,   L"r2",        true,  true,   443, false, "Cloudflare R2",                                                           L"https" },
+	{ AZURE_BLOB_SAS,  L"azblobsas", true,  true,   443, false, "Microsoft Azure Blob Storage Service with SAS token",                     L"https" },
+	{ SSH,             L"ssh",       true,  true,    22, false, "SSH - Secure Shell",                                                      L"" },
 	{ UNKNOWN,         L"",          false, false,   21, false, "",                                                                        L"" }
 };
 
@@ -132,9 +134,6 @@ bool CServer::operator==(const CServer &op) const
 	if (m_timezoneOffset != op.m_timezoneOffset) {
 		return false;
 	}
-	else if (m_pasvMode != op.m_pasvMode) {
-		return false;
-	}
 	else if (m_encodingType != op.m_encodingType) {
 		return false;
 	}
@@ -198,13 +197,6 @@ bool CServer::operator<(const CServer &op) const
 		return true;
 	}
 	else if (m_timezoneOffset > op.m_timezoneOffset) {
-		return false;
-	}
-
-	if (m_pasvMode < op.m_pasvMode) {
-		return true;
-	}
-	else if (m_pasvMode > op.m_pasvMode) {
 		return false;
 	}
 
@@ -332,16 +324,6 @@ bool CServer::SetTimezoneOffset(int minutes)
 int CServer::GetTimezoneOffset() const
 {
 	return m_timezoneOffset;
-}
-
-PasvMode CServer::GetPasvMode() const
-{
-	return m_pasvMode;
-}
-
-void CServer::SetPasvMode(PasvMode pasvMode)
-{
-	m_pasvMode = pasvMode;
 }
 
 std::wstring CServer::Format(ServerFormat formatType) const
@@ -585,7 +567,7 @@ bool CServer::ProtocolHasFeature(ServerProtocol const protocol, ProtocolFeature 
 			protocol == AZURE_BLOB || protocol == AZURE_FILE || protocol == B2 || protocol == BOX ||
 			protocol == DROPBOX || protocol == GOOGLE_CLOUD || protocol == GOOGLE_DRIVE ||
 			protocol == ONEDRIVE || protocol == S3 || protocol == S3_SSO || protocol == CLOUDFLARE_R2 ||
-			protocol == SWIFT || protocol == WEBDAV || protocol == GOOGLE_CLOUD_SVC_ACC) {
+			protocol == SWIFT || protocol == WEBDAV || protocol == GOOGLE_CLOUD_SVC_ACC || protocol == AZURE_BLOB_SAS) {
 			return true;
 		}
 		break;
@@ -618,7 +600,7 @@ bool CServer::ProtocolHasFeature(ServerProtocol const protocol, ProtocolFeature 
 		break;
 	case ProtocolFeature::TemporaryUrl:
 		if (protocol == B2 || protocol == S3 || protocol == S3_SSO || protocol == DROPBOX ||
-			protocol == AZURE_BLOB || protocol == AZURE_FILE) {
+			protocol == AZURE_BLOB || protocol == AZURE_FILE || protocol == AZURE_BLOB_SAS) {
 			return true;
 		}
 		break;
@@ -892,6 +874,7 @@ std::vector<LogonType> GetSupportedLogonTypes(ServerProtocol protocol)
 	case INSECURE_FTP:
 		return {LogonType::anonymous, LogonType::normal, LogonType::ask, LogonType::interactive, LogonType::account};
 	case SFTP:
+	case SSH:
 		return {LogonType::anonymous, LogonType::normal, LogonType::ask, LogonType::interactive, LogonType::key};
 	case S3:
 		return {LogonType::anonymous, LogonType::normal, LogonType::ask, LogonType::profile};
@@ -901,6 +884,7 @@ std::vector<LogonType> GetSupportedLogonTypes(ServerProtocol protocol)
 	case STORJ_GRANT:
 	case AZURE_FILE:
 	case AZURE_BLOB:
+	case AZURE_BLOB_SAS:
 	case SWIFT:
 	case B2:
 	case RACKSPACE:
@@ -943,11 +927,24 @@ std::vector<ParameterTraits> const& ExtraServerParameterTraits(ServerProtocol pr
 	case FTP:
 	case FTPS:
 	case FTPES:
+		{
+			static std::vector<ParameterTraits> const ret = []() {
+				std::vector<ParameterTraits> ret;
+				ret.emplace_back(ParameterTraits{"otp_code", ParameterSection::credentials, ParameterTraits::optional | ParameterTraits::custom, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"data_mode_override", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"relaxed_dataconnection_ip", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"allow_insecure_plain_dataconnection", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				return ret;
+			}();
+			return ret;
+		}
 	case INSECURE_FTP:
 		{
 			static std::vector<ParameterTraits> const ret = []() {
 				std::vector<ParameterTraits> ret;
 				ret.emplace_back(ParameterTraits{"otp_code", ParameterSection::credentials, ParameterTraits::optional | ParameterTraits::custom, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"data_mode_override", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
+				ret.emplace_back(ParameterTraits{"relaxed_dataconnection_ip", ParameterSection::extra, ParameterTraits::optional | ParameterTraits::custom | ParameterTraits::content_transparent, std::wstring(), std::wstring()});
 				return ret;
 			}();
 			return ret;
@@ -1072,7 +1069,6 @@ std::vector<ParameterTraits> const& ExtraServerParameterTraits(ServerProtocol pr
 			}();
 			return ret;
 		}
-
 	case CLOUDFLARE_R2:
 		{
 			static std::vector<ParameterTraits> const ret = []() {
@@ -1083,7 +1079,6 @@ std::vector<ParameterTraits> const& ExtraServerParameterTraits(ServerProtocol pr
 			}();
 			return ret;
 		}
-
 	default:
 		break;
 	}
@@ -1099,6 +1094,7 @@ std::tuple<std::wstring, std::wstring> GetDefaultHost(ServerProtocol protocol)
 	case AZURE_FILE:
 		return std::tuple<std::wstring, std::wstring>{L"file.core.windows.net", L""};
 	case AZURE_BLOB:
+	case AZURE_BLOB_SAS:
 		return std::tuple<std::wstring, std::wstring>{L"blob.core.windows.net", L""};
 	case GOOGLE_CLOUD:
 	case GOOGLE_CLOUD_SVC_ACC:

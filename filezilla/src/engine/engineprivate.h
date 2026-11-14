@@ -69,7 +69,6 @@ public:
 	bool IsConnected() const;
 
 	void SetAsyncRequestReply(std::unique_ptr<CAsyncRequestNotification> && pNotification);
-	unsigned int GetNextAsyncRequestNumber();
 
 	CTransferStatus GetTransferStatus(bool &changed);
 
@@ -157,9 +156,6 @@ protected:
 	bool m_maySendNotificationEvent{true};
 	bool queue_logs_{true};
 	std::vector<CLogmsgNotification*> queued_logs_;
-
-
-	std::atomic<unsigned int> asyncRequestCounter_{};
 
 	COptionsBase& options_;
 

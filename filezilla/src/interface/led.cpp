@@ -5,6 +5,8 @@
 
 #include <wx/dcclient.h>
 
+#include "Options.h"
+
 BEGIN_EVENT_TABLE(CLed, wxWindow)
 	EVT_PAINT(CLed::OnPaint)
 END_EVENT_TABLE()
@@ -16,7 +18,7 @@ CLed::CLed(wxWindow *parent, unsigned int index)
 	SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
 #endif
 
-	wxSize const& size = CThemeProvider::GetIconSize(iconSizeTiny);
+	wxSize const& size = CThemeProvider::GetIconSize(IconSize::tiny);
 	Create(parent, -1, wxDefaultPosition, size);
 
 	wxBitmap bmp = CThemeProvider::Get()->CreateBitmap(L"ART_LEDS", wxART_OTHER, size * 2);

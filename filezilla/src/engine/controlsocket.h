@@ -14,13 +14,27 @@
 
 #include <optional>
 
+using namespace std::literals;
+
+
 enum class async_request_type : unsigned {
 	waiting,
-	parallel,
-	global
+	parallel
 };
 
-using namespace std::literals;
+class AsyncRequestHandle final
+{
+public:
+	using Reply = std::function<void(CAsyncRequestNotification*)>;
+	explicit AsyncRequestHandle(async_request_type t, Reply && reply)
+		: type_(t)
+		, reply_(std::move(reply))
+	{}
+	AsyncRequestHandle() = delete;
+
+	async_request_type type_;
+	std::function<void(CAsyncRequestNotification*)> reply_;
+};
 
 class COpData
 {
@@ -60,7 +74,7 @@ public:
 
 	bool topLevelOperation_{}; // If set to true, if this command finishes, any other commands on the stack do not get a SubCommandResult
 
-	std::optional<std::pair<std::shared_ptr<unsigned int>, async_request_type>> pending_async_request_;
+	std::shared_ptr<AsyncRequestHandle> pending_async_request_;
 };
 
 template<typename T>
@@ -230,6 +244,7 @@ public:
 	Command GetCurrentCommandId() const;
 
 	void SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type = async_request_type::waiting);
+	std::shared_ptr<AsyncRequestHandle> SendAsyncRequest(std::unique_ptr<CAsyncRequestNotification> && notification, async_request_type type, AsyncRequestHandle::Reply && reply);
 	void CallSetAsyncRequestReply(CAsyncRequestNotification *pNotification);
 	bool SetFileExistsAction(CFileExistsNotification *pFileExistsNotification);
 
@@ -291,7 +306,8 @@ protected:
 	virtual bool SetAsyncRequestReply(CAsyncRequestNotification *pNotification) = 0;
 	void SendDirectoryListingNotification(CServerPath const& path, bool failed, std::optional<bool> primary = std::nullopt);
 
-	std::shared_ptr<unsigned int> pending_global_async_request_;
+	bool HasPendingAsyncRequest();
+	std::vector<std::weak_ptr<AsyncRequestHandle>> pending_async_requests_;
 
 	fz::duration GetInferredTimezoneOffset() const;
 
