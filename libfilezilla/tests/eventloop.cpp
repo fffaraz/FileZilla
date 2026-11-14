@@ -4,6 +4,8 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 
+#include <vector>
+
 class EventloopTest final : public CppUnit::TestFixture
 {
 	CPPUNIT_TEST_SUITE(EventloopTest);
@@ -13,6 +15,7 @@ class EventloopTest final : public CppUnit::TestFixture
 	CPPUNIT_TEST(testTimer);
 	CPPUNIT_TEST(testTimerFairness);
 	CPPUNIT_TEST(testSelfremove);
+	CPPUNIT_TEST(testSources);
 	CPPUNIT_TEST_SUITE_END();
 
 public:
@@ -25,6 +28,7 @@ public:
 	void testTimer();
 	void testTimerFairness();
 	void testSelfremove();
+	void testSources();
 };
 
 CPPUNIT_TEST_SUITE_REGISTRATION(EventloopTest);
@@ -415,4 +419,90 @@ void EventloopTest::testSelfremove()
 	h2->send_event<selfremove_event>(true);
 
 	loop.run();
+}
+
+namespace {
+struct source final : fz::event_source {
+	int updates{};
+};
+
+using const_source_event = fz::event_with_source<struct const_source_tag, source const*, int>;
+using mutable_source_event = fz::event_with_source<struct mutable_source_tag, source*, int>;
+
+class source_handler final : public fz::event_handler
+{
+public:
+	explicit source_handler(fz::event_loop &loop)
+		: event_handler(loop)
+	{}
+
+	~source_handler() override
+	{
+		remove_handler();
+	}
+
+	std::vector<fz::event_source const*> sources;
+	std::vector<int> values;
+
+private:
+	void operator()(fz::event_base const& ev) override
+	{
+		if (auto const* sourced = dynamic_cast<fz::event_with_source_base const*>(&ev)) {
+			sources.push_back(sourced->source());
+		}
+
+		fz::dispatch<
+			const_source_event,
+			mutable_source_event,
+			T4
+		>(ev, this,
+			&source_handler::on_const_source,
+			&source_handler::on_mutable_source,
+			&source_handler::stop
+		);
+	}
+
+	void on_const_source(source const*, int value)
+	{
+		values.push_back(value);
+	}
+
+	void on_mutable_source(source *s, int value)
+	{
+		s->updates += value;
+		values.push_back(value);
+	}
+
+	void stop()
+	{
+		event_loop_.stop();
+	}
+};
+}
+
+void EventloopTest::testSources()
+{
+	fz::event_loop loop(fz::event_loop::threadless);
+	source const handler_removed, loop_removed, retained;
+	source mutable_source;
+	source_handler first(loop), second(loop);
+
+	first.send_event<const_source_event>(&handler_removed, 1);
+	second.send_event<const_source_event>(&handler_removed, 2);
+	first.send_event<const_source_event>(&loop_removed, 3);
+	second.send_event<const_source_event>(&loop_removed, 4);
+	first.send_event<const_source_event>(&retained, 5);
+	first.send_event<mutable_source_event>(&mutable_source, 6);
+	second.send_event<mutable_source_event>(&mutable_source, 7);
+
+	first.remove_events(&handler_removed);
+	loop.remove_events(&loop_removed);
+	first.send_event<T4>();
+	loop.run();
+
+	CPPUNIT_ASSERT_MESSAGE("Handler removal preserves other sources", first.values == std::vector<int>({5, 6}));
+	CPPUNIT_ASSERT_MESSAGE("Loop removal reaches every handler; handler removal stays local", second.values == std::vector<int>({2, 7}));
+	CPPUNIT_ASSERT_MESSAGE("Const and mutable source identities survive dispatch", first.sources == std::vector<fz::event_source const*>({&retained, &mutable_source}));
+	CPPUNIT_ASSERT_MESSAGE("Source filtering does not change retained event identities", second.sources == std::vector<fz::event_source const*>({&handler_removed, &mutable_source}));
+	CPPUNIT_ASSERT_EQUAL_MESSAGE("Mutable-source payloads retain mutable access", 13, mutable_source.updates);
 }

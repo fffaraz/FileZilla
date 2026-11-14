@@ -117,6 +117,33 @@ public:
 	static datetime get_modification_time(native_string const& path);
 	static result set_modification_time(native_string const& path, const datetime& t);
 
+	/** \brief Gets the modification time of an open file or directory.
+	 *
+	 * The descriptor or handle is borrowed and is not closed by this function.
+	 * On Windows, the handle must have FILE_READ_ATTRIBUTES access.
+	 *
+	 * On failure, t is unchanged and the result retains the native error code.
+	 */
+	static result get_modification_time(file::file_t fd, datetime& t);
+
+	/** \brief Sets the modification time of an open file or directory.
+	 *
+	 * The descriptor or handle is borrowed and is not closed by this function.
+	 * On Windows, the access time is also updated. If access is denied, the
+	 * same object is temporarily reopened with FILE_WRITE_ATTRIBUTES access.
+	 * Reopening uses the calling thread's current security context, not the
+	 * identity that originally opened the handle. Callers using impersonation
+	 * must invoke this function under the intended identity. Reopening can fail
+	 * because of access or sharing restrictions; its native error is returned.
+	 * The original handle and its file position are unchanged.
+	 * On other systems, the access time is unchanged and no reopening occurs.
+	 *
+	 * An empty timestamp, or a Windows FILETIME with a zero high word, returns
+	 * result::invalid with a raw error of zero. Operating system errors retain
+	 * their native error code.
+	 */
+	static result set_modification_time(file::file_t fd, datetime const& t);
+
 	/** \brief Get the immediate target path of a symbolic link.
 	 * Only consideres the immediate link. Output may be be relative
 	 */
@@ -186,19 +213,57 @@ result FZ_PUBLIC_SYMBOL mkdir(native_string const& absolute_path, bool recurse, 
  */
 result FZ_PUBLIC_SYMBOL remove_dir(native_string const& absolute_path, bool missing_dir_is_error);
 
+/// Options for \ref rename_file, combinable with operator|.
+enum class rename_flags : unsigned int {
+	/// Rename without copying; cross-filesystem moves return result::cross_device.
+	none = 0,
+
+	/// Allow files, but not directories, to be copied across filesystems before deleting the source.
+	allow_copy = 0x1,
+
+	/// Reject an existing destination with result::preexisting; see rename_file for atomicity limitations.
+	no_replace = 0x2
+};
+
+inline bool operator&(rename_flags lhs, rename_flags rhs) {
+	return (static_cast<unsigned int>(lhs) & static_cast<unsigned int>(rhs)) != 0;
+}
+
+inline rename_flags operator|(rename_flags lhs, rename_flags rhs) {
+	return static_cast<rename_flags>(static_cast<unsigned int>(lhs) | static_cast<unsigned int>(rhs));
+}
+
+inline rename_flags& operator|=(rename_flags & lhs, rename_flags rhs) {
+	lhs = lhs | rhs;
+	return lhs;
+}
+
 /**
  * \brief Rename/move the passed file or directory
  *
- * Can rename both files and directories within same filesystem. Can
- * optionally rename files across filesystems
+ * Can rename both files and directories within the same filesystem. Can
+ * optionally move files across filesystems by copying them before deleting
+ * the source. Directories cannot be moved across filesystem boundaries.
  *
- * If renaming a file, the target file is overwritten.
+ * If renaming a file, the target file is overwritten unless
+ * rename_flags::no_replace is specified.
  *
- * Directories cannot be renamed/moved across differnet filesystems/mount points
+ * No-replace renames are atomic where a native API is available. On other
+ * systems, the destination is checked before renaming, but another process
+ * can create it between the check and the rename, allowing replacement.
  *
- * param allow_copy If true, files, but not directories, can be moved across
- *                  file system boundaries. It first copies the file before
- *                  deleting the old one.
+ * \param flags Options controlling copying and replacement. See \ref rename_flags.
+ */
+result FZ_PUBLIC_SYMBOL rename_file(native_string const& source, native_string const& dest, rename_flags flags);
+
+/**
+ * \brief Rename/move the passed file or directory
+ *
+ * Equivalent to the flags overload with rename_flags::allow_copy if allow_copy
+ * is true, or rename_flags::none otherwise. Existing target files are overwritten.
+ *
+ * \param allow_copy If true, files, but not directories, can be moved across
+ *                   filesystem boundaries by copying before deleting the source.
  */
 result FZ_PUBLIC_SYMBOL rename_file(native_string const& source, native_string const& dest, bool allow_copy = true);
 

@@ -1,6 +1,7 @@
 #include "libfilezilla/libfilezilla.hpp"
 #include "libfilezilla/buffer.hpp"
 #include "libfilezilla/file.hpp"
+#include "libfilezilla/local_filesys.hpp"
 #include "libfilezilla/time.hpp"
 #include "libfilezilla/util.hpp"
 
@@ -225,7 +226,7 @@ rwresult file::read2(void *buf, size_t count)
 	}
 
 	DWORD err = GetLastError();
-	return rwresult{rwresult::other, err};
+	return rwresult{err == ERROR_INVALID_HANDLE ? rwresult::invalid : rwresult::other, err};
 }
 
 rwresult file::write2(void const* buf, size_t count)
@@ -237,6 +238,8 @@ rwresult file::write2(void const* buf, size_t count)
 
 	DWORD err = GetLastError();
 	switch (err) {
+		case ERROR_INVALID_HANDLE:
+			return rwresult{rwresult::invalid, err};
 		case ERROR_DISK_FULL:
 		case ERROR_DISK_QUOTA_EXCEEDED:
 			return rwresult{rwresult::nospace, err};
@@ -280,30 +283,6 @@ bool file::fsync()
 	return FlushFileBuffers(fd_) != 0;
 }
 
-bool file::set_modification_time(datetime const& t)
-{
-	if (t.empty()) {
-		return false;
-	}
-
-	FILETIME ft = t.get_filetime();
-	if (!ft.dwHighDateTime) {
-		return false;
-	}
-
-	return SetFileTime(fd_, nullptr, &ft, &ft) == TRUE;
-}
-
-datetime file::get_modification_time() const
-{
-	FILETIME ft{};
-
-	if (GetFileTime(fd_, nullptr, nullptr, &ft)) {
-		return datetime(ft, datetime::milliseconds);
-	};
-
-	return {};
-}
 #else
 
 file::file(file && op) noexcept
@@ -544,34 +523,19 @@ bool file::fsync()
 #endif
 }
 
+#endif
+
 bool file::set_modification_time(datetime const& t)
 {
-	if (t.empty()) {
-		return false;
-	}
-
-	struct timespec times[2]{};
-	times[0].tv_nsec = UTIME_OMIT;
-	times[1].tv_sec = t.get_time_t();
-	times[1].tv_nsec = t.get_milliseconds() * 1000000;
-	return futimens(fd_, times) == 0;
+	return bool(local_filesys::set_modification_time(fd_, t));
 }
 
 datetime file::get_modification_time() const
 {
-	struct stat buf;
-
-	if (fstat(fd_, &buf) == 0) {
-#if HAVE_STRUCT_STAT_ST_MTIM
-		return datetime(buf.st_mtim.tv_sec, datetime::milliseconds) + fz::duration::from_milliseconds(buf.st_mtim.tv_nsec/1000000);
-#else
-		return datetime(buf.st_mtime, datetime::seconds);
-#endif
-	}
-
-	return {};
+	datetime t;
+	local_filesys::get_modification_time(fd_, t);
+	return t;
 }
-#endif
 
 namespace {
 template<typename T>

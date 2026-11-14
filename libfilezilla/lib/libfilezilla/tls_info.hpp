@@ -122,6 +122,9 @@ private:
 	bool self_signed_{};
 };
 
+/// Checks whether the given string is a valid X.509 distinguished name.
+bool FZ_PUBLIC_SYMBOL is_valid_x509_distinguished_name(std::string const& dn);
+
 /**
  * \brief Gets the certificate information for the certificates in the file.
  *
@@ -249,6 +252,9 @@ public:
 	bool system_trust() const { return !system_trust_chain_.empty(); }
 
 	/// True if the hostname in the SANs does not match the requested hostname
+	/// Note that if connecting to a server through its IP address instead of
+	/// hostname, the name is only checked if the certificate contains an
+	/// IP address as SAN.
 	bool mismatched_hostname() const { return hostname_mismatch_; }
 
 private:

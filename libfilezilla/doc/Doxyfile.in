@@ -38,13 +38,13 @@ PROJECT_NAME           = "libfilezilla"
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         =
+PROJECT_NUMBER         = @PACKAGE_VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
 # quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          =
+PROJECT_BRIEF          = "A cross-platform C++ library for asynchronous and networked applications"
 
 # With the PROJECT_LOGO tag one can specify a logo or an icon that is included
 # in the documentation. The maximum height of the logo should not exceed 55
@@ -161,7 +161,7 @@ STRIP_FROM_PATH        =
 # specify the list of include paths that are normally passed to the compiler
 # using the -I flag.
 
-STRIP_FROM_INC_PATH    =
+STRIP_FROM_INC_PATH    = @top_srcdir@/lib
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter (but
 # less readable) file names. This can be useful is your file systems doesn't
@@ -761,6 +761,7 @@ WARN_LOGFILE           =
 INPUT  = @top_srcdir@/lib/libfilezilla
 INPUT += @top_srcdir@/lib/libfilezilla/aio
 INPUT += @top_srcdir@/lib/libfilezilla/glue
+INPUT += @top_srcdir@/lib/libfilezilla/http
 INPUT += @top_srcdir@/demos/examples.txt
 
 # This tag can be used to specify the character encoding of the source files

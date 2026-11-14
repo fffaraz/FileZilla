@@ -1,7 +1,7 @@
 #ifndef LIBFILEZILLA_NONOWNING_BUFFER_HEADER
 #define LIBFILEZILLA_NONOWNING_BUFFER_HEADER
 
-#include "libfilezilla.hpp"
+#include "buffer.hpp"
 
 /** \file
 * \brief Declares fz::nonowning_buffer
@@ -10,16 +10,13 @@
 namespace fz {
 
 /**
- * \brief Similar to fz::buffer, but does not own memory.
+ * \brief Read and modify buffered bytes in caller-owned storage.
  *
- * Needs to be created with a fixed range of memory owned elsewhere. This
- * memory range needs to remain valid for the lifetime of nonowning_buffer.
- * While nonowning_buffer can change in size, it cannot grow past the size
- * of the passed memory.
- *
- * Note that copying nonowning_buffer is shallow.
+ * The supplied memory range must remain valid for the buffer's lifetime.
+ * Capacity is fixed; requests exceeding it abort. Copies and moves are shallow.
+ * Destruction leaves the supplied storage allocated and unchanged.
  */
-class FZ_PUBLIC_SYMBOL nonowning_buffer final
+class FZ_PUBLIC_SYMBOL nonowning_buffer final : public buffer_access_interface
 {
 public:
 	constexpr nonowning_buffer() noexcept = default;
@@ -47,10 +44,10 @@ public:
 	nonowning_buffer(nonowning_buffer &&) noexcept = default;
 	nonowning_buffer& operator=(nonowning_buffer &&) noexcept = default;
 
-	~nonowning_buffer() noexcept = default;
+	~nonowning_buffer() noexcept override;
 
-	size_t capacity() const { return capacity_; }
-	size_t size() const { return size_; }
+	size_t capacity() const override { return capacity_; }
+	size_t size() const override { return size_; }
 	bool empty() const { return size_ == 0; }
 	explicit operator bool() const { return !empty(); }
 
@@ -60,42 +57,31 @@ public:
 	 * If growing, memory isn't cleared.
 	 * Aborts if size exceeds capacity.
 	 */
-	void resize(size_t size);
-	void clear() { resize(0); }
+	void resize(size_t size) override;
+	void clear() override { resize(0); }
 
 	/// Gets element at offset. No safety check
 	uint8_t operator[](size_t offset) { return *(buffer_ + start_ + offset); }
 
-	/// Gets buffer
-	uint8_t const* get() const { return buffer_ + start_; }
-	uint8_t * get() { return buffer_ + start_; }
-
-	/** \brief Returns a writable buffer guaranteed to be large enough for write_size bytes, call add when done.
-	 *
-	 * The returned pointer is pointing just after the data already stored in the buffer.
-	 *
-	 * Calling this function does not does not affect size().
-	 *
-	 * Aborts if requested size is larger than capacity.
-	 */
-	uint8_t* get(size_t bytes);
-
-	/**
-	 * \brief Grows size by passed amount.
-	 *
-	 * Aborts if new size is larger than capacity.
-	 */
-	void add(size_t bytes);
+	/** @name Direct access
+	 * get() exposes active bytes. get(n) prepares tail space without changing size;
+	 * commit the written bytes with add(n). Requests exceeding capacity abort.
+	 * @{ */
+	uint8_t const* get() const override { return buffer_ ? buffer_ + start_ : nullptr; }
+	uint8_t * get() override { return buffer_ ? buffer_ + start_ : nullptr; }
+	uint8_t* get(size_t bytes) override;
+	void add(size_t bytes) override;
+	/** @} */
 
 	/** \brief Removes consumed bytes from the beginning of the buffer.
 	 *
 	 * Undefined if consumed > size()
 	 */
-	void consume(size_t bytes);
+	void consume(size_t bytes) override;
 
 	void reset();
 
-	void append(uint8_t const* data, size_t len);
+	void append(uint8_t const* data, size_t len) override;
 	void append(uint8_t c) { append(&c, 1); }
 	void append(std::string_view const& str);
 

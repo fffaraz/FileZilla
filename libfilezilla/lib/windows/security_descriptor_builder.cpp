@@ -128,7 +128,6 @@ holder<SID> security_descriptor_builder::impl::get_sid(entity e)
 	}
 }
 
-namespace {
 holder<TOKEN_USER> GetUserFromToken(HANDLE token)
 {
 	DWORD needed{};
@@ -141,7 +140,6 @@ holder<TOKEN_USER> GetUserFromToken(HANDLE token)
 	}
 
 	return {};
-}
 }
 
 bool security_descriptor_builder::impl::init_user()

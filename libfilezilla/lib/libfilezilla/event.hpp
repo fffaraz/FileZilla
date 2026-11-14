@@ -101,18 +101,20 @@ public:
 class event_source{};
 
 /// \private
-class event_with_source_base : public event_base
+class FZ_PUBLIC_SYMBOL event_with_source_base : public event_base
 {
 public:
 	using event_base::event_base;
-	virtual event_source* source() const  = 0;
+	virtual event_source const* source() const = 0;
 };
 
 /**
 \brief Events with associated source
  *
  * This is similar to simple_event, except that the type of the first event value
- * is derived from event_source.
+ * is a pointer to a type derived from event_source, optionally const-qualified.
+ * source() exposes its identity without granting mutable access; dispatch retains
+ * the pointer type specified in Values.
  *
  * Pending events from a given source can easily be removed
  * using \ref event_handler::remove_events
@@ -141,8 +143,8 @@ public:
 		return type();
 	}
 
-	virtual event_source* source() const override {
-		return static_cast<event_source*>(std::get<0>(v_));
+	virtual event_source const* source() const override {
+		return static_cast<event_source const*>(std::get<0>(v_));
 	}
 
 	mutable tuple_type v_;

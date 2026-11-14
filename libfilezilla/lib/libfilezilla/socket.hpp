@@ -597,6 +597,8 @@ public:
 
 	socket_t get_descriptor();
 
+	std::optional<duration> srtt();
+
 #ifndef FZ_WINDOWS
 	/** Sends file descriptors over a Unix Domain Socket.
 	 *

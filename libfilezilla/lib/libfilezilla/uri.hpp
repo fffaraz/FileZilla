@@ -54,6 +54,7 @@ public:
 	std::string get_request(bool with_query = true) const;
 
 	/// \brief Returns [user[:pass]@]host[:port]
+	/// Keeps valid bracketed IPv6 literals unchanged; percent-encodes other hosts.
 	std::string get_authority(bool with_userinfo) const;
 
 	bool empty() const;

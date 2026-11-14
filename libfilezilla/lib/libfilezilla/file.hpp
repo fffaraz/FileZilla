@@ -212,7 +212,10 @@ public:
 
 	/** \brief Sets modification time to specified time.
 	 *
-	 * File must be opened for writing, of the call will fail.
+	 * The file must be open and the caller authorized to change its timestamps.
+	 * On Windows, this may temporarily reopen the same object with
+	 * FILE_WRITE_ATTRIBUTES access under the caller's current security context.
+	 * See local_filesys::set_modification_time for details.
 	 */
 	bool set_modification_time(datetime const& t);
 

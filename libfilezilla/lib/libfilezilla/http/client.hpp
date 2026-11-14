@@ -38,6 +38,11 @@ public:
 	virtual request & req() override { return request_; }
 	virtual response & res() override { return response_; }
 
+	/**
+	 * Set's the callback to be invoked once the full header has been received.
+	 *
+	 * \warning Don't destroy or stop the client in the callback.
+	 */
 	void set_on_header(std::function<continuation(std::shared_ptr<request_response_holder<Request, Response>> const&)> cb)
 	{
 		if (cb) {
@@ -51,6 +56,11 @@ public:
 		}
 	}
 
+	/**
+	 * Set's the callback that receives body sending progress
+	 *
+	 * \warning Don't destroy or stop the client in the callback.
+	 */
 	void set_body_sending_progress(std::function<void(std::shared_ptr<request_response_holder<Request, Response>> const&, size_t)> cb)
 	{
 		if (cb) {
@@ -91,18 +101,27 @@ public:
 
 	bool add_request(shared_request_response const& srr);
 
-	/// Call this after having returned wait from on_header
-	void next();
-
 	/**
 	 * \brief Stops the client, deletes all requests.
+	 *
+	 * \warning Must not be invoked from on_alive or the
+	 * request/response callbacks.
 	 */
 	void stop(bool keep_alive);
 
-	/// Must be called in the destructor of the derived class
+	/**
+	 * Must be called in the destructor of the derived class
+	 *
+	 * \warning Must not be invoked from on_alive or the
+	 * request/response callbacks.
+	 */
 	void destroy();
 
 protected:
+	/** Called by the client when there is activity.
+	 *
+	 * \warning Do not call back into client from on_alive
+	 */
 	virtual void on_alive() {}
 
 	/// Called when the client requests a new socket.

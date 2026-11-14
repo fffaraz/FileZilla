@@ -14,15 +14,19 @@ test_SOURCES =  test.cpp \
 		invoker.cpp \
 		iputils.cpp \
 		json.cpp \
+		local_filesys.cpp \
 		smart_pointer.cpp \
 		socket.cpp \
 		string.cpp \
 		time.cpp \
+		uri.cpp \
 		util.cpp \
+		x509.cpp \
 		xml.cpp
 
 test_CPPFLAGS = $(AM_CPPFLAGS)
 test_CPPFLAGS += $(CPPUNIT_CFLAGS)
+test_CPPFLAGS += -I$(top_builddir)/config
 
 test_LDFLAGS = $(AM_LDFLAGS)
 test_LDFLAGS += -no-install

@@ -25,6 +25,7 @@ namespace fz {
 class FZ_PUBLIC_SYMBOL result
 {
 public:
+	/// Filesystem operation result categories; raw_ retains the native error when available.
 	enum error {
 		ok,
 		none = ok,
@@ -49,6 +50,9 @@ public:
 
 		/// File already exists when asked to explicitly create a new file
 		preexisting,
+
+		/// Operation cannot cross filesystem boundaries
+		cross_device,
 
 		/// Some other error
 		other

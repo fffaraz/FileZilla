@@ -590,6 +590,10 @@ typedef struct {
 
 typedef NTSTATUS(NTAPI* lfzNtQueryDirectoryFile)(HANDLE dir, HANDLE ev, void*, void*, IO_STATUS_BLOCK* status, void* buffer, ULONG size, lfzFILE_INFORMATION_CLASS c, BOOL single, void*, BOOL restart);
 typedef NTSTATUS(NTAPI* lfzNtOpenFile)(HANDLE* file, ACCESS_MASK DesiredAccess, OBJECT_ATTRIBUTES* attributes, IO_STATUS_BLOCK* status, ULONG ShareAccess, ULONG OpenOptions);
+typedef ULONG(NTAPI* lfzRtlNtStatusToDosError)(NTSTATUS status);
+#ifndef STATUS_SUCCESS
+#define STATUS_SUCCESS 0
+#endif
 }
 
 bool read_dir_buffer(HANDLE dir, void* buf, ULONG size, lfzFILE_INFORMATION_CLASS c)
@@ -607,21 +611,26 @@ bool read_dir_buffer(HANDLE dir, void* buf, ULONG size, lfzFILE_INFORMATION_CLAS
 	return true;
 }
 
+// Like CreateFile, failed opens leave a Win32 error for the caller to report.
+// The name can be empty, in that case the handle passed in dir itself is re-opened, even if its old pathname now names something else.
 HANDLE OpenAt(HANDLE dir, std::wstring const& name, ACCESS_MASK DesiredAccess, ULONG ShareAccess, ULONG OpenOptions)
 {
 	static dll ntdll(L"ntdll.dll", LOAD_LIBRARY_SEARCH_SYSTEM32);
 	static auto const func = reinterpret_cast<lfzNtOpenFile>(ntdll["NtOpenFile"]);
-	if (!func) {
+	static auto const to_error = reinterpret_cast<lfzRtlNtStatusToDosError>(ntdll["RtlNtStatusToDosError"]);
+	if (!func || !to_error) {
+		SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
 		return INVALID_HANDLE_VALUE;
 	}
 
-	if ((name.size() * 2 + 2) > std::numeric_limits<decltype(UNICODE_STRING::Length)>::max()) {
+	if (name.size() > (std::numeric_limits<decltype(UNICODE_STRING::Length)>::max() - sizeof(wchar_t)) / sizeof(wchar_t)) {
+		SetLastError(ERROR_FILENAME_EXCED_RANGE);
 		return INVALID_HANDLE_VALUE;
 	}
 
 	UNICODE_STRING uname;
-	uname.Length = static_cast<decltype(UNICODE_STRING::Length)>(name.size() * 2);
-	uname.MaximumLength = static_cast<decltype(UNICODE_STRING::Length)>(name.size() * 2 + 2);
+	uname.Length = static_cast<decltype(UNICODE_STRING::Length)>(name.size() * sizeof(wchar_t));
+	uname.MaximumLength = static_cast<decltype(UNICODE_STRING::Length)>(name.size() * sizeof(wchar_t) + sizeof(wchar_t));
 	uname.Buffer = const_cast<wchar_t*>(name.c_str());
 
 	OBJECT_ATTRIBUTES attrs{};
@@ -629,12 +638,14 @@ HANDLE OpenAt(HANDLE dir, std::wstring const& name, ACCESS_MASK DesiredAccess, U
 	attrs.RootDirectory = dir;
 	attrs.ObjectName = &uname;
 
-	HANDLE file;
+	HANDLE file = INVALID_HANDLE_VALUE;
 	IO_STATUS_BLOCK s{};
 	NTSTATUS res = func(&file, DesiredAccess | SYNCHRONIZE, &attrs, &s, ShareAccess, OpenOptions | FILE_SYNCHRONOUS_IO_NONALERT);
-	if (res) {
+	if (res != STATUS_SUCCESS) {
+		SetLastError(to_error(res));
 		return INVALID_HANDLE_VALUE;
 	}
+
 	return file;
 }
 
@@ -927,6 +938,106 @@ datetime local_filesys::get_modification_time(native_string const& path)
 	return mtime;
 }
 
+result local_filesys::get_modification_time(file::file_t fd, datetime& t)
+{
+#ifdef FZ_WINDOWS
+	FILETIME ft{};
+	if (GetFileTime(fd, nullptr, nullptr, &ft)) {
+		t = datetime(ft, datetime::milliseconds);
+		return {};
+	}
+
+	auto const error = GetLastError();
+	switch (error) {
+	case ERROR_ACCESS_DENIED:
+		return {result::noperm, error};
+	case ERROR_INVALID_PARAMETER:
+		return {result::invalid, error};
+	default:
+		return {result::other, error};
+	}
+#else
+	struct stat buf;
+	if (fstat(fd, &buf) == 0) {
+#if HAVE_STRUCT_STAT_ST_MTIM
+		t = datetime(buf.st_mtim.tv_sec, datetime::milliseconds) + fz::duration::from_milliseconds(buf.st_mtim.tv_nsec/1000000);
+#else
+		t = datetime(buf.st_mtime, datetime::seconds);
+#endif
+		return {};
+	}
+
+	auto const error = errno;
+	return {result::other, error};
+#endif
+}
+
+result local_filesys::set_modification_time(file::file_t fd, datetime const& t)
+{
+	if (t.empty()) {
+		return {result::invalid, 0};
+	}
+
+#ifdef FZ_WINDOWS
+	FILETIME ft = t.get_filetime();
+	if (!ft.dwHighDateTime) {
+		return {result::invalid, 0};
+	}
+
+	if (SetFileTime(fd, nullptr, &ft, &ft)) {
+		return {};
+	}
+
+	auto error = GetLastError();
+	if (error == ERROR_ACCESS_DENIED) {
+		// Windows rejects directory handles in ReOpenFile, even with FILE_FLAG_BACKUP_SEMANTICS.
+		// An empty-name native open works for both files and directories without looking up
+		// the old pathname, which could now refer to a replacement object.
+		fz::file reopened(OpenAt(fd, {}, FILE_WRITE_ATTRIBUTES,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, 0));
+		if (reopened.opened()) {
+			if (SetFileTime(reopened.fd(), nullptr, &ft, &ft)) {
+				return {};
+			}
+		}
+
+		error = GetLastError();
+	}
+
+	switch (error) {
+	case ERROR_ACCESS_DENIED:
+		return {result::noperm, error};
+	case ERROR_INVALID_PARAMETER:
+		return {result::invalid, error};
+	default:
+		return {result::other, error};
+	}
+#else
+	struct timespec times[2]{};
+	times[0].tv_nsec = UTIME_OMIT;
+	times[1].tv_sec = t.get_time_t();
+	times[1].tv_nsec = t.get_milliseconds() * 1000000;
+	if (!futimens(fd, times)) {
+		return {};
+	}
+
+	auto const error = errno;
+	switch (error) {
+	case EINVAL:
+		return {result::invalid, error};
+	case EPERM:
+	case EACCES:
+	case EROFS:
+	case ESRCH:
+		return {result::noperm, error};
+	case ENOENT:
+		return {result::nofile, error};
+	default:
+		return {result::other, error};
+	}
+#endif
+}
+
 result local_filesys::set_modification_time(native_string const& path, datetime const& t)
 {
 	if (t.empty()) {
@@ -939,7 +1050,8 @@ result local_filesys::set_modification_time(native_string const& path, datetime 
 		return {result::invalid, 0};
 	}
 
-	HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, FILE_SHARE_WRITE | FILE_SHARE_READ, nullptr, OPEN_EXISTING, 0, nullptr);
+	HANDLE h = CreateFile(path.c_str(), FILE_WRITE_ATTRIBUTES, FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+		nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, nullptr);
 	if (h == INVALID_HANDLE_VALUE) {
 		DWORD const err = GetLastError();
 		switch (err) {
@@ -954,14 +1066,9 @@ result local_filesys::set_modification_time(native_string const& path, datetime 
 		}
 	}
 
-	bool ret = SetFileTime(h, nullptr, &ft, &ft) == TRUE;
-	DWORD err = GetLastError();
-	CloseHandle(h);
-	if (!ret) {
-		// Dunnno how SetFileTime could have failed on a handle opened for writing
-		return {result::other, err};
-	}
-	return {};
+	// Take ownership so the handle is closed after the result has been captured.
+	fz::file file(h);
+	return set_modification_time(file.fd(), t);
 #else
 	struct timespec times[2]{};
 	times[0].tv_nsec = UTIME_OMIT;
@@ -1374,7 +1481,7 @@ result remove_dir(native_string const& absolute_path, bool missing_dir_is_error)
 
 #ifndef FZ_WINDOWS
 namespace {
-static result do_copy(native_string const& source, native_string const& dest, bool & dest_opened)
+static result do_copy(native_string const& source, native_string const& dest, bool & dest_opened, bool no_replace)
 {
 	fz::file in(source, fz::file::reading, fz::file::existing);
 
@@ -1383,8 +1490,13 @@ static result do_copy(native_string const& source, native_string const& dest, bo
 		return {result::other};
 	}
 
-	fz::file out(dest, fz::file::writing, fz::file::empty);
-	if (!out.opened()) {
+	fz::file out;
+	auto opened = out.open(dest, fz::file::writing, no_replace ? fz::file::fresh : fz::file::empty);
+	if (!opened) {
+		if (no_replace) {
+			return opened;
+		}
+
 		// TODO error codes
 		return {result::other};
 	}
@@ -1425,8 +1537,15 @@ static result do_copy(native_string const& source, native_string const& dest, bo
 
 result rename_file(native_string const& source, native_string const& dest, bool allow_copy)
 {
+	return rename_file(source, dest, allow_copy ? rename_flags::allow_copy : rename_flags::none);
+}
+
+result rename_file(native_string const& source, native_string const& dest, rename_flags options)
+{
+	bool const allow_copy = options & rename_flags::allow_copy;
+	bool const no_replace = options & rename_flags::no_replace;
 #ifdef FZ_WINDOWS
-	DWORD flags = MOVEFILE_REPLACE_EXISTING;
+	DWORD flags = no_replace ? 0 : MOVEFILE_REPLACE_EXISTING;
 	if (allow_copy) {
 		flags |= MOVEFILE_COPY_ALLOWED;
 	}
@@ -1437,6 +1556,11 @@ result rename_file(native_string const& source, native_string const& dest, bool 
 
 	DWORD const err = GetLastError();
 	switch (err) {
+		case ERROR_NOT_SAME_DEVICE:
+			return {result::cross_device, err};
+		case ERROR_FILE_EXISTS:
+		case ERROR_ALREADY_EXISTS:
+			return {no_replace ? result::preexisting : result::other, err};
 		case ERROR_FILE_NOT_FOUND:
 			return {result::nofile, err};
 		case ERROR_PATH_NOT_FOUND:
@@ -1451,13 +1575,45 @@ result rename_file(native_string const& source, native_string const& dest, bool 
 			return {result::other, err};
 	}
 #else
-	int res = rename(source.c_str(), dest.c_str());
+	int res;
+	if (no_replace) {
+#ifdef HAVE_RENAMEAT2_NOREPLACE
+		// TODO: Maybe handle EINVAL with fallback if filesystem doesn't support (AT_)RENAME_NOREPLACE?
+#ifdef AT_RENAME_NOREPLACE
+		res = renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, dest.c_str(), AT_RENAME_NOREPLACE);
+#else
+		res = renameat2(AT_FDCWD, source.c_str(), AT_FDCWD, dest.c_str(), RENAME_NOREPLACE);
+#endif
+#elif defined(FZ_MAC) && defined(RENAME_EXCL)
+		// TODO: As above, but check what macOS actually returns, it doesn't document what happens in this case
+		res = renamex_np(source.c_str(), dest.c_str(), RENAME_EXCL);
+#else
+		// The portable fallback cannot prevent destination creation between the calls.
+		struct stat buf;
+		if (!lstat(dest.c_str(), &buf)) {
+			return {result::preexisting, EEXIST};
+		}
+
+		if (errno != ENOENT) {
+			res = -1;
+		}
+		else {
+			res = rename(source.c_str(), dest.c_str());
+		}
+#endif
+	}
+	else {
+		res = rename(source.c_str(), dest.c_str());
+	}
+
 	if (!res) {
 		return {result::ok};
 	}
 
 	int const err = errno;
 	switch (err) {
+	case EEXIST:
+		return {no_replace ? result::preexisting : result::other, err};
 	case EPERM:
 	case EACCES:
 	case EROFS:
@@ -1472,7 +1628,7 @@ result rename_file(native_string const& source, native_string const& dest, bool 
 		return {result::nofile, err};
 	case EXDEV:
 		if (!allow_copy) {
-			return {result::other, err};
+			return {result::cross_device, err};
 		}
 		break;
 	default:
@@ -1480,7 +1636,7 @@ result rename_file(native_string const& source, native_string const& dest, bool 
 	}
 
 	bool dest_opened{};
-	auto ret = do_copy(source, dest, dest_opened);
+	auto ret = do_copy(source, dest, dest_opened, no_replace);
 	if (!ret) {
 		if (dest_opened) {
 			unlink(dest.c_str());

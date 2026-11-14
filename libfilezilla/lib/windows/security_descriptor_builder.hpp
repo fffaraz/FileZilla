@@ -5,8 +5,11 @@
 
 #ifdef FZ_WINDOWS
 
+#include "helpers.hpp"
+
 #include "../libfilezilla/glue/windows.hpp"
 #include "../libfilezilla/logger.hpp"
+
 #include <memory>
 
 namespace fz {
@@ -58,6 +61,7 @@ private:
 
 bool GetUserAndDomainFromSid(PSID sid, std::wstring& user, std::wstring& domain);
 bool GetUserInfoFromToken(HANDLE h, std::string& sid_string, std::wstring& username, std::wstring& domain, logger_interface& logger = get_null_logger());
+windows::holder<TOKEN_USER> GetUserFromToken(HANDLE token);
 
 }
 

@@ -311,6 +311,25 @@ void clone_cert(gnutls_x509_crt_t in, gnutls_x509_crt_t &out)
 		}
 	}
 }
+
+bool certificate_has_ip_san(gnutls_x509_crt_t cert)
+{
+	unsigned char san[16];
+	for (unsigned int i = 0; i < 10000; ++i) {
+		size_t san_size = sizeof(san);
+		int const type_or_error = gnutls_x509_crt_get_subject_alt_name(cert, i, san, &san_size, nullptr);
+		if (type_or_error == GNUTLS_SAN_IPADDRESS) {
+			return true;
+		}
+		if (type_or_error == GNUTLS_E_SHORT_MEMORY_BUFFER) {
+			continue;
+		}
+		if (type_or_error < 0) {
+			break;
+		}
+	}
+	return false;
+}
 }
 
 tls_layer_impl::tls_layer_impl(tls_layer& layer, tls_system_trust_store* systemTrustStore, logger_interface & logger)
@@ -1070,7 +1089,7 @@ int tls_layer_impl::continue_write()
 
 bool tls_layer_impl::resumed_session() const
 {
-	return gnutls_session_is_resumed(session_) != 0;
+	return session_ && gnutls_session_is_resumed(session_) != 0;
 }
 
 bool tls_layer_impl::client_handshake(std::vector<uint8_t> const& session_to_resume, native_string const& session_hostname, std::vector<uint8_t> const& required_certificate, event_handler *const verification_handler, tls_client_flags flags)
@@ -1229,6 +1248,8 @@ bool tls_layer_impl::server_handshake(std::vector<uint8_t> const& session_to_res
 		gnutls_handshake_set_hook_function(session_, GNUTLS_HANDSHAKE_ANY, GNUTLS_HOOK_BOTH, &handshake_hook_func);
 	}
 
+	preamble_.append(preamble);
+
 	if (tls_layer_.next_layer_.get_state() == socket_state::none || tls_layer_.next_layer_.get_state() == socket_state::connecting) {
 		// Wait until the socket gets connected
 		return true;
@@ -1238,8 +1259,6 @@ bool tls_layer_impl::server_handshake(std::vector<uint8_t> const& session_to_res
 		state_ = socket_state::failed;
 		return false;
 	}
-
-	preamble_.append(preamble);
 
 	return continue_handshake() == EAGAIN;
 }
@@ -1766,6 +1785,10 @@ bool tls_layer_impl::certificate_is_blacklisted(gnutls_x509_crt_t const& cert)
 
 int tls_layer_impl::get_algorithm_warnings() const
 {
+	if(!session_) {
+		return {};
+	}
+
 	int algorithmWarnings{};
 
 	switch (gnutls_protocol_get_version(session_))
@@ -2033,7 +2056,10 @@ int tls_layer_impl::verify_certificate()
 		return 0;
 	}
 
-	bool const uses_hostname = !hostname_.empty() && get_address_type(hostname_) == address_type::unknown;
+	// For an IP literal, only check the identity if the certificate actually declares an IP identity.
+	// A certificate with DNS SANs only intentionally does not produce a hostname mismatch warning.
+	bool const uses_hostname = !hostname_.empty() &&
+		(get_address_type(hostname_) == address_type::unknown || certificate_has_ip_san(certs.certs[0]));
 
 	bool const can_use_trust_store = uses_hostname && system_trust_store_;
 	bool systemTrust = false;
@@ -2269,9 +2295,11 @@ std::string tls_layer_impl::get_protocol() const
 {
 	std::string ret;
 
-	char const* s = gnutls_protocol_get_name(gnutls_protocol_get_version(session_));
-	if (s && *s) {
-		ret = s;
+	if (session_) {
+		char const* s = gnutls_protocol_get_name(gnutls_protocol_get_version(session_));
+		if (s && *s) {
+			ret = s;
+		}
 	}
 
 	if (ret.empty()) {
@@ -2285,27 +2313,29 @@ std::string tls_layer_impl::get_key_exchange() const
 {
 	std::string ret;
 
-	char const* s{};
-	gnutls_kx_algorithm_t alg = gnutls_kx_get(session_);
-	bool const dh = (alg == GNUTLS_KX_DHE_RSA || alg == GNUTLS_KX_DHE_DSS);
-	bool const ecdh = (alg == GNUTLS_KX_ECDHE_RSA || alg == GNUTLS_KX_ECDHE_ECDSA);
-	if (dh || ecdh) {
-		char const* const signature_name = gnutls_sign_get_name(static_cast<gnutls_sign_algorithm_t>(gnutls_sign_algorithm_get(session_)));
-		ret = (ecdh ? "ECDHE" : "DHE");
-		s = gnutls_group_get_name(gnutls_group_get(session_));
-		if (s && *s) {
-			ret += "-";
-			ret += s;
+	if (session_) {
+		char const* s{};
+		gnutls_kx_algorithm_t alg = gnutls_kx_get(session_);
+		bool const dh = (alg == GNUTLS_KX_DHE_RSA || alg == GNUTLS_KX_DHE_DSS);
+		bool const ecdh = (alg == GNUTLS_KX_ECDHE_RSA || alg == GNUTLS_KX_ECDHE_ECDSA);
+		if (dh || ecdh) {
+			char const* const signature_name = gnutls_sign_get_name(static_cast<gnutls_sign_algorithm_t>(gnutls_sign_algorithm_get(session_)));
+			ret = (ecdh ? "ECDHE" : "DHE");
+			s = gnutls_group_get_name(gnutls_group_get(session_));
+			if (s && *s) {
+				ret += "-";
+				ret += s;
+			}
+			if (signature_name && *signature_name) {
+				ret += "-";
+				ret += signature_name;
+			}
 		}
-		if (signature_name && *signature_name) {
-			ret += "-";
-			ret += signature_name;
-		}
-	}
-	else {
-		s = gnutls_kx_get_name(alg);
-		if (s && *s) {
-			ret = s;
+		else {
+			s = gnutls_kx_get_name(alg);
+			if (s && *s) {
+				ret = s;
+			}
 		}
 	}
 
@@ -2321,9 +2351,11 @@ std::string tls_layer_impl::get_cipher() const
 {
 	std::string ret;
 
-	char const* cipher = gnutls_cipher_get_name(gnutls_cipher_get(session_));
-	if (cipher && *cipher) {
-		ret = cipher;
+	if (session_) {
+		char const* cipher = gnutls_cipher_get_name(gnutls_cipher_get(session_));
+		if (cipher && *cipher) {
+			ret = cipher;
+		}
 	}
 
 	if (ret.empty()) {
@@ -2337,9 +2369,11 @@ std::string tls_layer_impl::get_mac() const
 {
 	std::string ret;
 
-	char const* mac = gnutls_mac_get_name(gnutls_mac_get(session_));
-	if (mac && *mac) {
-		ret = mac;
+	if (session_) {
+		char const* mac = gnutls_mac_get_name(gnutls_mac_get(session_));
+		if (mac && *mac) {
+			ret = mac;
+		}
 	}
 
 	if (ret.empty()) {
@@ -2384,6 +2418,7 @@ std::string tls_layer_impl::list_tls_ciphers(std::string const& priority)
 					gnutls_protocol_get_name(version));
 			}
 		}
+		gnutls_priority_deinit(pcache);
 	}
 
 	return list;
@@ -2487,22 +2522,24 @@ std::vector<uint8_t> tls_layer_impl::get_session_parameters() const
 {
 	std::vector<uint8_t> ret;
 
-	if (!server_) {
-		datum_holder d;
-		int res = gnutls_session_get_data2(session_, &d);
-		if (res) {
-			logger_.log(logmsg::debug_warning, L"gnutls_session_get_data2 failed: %d", res);
+	if (session_) {
+		if (!server_) {
+			datum_holder d;
+			int res = gnutls_session_get_data2(session_, &d);
+			if (res) {
+				logger_.log(logmsg::debug_warning, L"gnutls_session_get_data2 failed: %d", res);
+			}
+			else {
+				ret.assign(d.data, d.data + d.size);
+			}
 		}
 		else {
-			ret.assign(d.data, d.data + d.size);
+			ret.resize(sizeof(size_t) * 3 + ticket_key_.size() + session_db_key_.size() + session_db_data_.size());
+			auto* p = ret.data();
+			append_with_size(p, ticket_key_);
+			append_with_size(p, session_db_key_);
+			append_with_size(p, session_db_data_);
 		}
-	}
-	else {
-		ret.resize(sizeof(size_t) * 3 + ticket_key_.size() + session_db_key_.size() + session_db_data_.size());
-		auto* p = ret.data();
-		append_with_size(p, ticket_key_);
-		append_with_size(p, session_db_key_);
-		append_with_size(p, session_db_data_);
 	}
 
 	return ret;
@@ -2512,11 +2549,12 @@ std::vector<uint8_t> tls_layer_impl::get_raw_certificate() const
 {
 	std::vector<uint8_t> ret;
 
-	// Implicitly trust certificate of primary socket
-	unsigned int cert_list_size;
-	gnutls_datum_t const* const cert_list = gnutls_certificate_get_peers(session_, &cert_list_size);
-	if (cert_list && cert_list_size) {
-		ret.assign(cert_list[0].data, cert_list[0].data + cert_list[0].size);
+	if (session_) {
+		unsigned int cert_list_size;
+		gnutls_datum_t const* const cert_list = gnutls_certificate_get_peers(session_, &cert_list_size);
+		if (cert_list && cert_list_size) {
+			ret.assign(cert_list[0].data, cert_list[0].data + cert_list[0].size);
+		}
 	}
 
 	return ret;
@@ -2623,6 +2661,21 @@ bool set_purposes_from_type(tls_layer_impl::cert_context &ctx, gnutls_x509_crt_t
 	return true;
 }
 
+static int get_key_usage(tls_layer::cert_type t)
+{
+	int usage{};
+	if (t == tls_layer::cert_type::ca) {
+		usage = GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN;
+	}
+	else if (t == tls_layer::cert_type::codesign) {
+		usage = GNUTLS_KEY_DIGITAL_SIGNATURE;
+	}
+	else {
+		usage = GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT;
+	}
+	return usage;
+}
+
 static bool set_cert_params(tls_layer_impl::cert_context &ctx, gnutls_x509_crt_t & crt, tls_layer::cert_type t, std::string const& distinguished_name, std::vector<std::string> const& hostnames, duration lifetime)
 {
 	int res = gnutls_x509_crt_set_serial(crt, random_bytes(20).data(), 20);
@@ -2667,18 +2720,7 @@ static bool set_cert_params(tls_layer_impl::cert_context &ctx, gnutls_x509_crt_t
 		return {};
 	}
 
-	int usage{};
-	if (t == tls_layer::cert_type::ca) {
-		usage = GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN;
-	}
-	else if (t == tls_layer::cert_type::codesign) {
-		usage = GNUTLS_KEY_DIGITAL_SIGNATURE;
-	}
-	else {
-		usage = GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT;
-	}
-
-	res = gnutls_x509_crt_set_key_usage(crt, usage);
+	res = gnutls_x509_crt_set_key_usage(crt, get_key_usage(t));
 	if (res) {
 		ctx.log_gnutls_error(res, L"gnutls_x509_crt_set_key_usage");
 		return {};
@@ -2722,9 +2764,7 @@ std::string tls_layer_impl::generate_selfsigned_certificate(cert_context &ctx, u
 				ctx.log_gnutls_error(res, L"gnutls_pubkey_init");
 			}
 			else {
-				unsigned int key_usage = (type == tls_layer::cert_type::ca) ? (GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN) : (GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
-
-				res = gnutls_pubkey_import_privkey(pub, priv.get(), key_usage, 0);
+				res = gnutls_pubkey_import_privkey(pub, priv.get(), get_key_usage(type), 0);
 				if (res) {
 					ctx.log_gnutls_error(res, L"gnutls_pubkey_import_privkey");
 				}
@@ -2965,6 +3005,12 @@ std::string tls_layer_impl::generate_cert_from_csr(std::pair<std::string, std::s
 				return {};
 			}
 		}
+		else if (type == tls_layer::cert_type::codesign) {
+			if (usage & ~GNUTLS_KEY_DIGITAL_SIGNATURE) {
+				ctx.logger.log_raw(logmsg::error, fztranslate("Certificate request has wrong key usage types set."));
+				return {};
+			}
+		}
 		else {
 			if (usage & ~(GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT)) {
 				ctx.logger.log_raw(logmsg::error, fztranslate("Certificate request has wrong key usage types set."));
@@ -3028,13 +3074,13 @@ std::string tls_layer_impl::generate_csr(cert_context &ctx, unique_gnutls_privke
 	}
 
 	auto ret = [&]() -> std::string {
-		res = gnutls_x509_crq_set_version(crq, 3);
+		res = gnutls_x509_crq_set_version(crq, 1);
 		if (res) {
 			ctx.log_gnutls_error(res, L"gnutls_x509_crq_set_version");
 			return {};
 		}
 
-		unsigned int key_usage = (type == tls_layer::cert_type::ca) ? (GNUTLS_KEY_KEY_CERT_SIGN | GNUTLS_KEY_CRL_SIGN) : (GNUTLS_KEY_DIGITAL_SIGNATURE | GNUTLS_KEY_KEY_ENCIPHERMENT);
+		unsigned int key_usage = get_key_usage(type);
 
 		{
 			gnutls_pubkey_t pub;
@@ -3085,6 +3131,13 @@ std::string tls_layer_impl::generate_csr(cert_context &ctx, unique_gnutls_privke
 
 		if (type == tls_layer::cert_type::client || type == tls_layer::cert_type::server) {
 			res = gnutls_x509_crq_set_key_purpose_oid(crq, (type == tls_layer::cert_type::server) ? GNUTLS_KP_TLS_WWW_SERVER : GNUTLS_KP_TLS_WWW_CLIENT, 1);
+			if (res) {
+				ctx.log_gnutls_error(res, L"gnutls_x509_crq_set_key_purpose_oid");
+				return {};
+			}
+		}
+		else if (type == tls_layer::cert_type::codesign) {
+			res = gnutls_x509_crq_set_key_purpose_oid(crq, GNUTLS_KP_CODE_SIGNING, 1);
 			if (res) {
 				ctx.log_gnutls_error(res, L"gnutls_x509_crq_set_key_purpose_oid");
 				return {};

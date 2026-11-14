@@ -95,9 +95,69 @@ public:
 	HANDLE write_{INVALID_HANDLE_VALUE};
 };
 
-native_string escape_argument(native_string const& arg)
+
+bool is_batch_file(native_string const& cmd)
 {
-	native_string ret;
+	// Windows strips trailing spaces and dots during path resolution
+	auto end = cmd.find_last_not_of(fzT(" ."));
+	if (end == native_string::npos) {
+		return false;
+	}
+
+	native_string_view const name(cmd.data(), end + 1);
+	return ends_with<true>(name, fzT(".bat")) || ends_with<true>(name, fzT(".cmd"));
+}
+
+native_string get_cmd_exe()
+{
+	native_string path(MAX_PATH, L'\0');
+	for (;;) {
+		auto const len = GetSystemDirectoryW(path.data(), static_cast<UINT>(path.size() + 1));
+		if (!len) {
+			return {};
+		}
+		if (len <= path.size()) {
+			path.resize(len);
+			break;
+		}
+		path.resize(len);
+	}
+
+	if (path.back() != L'\\') {
+		path += L'\\';
+	}
+	path += L"cmd.exe";
+	return path;
+}
+
+native_string get_full_path(native_string const& path)
+{
+	native_string ret(MAX_PATH, L'\0');
+	for (;;) {
+		auto const len = GetFullPathNameW(path.c_str(), static_cast<DWORD>(ret.size() + 1), ret.data(), nullptr);
+		if (!len) {
+			return {};
+		}
+		if (len <= ret.size()) {
+			ret.resize(len);
+			break;
+		}
+		ret.resize(len);
+	}
+
+	if (starts_with(ret, fzT("\\\\?\\"))) {
+		return {};
+	}
+
+	return ret;
+}
+
+
+bool append_argument(native_string& cmdline, native_string const& arg)
+{
+	if (arg.find(L'\0') != native_string::npos) {
+		return false;
+	}
 
 	// Treat newlines as whitespace just to be sure, even if MSDN doesn't mention it
 	if (arg.find_first_of(fzT(" \"\t\r\n\v")) != native_string::npos) {
@@ -106,7 +166,7 @@ native_string escape_argument(native_string const& arg)
 		// If an even number of backslashes is followed by a double quotation mark, one backslash is placed in the argv array for every pair of backslashes, and the double quotation mark is interpreted as a string delimiter.
 		// If an odd number of backslashes is followed by a double quotation mark, one backslash is placed in the argv array for every pair of backslashes, and the double quotation mark is "escaped" by the remaining backslash, causing a literal double quotation mark (") to be placed in argv.
 
-		ret = fzT("\"");
+		cmdline += fzT("\"");
 		int backslashCount = 0;
 		for (auto it = arg.begin(); it != arg.end(); ++it) {
 			if (*it == '\\') {
@@ -115,35 +175,130 @@ native_string escape_argument(native_string const& arg)
 			else {
 				if (*it == '"') {
 					// Escape all preceeding backslashes and escape the quote
-					ret += native_string(backslashCount + 1, '\\');
+					cmdline += native_string(backslashCount + 1, '\\');
 				}
 				backslashCount = 0;
 			}
-			ret += *it;
+			cmdline += *it;
 		}
 		if (backslashCount) {
 			// Escape all preceeding backslashes
-			ret += native_string(backslashCount, '\\');
+			cmdline += native_string(backslashCount, '\\');
 		}
 
-		ret += fzT("\"");
+		cmdline += fzT("\"");
+	}
+	else if (arg.empty()) {
+		cmdline += fzT("\"\"");
 	}
 	else {
-		ret = arg;
+		cmdline += arg;
 	}
 
-	return ret;
+	return true;
 }
 
-native_string get_cmd_line(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end)
+bool append_batch_argument(native_string& cmdline, native_string const& arg)
 {
-	native_string cmdline = escape_argument(cmd);
+	if (arg.find(L'\0') != native_string::npos || arg.find_first_of(fzT("\r\n")) != native_string::npos) {
+		return false;
+	}
+
+	bool quote = arg.empty() || arg.back() == L'\\';
+	for (auto const c : arg) {
+		bool const alphanumeric = (c >= L'a' && c <= L'z') || (c >= L'A' && c <= L'Z') || (c >= L'0' && c <= L'9');
+		bool const control = c <= 0x1f || (c >= 0x7f && c <= 0x9f);
+		if (control || (c <= 0x7f && !alphanumeric && native_string_view(L"#$*+-./:?@\\_").find(c) == native_string_view::npos)) {
+			quote = true;
+		}
+	}
+
+	if (quote) {
+		cmdline += L'"';
+	}
+
+	size_t backslashes{};
+	for (auto const c : arg) {
+		if (c == L'\\') {
+			++backslashes;
+		}
+		else {
+			if (c == L'"') {
+				// Double both the preceding backslashes and the quote itself.
+				cmdline += native_string(backslashes, L'\\');
+				cmdline += L'"';
+			}
+			else if (c == L'%') {
+				// Prevent cmd.exe from expanding pairs of percent signs as environment variables.
+				cmdline += L"%%cd:~,";
+			}
+			backslashes = 0;
+		}
+		cmdline += c;
+	}
+
+	if (quote) {
+		// A quoted trailing backslash must not escape the closing quote.
+		cmdline += native_string(backslashes, L'\\');
+		cmdline += L'"';
+	}
+
+	return true;
+}
+
+// Windows has an undocumented fallback in CreateProcess: If the executable image cannot be loaded,
+// it checks whether it is a batch file and executes it through cmd.exe, for which the quoting isn't
+// sufficient.
+// Don't rely on the fallback, explicitly check for .bat/.cmd and quote the arguments properly for
+// passing to cmd.exe
+std::optional<native_string> get_cmd_line(native_string const& cmd, std::vector<native_string>::const_iterator const& begin, std::vector<native_string>::const_iterator const& end, bool batch)
+{
+	if (cmd.empty() || cmd.find(L'\0') != native_string::npos) {
+		return {};
+	}
+
+	native_string cmdline;
+	if (batch) {
+		auto const batch_file = get_full_path(cmd);
+		if (batch_file.empty()) {
+			return {};
+		}
+
+		// These characters cannot be made unambiguous in a batch file name at
+		// this parsing boundary. Quotes and line breaks aren't valid in Windows
+		// file names in any case.
+		if (batch_file.find_first_of(fzT("\"^%\r\n")) != native_string::npos) {
+			return {};
+		}
+
+		// cmd.exe strips the first and last quote after /c. Add an outer pair so
+		// that the quotes around the batch file and its arguments survive.
+		cmdline = fzT("cmd.exe /e:ON /v:OFF /d /c \"");
+		cmdline += fzT("\"") + batch_file + fzT("\"");
+	}
+	else {
+		if (!append_argument(cmdline, cmd)) {
+			return {};
+		}
+	}
 
 	for (auto it = begin; it != end; ++it) {
 		auto const& arg = *it;
-		if (!arg.empty()) {
-			cmdline += fzT(" ") + escape_argument(arg);
+		cmdline += fzT(" ");
+		if (batch) {
+			if (!append_batch_argument(cmdline, arg)) {
+				return {};
+			}
 		}
+		else {
+			if (!append_argument(cmdline, arg)) {
+				return {};
+			}
+		}
+	}
+
+	if (batch) {
+		cmdline += L'"';
 	}
 
 	return cmdline;
@@ -199,7 +354,20 @@ public:
 			return false;
 		}
 
-		auto cmdline = get_cmd_line(cmd, begin, end);
+		bool const batch = is_batch_file(cmd);
+		auto cmdline = get_cmd_line(cmd, begin, end, batch);
+		if (!cmdline) {
+			return false;
+		}
+
+		native_string application;
+		if (batch) {
+			application = get_cmd_exe();
+			if (application.empty()) {
+				return false;
+			}
+		}
+		auto const application_name = batch ? application.c_str() : cmd.c_str();
 
 		bool const inherit = redirect_mode != io_redirection::none;
 		if (inherit) {
@@ -256,14 +424,14 @@ public:
 			if (desktop_name) {
 				si.StartupInfo.lpDesktop = *desktop_name;
 				logger.log(logmsg::debug_debug, L"process: spawning impersonated process with desktop [%s].", si.StartupInfo.lpDesktop ? si.StartupInfo.lpDesktop : L"<automatic>");
-				res = CreateProcessAsUserW(get_handle(*it), cmd.c_str(), cmdline.data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
+				res = CreateProcessAsUserW(get_handle(*it), application_name, cmdline->data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
 				if (!res) {
 					impersonation_error = GetLastError();
 				}
 			}
 		}
 		else {
-			res = CreateProcessW(cmd.c_str(), cmdline.data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
+			res = CreateProcessW(application_name, cmdline->data(), nullptr, nullptr, inherit, flags, nullptr, nullptr, reinterpret_cast<STARTUPINFOW*>(&si), &pi);
 		}
 
 		if (inherit) {
@@ -1147,14 +1315,27 @@ bool spawn_detached_process(std::vector<native_string> const& cmd_with_args)
 	si.cb = sizeof(si);
 
 	auto begin = cmd_with_args.cbegin() + 1;
-	auto cmdline = get_cmd_line(cmd_with_args.front(), begin, cmd_with_args.cend());
+	bool const batch = is_batch_file(cmd_with_args.front());
+	auto cmdline = get_cmd_line(cmd_with_args.front(), begin, cmd_with_args.cend(), batch);
+	if (!cmdline) {
+		return false;
+	}
+
+	native_string application;
+	if (batch) {
+		application = get_cmd_exe();
+		if (application.empty()) {
+			return false;
+		}
+	}
+	auto const application_name = batch ? application.c_str() : cmd_with_args.front().c_str();
 
 	PROCESS_INFORMATION pi{};
 
-	auto cmdline_buf = cmdline.data();
+	auto cmdline_buf = cmdline->data();
 
 	DWORD const flags = CREATE_UNICODE_ENVIRONMENT | CREATE_DEFAULT_ERROR_MODE | CREATE_NO_WINDOW;
-	BOOL res = CreateProcess(cmd_with_args.front().c_str(), cmdline_buf, nullptr, nullptr, false, flags, nullptr, nullptr, &si, &pi);
+	BOOL res = CreateProcess(application_name, cmdline_buf, nullptr, nullptr, false, flags, nullptr, nullptr, &si, &pi);
 	if (!res) {
 		return false;
 	}

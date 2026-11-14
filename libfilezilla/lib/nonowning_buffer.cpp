@@ -4,6 +4,8 @@
 
 namespace fz {
 
+nonowning_buffer::~nonowning_buffer() noexcept = default;
+
 void nonowning_buffer::resize(size_t size)
 {
 	if (!size) {
@@ -29,7 +31,7 @@ uint8_t* nonowning_buffer::get(size_t bytes)
 		memmove(buffer_, buffer_ + start_, size_);
 		start_ = 0;
 	}
-	return buffer_ + start_ + size_;
+	return buffer_ ? buffer_ + start_ + size_ : nullptr;
 }
 
 void nonowning_buffer::add(size_t bytes)

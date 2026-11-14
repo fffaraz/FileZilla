@@ -1,3 +1,24 @@
+0.59.0 (2026-11-13)
+
+! MSW: Fix argument quoting when directly trying to start .bat/.cmd as executable
+! HTTP: Fix redirects on same host but different protocol/port
++ Add support for certificates with IP SAN, these can now be checked against the system trust store
+- fz::event_with_source accepts const source pointers; source() now returns a const source-identity pointer
+- Minor fixes to key purpose handling in certificate requests
+
+0.58.0 (2026-10-23)
+
++ Added fz::socket::srtt to get an estimate of the the smoothed rounttrip time of the connection, if available
++ Added fz::rename_file flags to control replacement and cross-filesystem copying; no-replace uses native atomic operations where available, otherwise a best-effort check
++ Added fz::result::cross_device to report filesystem-boundary failures
++ Added fz::local_filesys modification time overloads for native file and directory handles
++ Added fz::is_valid_x509_distinguished_name
++ Added shared interface for buffer access
+- fz::uri::get_authority now correctly preserves IPv6 literal addresses
+- HTTP connections that are kept alive now also use TCP keep-alive and automatically close after a few minutes
+- MSW: Reading or writing an invalid file handle now reports invalid instead of other, matching Unix
+- MSW: When impersonating, TOKEN_ONWER is now set on the token
+
 0.57.0 (2026-08-18)
 
 + Added support for creating impersonation_token from either user names or user ids

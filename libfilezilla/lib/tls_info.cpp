@@ -151,4 +151,18 @@ native_string check_certificate_status(std::string_view const& key, std::string_
 	return check_key_and_certs_status(tls_blob(key), tls_blob(certs), password, pem ? tls_data_format::pem : tls_data_format::der);
 }
 
+
+bool is_valid_x509_distinguished_name(std::string const& dn)
+{
+	gnutls_x509_crt_t crt;
+	gnutls_x509_crt_init(&crt);
+
+	// The optional err parameter is unfortunately not helpful, the position is in
+	// most cases at the very end, even with clear errors at the start of the DN
+	int res = gnutls_x509_crt_set_dn(crt, dn.c_str(), nullptr);
+
+	gnutls_x509_crt_deinit(crt);
+	return res == 0;
+}
+
 }

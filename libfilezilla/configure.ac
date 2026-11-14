@@ -1,4 +1,4 @@
-﻿AC_INIT([libfilezilla],[0.57.0],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
+﻿AC_INIT([libfilezilla],[0.59.0],[tim.kosse@filezilla-project.org],[],[https://lib.filezilla-project.org/])
 
 # Update the version information only immediately before a public release of your software
 # If the library source code has changed at all since the last update, then increment revision (‘c:r:a’ becomes ‘c:r+1:a’).
@@ -6,7 +6,7 @@
 # If any interfaces have been added since the last public release, then increment age.
 # If any interfaces have been removed or changed since the last public release, then set age to 0.
 # CURRENT:REVISION:AGE
-LIBRARY_VERSION=59:0:0
+LIBRARY_VERSION=61:0:0
 
 AH_TOP([
 #ifndef LIBFILEZILLA_CONFIG_HEADER
@@ -88,7 +88,7 @@ AX_CHECK_LINK_FLAG([-Wl,-no_weak_imports], [
   # If the programmer wants weak symbols he would just used dlopen/dlsym
   # But not so on Apple systems where even basic functions like clock_gettime can
   # be randomly missing at runtime.
-  AX_APPEND_FLAG([-Wl,-no_weak_imports], LFDLAGS)
+  AX_APPEND_FLAG([-Wl,-no_weak_imports], LDFLAGS)
 ])
 
 # Check for C++14 support
@@ -107,7 +107,26 @@ if test "$windows" = "0"; then
   AC_CHECK_FUNC(poll, [], [
     AC_MSG_ERROR([Please update to an operating system supporitng poll().])
   ])
-  AC_CHECK_FUNCS(posix_fadvise pipe2 accept4)
+
+  CHECK_PIPE2
+
+  AC_CHECK_FUNCS(posix_fadvise accept4)
+
+  AC_CACHE_CHECK([for renameat2 with a no-replace flag], [fz_cv_renameat2_noreplace], [
+    AC_LINK_IFELSE([AC_LANG_PROGRAM([[
+      #include <stdio.h>
+      #include <sys/fcntl.h>
+    ]], [[
+      #ifdef AT_RENAME_NOREPLACE
+        return renameat2(AT_FDCWD, "source", AT_FDCWD, "dest", AT_RENAME_NOREPLACE);
+      #else
+        return renameat2(AT_FDCWD, "source", AT_FDCWD, "dest", RENAME_NOREPLACE);
+      #endif
+    ]])], [fz_cv_renameat2_noreplace=yes], [fz_cv_renameat2_noreplace=no])
+  ])
+  AS_IF([test "$fz_cv_renameat2_noreplace" = "yes"], [
+    AC_DEFINE([HAVE_RENAMEAT2_NOREPLACE], [1], [Define if renameat2 supports a no-replace flag.])
+  ])
 
   # eventfd is preferred over selfpipe, half the descriptors after all.
   CHECK_EVENTFD

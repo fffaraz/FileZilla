@@ -269,8 +269,13 @@ bool check_auth(native_string const& username, native_string const& password)
 	auto shadow = get_shadow(username);
 	if (shadow.shadow_) {
 		struct crypt_data data{};
+
+		// Some systems, notably those with musl libc, do not return null on failure, but instead just "*".
+		// Luckily, if the hash obtained by getspnam_r is *, then crypt_r returns x, so nothing bad happens here.
+		//
+		// Nonetheless, better check that the encrypted password doesn't start with an asterisk.
 		char* encrypted = crypt_r(password.c_str(), shadow.shadow_->sp_pwdp, &data);
-		if (encrypted && !strcmp(encrypted, shadow.shadow_->sp_pwdp)) {
+		if (encrypted && *encrypted && *encrypted != '*' && !strcmp(encrypted, shadow.shadow_->sp_pwdp)) {
 			return true;
 		}
 	}
@@ -1000,6 +1005,20 @@ std::unique_ptr<impersonation_token_impl> make_impersonation_token_impl(fz::user
 	if (!DuplicateTokenEx(token.get(), 0, nullptr, SecurityImpersonation, TokenPrimary, windows::out_ptr(primary))) {
 		auto err = GetLastError();
 		logger.log(logmsg::error, fztranslate("impersonation_token: DuplicateTokenEx failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
+		return {};
+	}
+
+	auto token_user = GetUserFromToken(primary.get());
+	if (!token_user) {
+		auto err = GetLastError();
+		logger.log(logmsg::error, fztranslate("impersonation_token: GetUserFroMToken failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
+		return {};
+	}
+
+	TOKEN_OWNER owner{token_user->User.Sid};
+	if (!SetTokenInformation(primary.get(), TokenOwner, &owner, sizeof(owner))) {
+		auto err = GetLastError();
+		logger.log(logmsg::error, fztranslate("impersonation_token: SetTokenInformation w/ TokenOwner failed. User: '%s', Domain: '%s'. Last Error: %d."), user, domain, err);
 		return {};
 	}
 

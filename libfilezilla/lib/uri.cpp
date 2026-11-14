@@ -184,7 +184,14 @@ std::string uri::get_authority(bool with_userinfo) const
 				ret += "@";
 			}
 		}
-		ret += percent_encode(host_);
+		// RFC 3986 section 3.2.2: brackets and colons delimit an IPv6 literal.
+		if (host_.front() == '[' && get_address_type(host_) == address_type::ipv6) {
+			ret += host_;
+		}
+		else {
+			ret += percent_encode(host_);
+		}
+
 		if (port_ != 0) {
 			ret += ":";
 			ret += fz::to_string(port_);

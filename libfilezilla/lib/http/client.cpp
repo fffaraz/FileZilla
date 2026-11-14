@@ -110,7 +110,7 @@ private:
 	timer_id buffer_tuning_timer_{};
 #endif
 
-	std::string canonical_host_;
+	std::string host_with_scheme_and_port_;
 	socket_interface* socket_{};
 
 	std::string agent_;
@@ -119,6 +119,8 @@ private:
 
 	static request_throttler throttler_;
 	timer_id throttle_timer_{};
+
+	timer_id idle_timer_{};
 };
 
 request_throttler client::impl::throttler_;
@@ -256,9 +258,13 @@ bool client::impl::add_request(shared_request_response const& srr)
 		}
 	}
 
+	stop_timer(idle_timer_);
+	idle_timer_ = 0;
+
 	srr->request_id_ = ++request_id_counter_;
 	srr->res().flags_ = 0;
 	requests_.push_back(srr);
+
 	return true;
 }
 
@@ -309,6 +315,11 @@ continuation client::impl::on_send()
 		}
 
 		auto canonical_host = get_canonical_host(req.uri_);
+
+		bool https = equal_insensitive_ascii(req.uri_.scheme_, "https");
+		unsigned short port = req.uri_.port_ ? req.uri_.port_ : (https ? 443 : 80);
+		std::string host_with_scheme_and_port = fz::sprintf("%s://%s:%u", https ? "https"sv : "http"sv, req.uri_.host_, port);
+
 		req.headers_["Host"] = canonical_host;
 		auto pos = req.headers_.find("Connection");
 		if (pos == req.headers_.end()) {
@@ -317,9 +328,10 @@ continuation client::impl::on_send()
 		}
 		req.headers_["User-Agent"] = agent_;
 
-		if (socket_ && canonical_host_ == canonical_host) {
+		if (socket_ && host_with_scheme_and_port_ == host_with_scheme_and_port) {
 			request_send_state_ = request_send_state::header;
 			logger_.log(logmsg::debug_verbose, "Re-using existing connection."sv);
+
 			return continuation::next;
 		}
 
@@ -330,12 +342,9 @@ continuation client::impl::on_send()
 		}
 
 		request_send_state_ = request_send_state::header;
-		canonical_host_ = std::move(canonical_host);
+		host_with_scheme_and_port_ = std::move(host_with_scheme_and_port);
 
-		logger_.log(logmsg::debug_verbose, "Creating socket interface for connecting to %s"sv, canonical_host_);
-
-		bool https = equal_insensitive_ascii(req.uri_.scheme_, "https");
-		unsigned short port = req.uri_.port_ ? req.uri_.port_ : (https ? 443 : 80);
+		logger_.log(logmsg::debug_verbose, "Creating socket interface for connecting to %s"sv, canonical_host);
 
 		auto const host = to_native_from_utf8(req.uri_.host_);
 		socket_ = client_.create_socket(host, port, https);
@@ -360,7 +369,8 @@ continuation client::impl::on_send()
 
 		auto root = dynamic_cast<fz::socket*>(socket_->root());
 		if (root) {
-			root->set_flags(fz::socket::flag_nodelay, true);
+			root->set_flags(fz::socket::flag_nodelay | fz::socket::flag_keepalive, true);
+			root->set_keepalive_interval(duration::from_minutes(1));
 		}
 
 		waiting_for_send_ = true;
@@ -576,6 +586,10 @@ continuation client::impl::finalize_response()
 			return continuation::error;
 		}
 		--send_pos_;
+	}
+
+	if (socket_ && requests_.empty()) {
+		idle_timer_ = stop_add_timer(idle_timer_, duration::from_minutes(10), true);
 	}
 
 	if (wait_for_response_before_send_) {
@@ -1277,7 +1291,7 @@ void client::impl::on_buffer_availability(aio_waitable const* w)
 			}
 		}
 
-		if ((buffer_pool_ && buffer_pool_ == w) || requests_.front()->res().writer_.get() == w) {
+		if ((buffer_pool_ && buffer_pool_ == w) || (requests_.front() && requests_.front()->res().writer_.get() == w)) {
 			read_loop();
 			return;
 		}
@@ -1291,10 +1305,9 @@ void client::impl::on_timer(fz::timer_id id)
 		throttle_timer_ = 0;
 		waiting_for_send_ = false;
 		send_loop();
-		return;
 	}
 #if FZ_WINDOWS
-	if (id == buffer_tuning_timer_ && socket_) {
+	else if (id == buffer_tuning_timer_ && socket_) {
 		auto root = dynamic_cast<fz::socket*>(socket_->root());
 		if (root && root->is_connected()) {
 			int const ideal_send_buffer = root->ideal_send_buffer_size();
@@ -1304,6 +1317,14 @@ void client::impl::on_timer(fz::timer_id id)
 		}
 	}
 #endif
+	else if (id == idle_timer_) {
+		idle_timer_ = 0;
+
+		if (requests_.empty()) {
+			logger_.log(logmsg::debug_info, "Closing idle connection due to inactivity"sv);
+			stop(false, false);
+		}
+	}
 }
 
 void client::impl::destroy_socket()
@@ -1321,6 +1342,8 @@ void client::impl::destroy_socket()
 	stop_timer(buffer_tuning_timer_);
 	buffer_tuning_timer_ = 0;
 #endif
+	stop_timer(idle_timer_);
+	idle_timer_ = 0;
 }
 
 void client::impl::next()

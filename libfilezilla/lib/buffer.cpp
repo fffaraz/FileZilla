@@ -9,6 +9,17 @@
 
 namespace fz {
 
+// Out-of-line virtual destructors give these vtables a home in the library.
+buffer_access_interface::~buffer_access_interface() = default;
+buffer_interface::~buffer_interface() = default;
+buffer::~buffer() = default;
+secure_buffer::~secure_buffer() = default;
+
+namespace buffer_detail {
+template<buffer_wipe_policy Policy>
+owning_buffer<Policy>::~owning_buffer() = default;
+}
+
 template<buffer_wipe_policy Policy>
 basic_buffer<Policy>::~basic_buffer()
 {
@@ -399,5 +410,7 @@ void basic_buffer<Policy>::wipe_unused()
 
 template class basic_buffer<buffer_wipe_policy::normal>;
 template class basic_buffer<buffer_wipe_policy::wipe_on_release>;
+template class buffer_detail::owning_buffer<buffer_wipe_policy::normal>;
+template class buffer_detail::owning_buffer<buffer_wipe_policy::wipe_on_release>;
 
 }

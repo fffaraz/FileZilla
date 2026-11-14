@@ -1,6 +1,21 @@
 #include "libfilezilla/libfilezilla.hpp"
 
 #ifdef FZ_WINDOWS
+  // So that TCP_INFO and struct _TCP_INFO_v0 are available.
+  #ifndef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0A00
+  #elif _WIN32_WINNT < 0x0A00
+    #undef _WIN32_WINNT
+    #define _WIN32_WINNT 0x0A00
+  #endif
+
+  #ifndef NTDDI_VERSION
+    #define NTDDI_VERSION 0x0A000003
+  #elif NTDDI_VERSION < 0x0A000003
+    #undef NTDDI_VERSION
+    #define NTDDI_VERSION 0x0A000003
+  #endif
+
   #include "libfilezilla/glue/windows.hpp"
   #include <winsock2.h>
   #include <ws2tcpip.h>
@@ -276,7 +291,7 @@ int do_set_flags(socket::socket_t fd, int flags, int flags_mask, duration const&
 {
 	if (flags_mask & socket::flag_nodelay) {
 		const int value = (flags & socket::flag_nodelay) ? 1 : 0;
-		int res = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&value, sizeof(value));
+		int res = setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, reinterpret_cast<char const*>(&value), sizeof(value));
 		if (res != 0) {
 			return last_socket_error();
 		}
@@ -294,13 +309,28 @@ int do_set_flags(socket::socket_t fd, int flags, int flags_mask, duration const&
 		}
 #else
 		const int value = (flags & socket::flag_keepalive) ? 1 : 0;
-		int res = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (const char*)&value, sizeof(value));
+		int res = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<char const*>(&value), sizeof(value));
 		if (res != 0) {
 			return last_socket_error();
 		}
+
 #ifdef TCP_KEEPINTVL
+		int const interval = 1;
+		res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, reinterpret_cast<char const*>(&value), sizeof(interval));
+		if (res != 0) {
+			return last_socket_error();
+		}
+#endif
+
+#if defined(TCP_KEEPIDLE)
+		constexpr int idle_option = TCP_KEEPIDLE;
+#elif defined(TCP_KEEPALIVE)
+		constexpr int idle_option = TCP_KEEPALIVE;
+#endif
+
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPALIVE)
 		int const idle = keepalive_interval.get_seconds();
-		res = setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (const char*)&idle, sizeof(idle));
+		res = setsockopt(fd, IPPROTO_TCP, idle_option, (char const*)&idle, sizeof(idle));
 		if (res != 0) {
 			return last_socket_error();
 		}
@@ -1885,13 +1915,15 @@ void socket::set_keepalive_interval(duration const& d)
 		return;
 	}
 
-	if (d < duration::from_minutes(1)) {
+	if (d <= duration()) {
 		return;
 	}
 
+	auto const clamped = std::min(std::max(d, duration::from_minutes(1)), duration::from_hours(24));
+
 	scoped_lock l(socket_thread_->mutex_);
 
-	keepalive_interval_ = d;
+	keepalive_interval_ = clamped;
 	if (fd_ != -1) {
 		do_set_flags(fd_, flags_, flag_keepalive, keepalive_interval_);
 	}
@@ -1928,6 +1960,45 @@ void socket::set_flags(int flags)
 		do_set_flags(fd_, flags, flags ^ flags_, keepalive_interval_);
 	}
 	flags_ = flags;
+}
+
+std::optional<duration> socket::srtt()
+{
+	if (!socket_thread_) {
+		return {};
+	}
+
+	scoped_lock l(socket_thread_->mutex_);
+
+#if FZ_WINDOWS
+	TCP_INFO_v0 info{};
+
+	DWORD v{0};
+	DWORD s{};
+	if (WSAIoctl(fd_, SIO_TCP_INFO, &v, sizeof(v), &info, sizeof(info), &s, nullptr, nullptr) != 0) {
+		return {};
+	}
+
+	return fz::duration::from_milliseconds(info.RttUs / 1000);
+#elif FZ_MAC
+	struct tcp_connection_info info{};
+	socklen_t len = sizeof(info);
+	int res = getsockopt(fd_, IPPROTO_TCP, TCP_CONNECTION_INFO, &info, &len);
+	if (res) {
+		return {};
+	}
+	return fz::duration::from_milliseconds(info.tcpi_srtt); // Unlike the other platforms, macOS has this in ms already
+#elif HAVE_TCP_INFO
+	tcp_info info{};
+	socklen_t len = sizeof(info);
+	int res = getsockopt(fd_, IPPROTO_TCP, TCP_INFO, &info, &len);
+	if (res) {
+		return {};
+	}
+	return fz::duration::from_milliseconds(info.tcpi_rtt / 1000);
+#endif
+
+	return {};
 }
 
 #ifndef FZ_WINDOWS

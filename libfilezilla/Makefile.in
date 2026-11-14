@@ -105,6 +105,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_flag.m4 \
 	$(top_srcdir)/m4/check_libc++.m4 \
 	$(top_srcdir)/m4/check_lrt_for_shm_open.m4 \
 	$(top_srcdir)/m4/check_memfd_create.m4 \
+	$(top_srcdir)/m4/check_pipe2.m4 \
 	$(top_srcdir)/m4/check_random.m4 \
 	$(top_srcdir)/m4/check_steady_clock.m4 \
 	$(top_srcdir)/m4/check_tcp_info.m4 \
