@@ -17,3 +17,9 @@ To compile FileZilla inside a Docker container and produce an AppImage executabl
 ./build.sh
 ./FileZilla.AppImage
 ```
+
+## Source code
+
+* https://filezilla-project.org/download.php?show_all=1
+* https://lib.filezilla-project.org/download.php
+* https://fzssh.filezilla-project.org/download.php

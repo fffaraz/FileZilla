@@ -29,8 +29,3 @@ docker rm -f filezilla
 # debug:
 # docker run --privileged -it --entrypoint /bin/bash filezilla
 # cd /opt && ./appimagetool-x86_64.AppImage ./approot ./FileZilla.AppImage
-
-# source code:
-# https://filezilla-project.org/download.php?show_all=1
-# https://lib.filezilla-project.org/download.php
-# https://fzssh.filezilla-project.org/download.php
